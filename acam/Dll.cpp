@@ -23,7 +23,7 @@ extern "C" __declspec(dllexport) HRESULT DllUnregisterServer()
 
 STDAPI DllEntryPoint(HINSTANCE, ULONG, LPVOID);
 
-BOOL APIENTRY DllMain(HANDLE hModule, DWORD  dwReason, LPVOID lpReserved)
+extern "C" BOOL APIENTRY DllMain(HANDLE hModule, DWORD  dwReason, LPVOID lpReserved)
 {
 	return DllEntryPoint((HINSTANCE)(hModule), dwReason, lpReserved);
 }
