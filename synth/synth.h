@@ -77,6 +77,7 @@ public:
     void FillPCMAudioBuffer(const WAVEFORMATEX& wfex, BYTE pBuf[], int iSize);
 	// helper for same
 	void copyCacheToOutputBuffers(const WAVEFORMATEX& wfex, BYTE pBuf[], int iSize);
+	void copyNewCacheToOutputBuffers(const WAVEFORMATEX& wfex, BYTE pBuf[], int iSize);
 
     // Set the "current" format and allocate temporary memory
     HRESULT AllocWaveCache(const WAVEFORMATEX& wfex);

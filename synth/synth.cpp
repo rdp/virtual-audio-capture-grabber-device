@@ -686,8 +686,15 @@ void CAudioSynth::FillPCMAudioBuffer(const WAVEFORMATEX& wfex, BYTE pBuf[], int 
     }
 
     // Copy cache to output buffers
-    copyCacheToOutputBuffers(wfex, pBuf, iSize);
+	// sin wave?
+    //copyCacheToOutputBuffers(wfex, pBuf, iSize);
+	copyNewCacheToOutputBuffers(wfex, pBuf, iSize);
 }
+
+void CAudioSynth::copyNewCacheToOutputBuffers(const WAVEFORMATEX& wfex, BYTE pBuf[], int iSize) 
+{
+}
+
 
 void CAudioSynth::copyCacheToOutputBuffers(const WAVEFORMATEX& wfex, BYTE pBuf[], int iSize)
 {
