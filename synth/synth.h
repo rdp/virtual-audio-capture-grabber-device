@@ -11,6 +11,9 @@
 #ifndef __AUDIOSYNTH__
 #define __AUDIOSYNTH__
 
+// There are 8 bits in a byte.
+const DWORD BITS_PER_BYTE = 8;
+
 //CLSID_SynthFilter
 //{79A98DE0-BC00-11ce-AC2E-444553540000}
 DEFINE_GUID(CLSID_SynthFilter,

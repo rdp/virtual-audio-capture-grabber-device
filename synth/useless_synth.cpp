@@ -545,3 +545,167 @@ STDMETHODIMP CAudioSynth::put_OutputFormat(SYNTH_OUTPUT_FORMAT ofOutputFormat)
 
     return S_OK;
 }
+
+
+
+// -------------------------------------------------------------------------
+// ISynth2, the control interface for the synthesizer
+// -------------------------------------------------------------------------
+
+//
+// get_Frequency
+//
+STDMETHODIMP CSynthFilter::get_Frequency(int *Frequency) 
+{
+    m_Synth->get_Frequency(Frequency);
+
+    DbgLog((LOG_TRACE, 3, TEXT("get_Frequency: %d"), *Frequency));
+    return NOERROR;
+}
+
+
+//
+// put_Frequency
+//
+STDMETHODIMP CSynthFilter::put_Frequency(int Frequency) 
+{
+    m_Synth->put_Frequency (Frequency);
+
+    DbgLog((LOG_TRACE, 3, TEXT("put_Frequency: %d"), Frequency));
+    return NOERROR;
+}
+
+
+//
+// get_Waveform
+//
+STDMETHODIMP CSynthFilter::get_Waveform(int *Waveform) 
+{
+    m_Synth->get_Waveform (Waveform);
+
+    DbgLog((LOG_TRACE, 3, TEXT("get_Waveform: %d"), *Waveform));
+    return NOERROR;
+}
+
+
+//
+// put_Waveform
+//
+STDMETHODIMP CSynthFilter::put_Waveform(int Waveform) 
+{
+    m_Synth->put_Waveform (Waveform);
+
+    DbgLog((LOG_TRACE, 3, TEXT("put_Waveform: %d"), Waveform));
+    return NOERROR;
+}
+
+
+//
+// get_Channels
+//
+STDMETHODIMP CSynthFilter::get_Channels(int *Channels) 
+{
+    HRESULT hr = m_Synth->get_Channels( Channels );
+
+    DbgLog((LOG_TRACE, 3, TEXT("get_Channels: %d"), *Channels));
+    return hr;
+}
+
+
+//
+// If the format changes, we need to reconnect
+//
+void CSynthFilter::ReconnectWithNewFormat(void) 
+{
+    // The caller must hold the state lock because this
+    // function calls IsConnected().
+    ASSERT(CritCheckIn(pStateLock()));
+
+    // The synth filter's only has one pin.  The pin is an output pin.
+    CDynamicSourceStream* pOutputPin = (CDynamicSourceStream*)GetPin(0);
+
+    if( pOutputPin->IsConnected() ) {
+        pOutputPin->OutputPinNeedsToBeReconnected();
+    }
+}
+
+
+
+//
+// get_BitsPerSample
+//
+STDMETHODIMP CSynthFilter::get_BitsPerSample(int *BitsPerSample) 
+{
+    HRESULT hr = m_Synth->get_BitsPerSample(BitsPerSample);
+
+    DbgLog((LOG_TRACE, 3, TEXT("get_BitsPerSample: %d"), *BitsPerSample));
+    return hr;
+}
+
+
+
+//
+// get_SamplesPerSec
+//
+STDMETHODIMP CSynthFilter::get_SamplesPerSec(int *SamplesPerSec) 
+{
+    HRESULT hr = m_Synth->get_SamplesPerSec(SamplesPerSec);
+    
+    DbgLog((LOG_TRACE, 3, TEXT("get_SamplesPerSec: %d"), *SamplesPerSec));
+    return hr;
+}
+
+
+
+//
+// get_Amplitude
+//
+STDMETHODIMP CSynthFilter::get_Amplitude(int *Amplitude) 
+{
+    m_Synth->get_Amplitude (Amplitude);
+
+    DbgLog((LOG_TRACE, 3, TEXT("get_Amplitude: %d"), *Amplitude));
+    return NOERROR;
+}
+
+
+
+//
+// get_SweepRange
+//
+STDMETHODIMP CSynthFilter::get_SweepRange(int *SweepStart, int *SweepEnd) 
+{
+    m_Synth->get_SweepRange (SweepStart, SweepEnd);
+
+    DbgLog((LOG_TRACE, 3, TEXT("get_SweepStart: %d %d"), *SweepStart, *SweepEnd));
+    return NOERROR;
+}
+
+
+STDMETHODIMP CSynthFilter::get_OutputFormat(SYNTH_OUTPUT_FORMAT* pOutputFormat) 
+{
+    HRESULT hr = m_Synth->get_OutputFormat(pOutputFormat);
+    if (FAILED(hr)) {
+        return hr;
+    }
+
+    return S_OK;
+}
+
+void CSynthStream::DerivePCMFormatFromADPCMFormatStructure(const WAVEFORMATEX& wfexADPCM, 
+                                                           WAVEFORMATEX* pwfexPCM)
+{
+    ASSERT(pwfexPCM);
+    if (!pwfexPCM)
+        return;
+
+    pwfexPCM->wFormatTag = WAVE_FORMAT_PCM; 
+    pwfexPCM->wBitsPerSample = 16;
+    pwfexPCM->cbSize = 0;
+
+    pwfexPCM->nChannels = wfexADPCM.nChannels;
+    pwfexPCM->nSamplesPerSec = wfexADPCM.nSamplesPerSec;
+
+    pwfexPCM->nBlockAlign = (WORD)((pwfexPCM->nChannels * pwfexPCM->wBitsPerSample) / BITS_PER_BYTE);
+    pwfexPCM->nAvgBytesPerSec = pwfexPCM->nBlockAlign * pwfexPCM->nSamplesPerSec;
+}

@@ -73,8 +73,6 @@ CFactoryTemplate g_Templates[] = {
 };
 int g_cTemplates = sizeof(g_Templates) / sizeof(g_Templates[0]);
 
-// There are 8 bits in a byte.
-const DWORD BITS_PER_BYTE = 8;
 
 
 // -------------------------------------------------------------------------
@@ -152,151 +150,6 @@ DWORD CSynthFilter::GetSoftwareVersion(void)
 }
 
 
-// -------------------------------------------------------------------------
-// ISynth2, the control interface for the synthesizer
-// -------------------------------------------------------------------------
-
-//
-// get_Frequency
-//
-STDMETHODIMP CSynthFilter::get_Frequency(int *Frequency) 
-{
-    m_Synth->get_Frequency(Frequency);
-
-    DbgLog((LOG_TRACE, 3, TEXT("get_Frequency: %d"), *Frequency));
-    return NOERROR;
-}
-
-
-//
-// put_Frequency
-//
-STDMETHODIMP CSynthFilter::put_Frequency(int Frequency) 
-{
-    m_Synth->put_Frequency (Frequency);
-
-    DbgLog((LOG_TRACE, 3, TEXT("put_Frequency: %d"), Frequency));
-    return NOERROR;
-}
-
-
-//
-// get_Waveform
-//
-STDMETHODIMP CSynthFilter::get_Waveform(int *Waveform) 
-{
-    m_Synth->get_Waveform (Waveform);
-
-    DbgLog((LOG_TRACE, 3, TEXT("get_Waveform: %d"), *Waveform));
-    return NOERROR;
-}
-
-
-//
-// put_Waveform
-//
-STDMETHODIMP CSynthFilter::put_Waveform(int Waveform) 
-{
-    m_Synth->put_Waveform (Waveform);
-
-    DbgLog((LOG_TRACE, 3, TEXT("put_Waveform: %d"), Waveform));
-    return NOERROR;
-}
-
-
-//
-// get_Channels
-//
-STDMETHODIMP CSynthFilter::get_Channels(int *Channels) 
-{
-    HRESULT hr = m_Synth->get_Channels( Channels );
-
-    DbgLog((LOG_TRACE, 3, TEXT("get_Channels: %d"), *Channels));
-    return hr;
-}
-
-
-//
-// If the format changes, we need to reconnect
-//
-void CSynthFilter::ReconnectWithNewFormat(void) 
-{
-    // The caller must hold the state lock because this
-    // function calls IsConnected().
-    ASSERT(CritCheckIn(pStateLock()));
-
-    // The synth filter's only has one pin.  The pin is an output pin.
-    CDynamicSourceStream* pOutputPin = (CDynamicSourceStream*)GetPin(0);
-
-    if( pOutputPin->IsConnected() ) {
-        pOutputPin->OutputPinNeedsToBeReconnected();
-    }
-}
-
-
-
-//
-// get_BitsPerSample
-//
-STDMETHODIMP CSynthFilter::get_BitsPerSample(int *BitsPerSample) 
-{
-    HRESULT hr = m_Synth->get_BitsPerSample(BitsPerSample);
-
-    DbgLog((LOG_TRACE, 3, TEXT("get_BitsPerSample: %d"), *BitsPerSample));
-    return hr;
-}
-
-
-
-//
-// get_SamplesPerSec
-//
-STDMETHODIMP CSynthFilter::get_SamplesPerSec(int *SamplesPerSec) 
-{
-    HRESULT hr = m_Synth->get_SamplesPerSec(SamplesPerSec);
-    
-    DbgLog((LOG_TRACE, 3, TEXT("get_SamplesPerSec: %d"), *SamplesPerSec));
-    return hr;
-}
-
-
-
-//
-// get_Amplitude
-//
-STDMETHODIMP CSynthFilter::get_Amplitude(int *Amplitude) 
-{
-    m_Synth->get_Amplitude (Amplitude);
-
-    DbgLog((LOG_TRACE, 3, TEXT("get_Amplitude: %d"), *Amplitude));
-    return NOERROR;
-}
-
-
-
-//
-// get_SweepRange
-//
-STDMETHODIMP CSynthFilter::get_SweepRange(int *SweepStart, int *SweepEnd) 
-{
-    m_Synth->get_SweepRange (SweepStart, SweepEnd);
-
-    DbgLog((LOG_TRACE, 3, TEXT("get_SweepStart: %d %d"), *SweepStart, *SweepEnd));
-    return NOERROR;
-}
-
-
-STDMETHODIMP CSynthFilter::get_OutputFormat(SYNTH_OUTPUT_FORMAT* pOutputFormat) 
-{
-    HRESULT hr = m_Synth->get_OutputFormat(pOutputFormat);
-    if (FAILED(hr)) {
-        return hr;
-    }
-
-    return S_OK;
-}
-
-
 
 // -------------------------------------------------------------------------
 // CSynthStream, the output pin
@@ -340,6 +193,8 @@ CSynthStream::~CSynthStream(void)
 // FillBuffer
 //
 // Stuffs the buffer with data
+// "they" call this
+// then "they" call Deliver...so I guess we just fill it with something?
 HRESULT CSynthStream::FillBuffer(IMediaSample *pms) 
 {
     CheckPointer(pms,E_POINTER);
@@ -374,67 +229,8 @@ HRESULT CSynthStream::FillBuffer(IMediaSample *pms)
     } 
     else 
     {
-        // This filter only supports two audio formats: PCM and ADPCM. 
-        ASSERT(WAVE_FORMAT_ADPCM == pwfexCurrent->wFormatTag);
-
-        // Create PCM audio samples and then compress them.  We use the
-        // Audio Compression Manager (ACM) API to convert the samples to 
-        // the ADPCM format. 
-
-        ACMSTREAMHEADER ACMStreamHeader;
-
-        ACMStreamHeader.cbStruct = sizeof(ACMStreamHeader);
-        ACMStreamHeader.fdwStatus = 0;
-        ACMStreamHeader.dwUser = 0;
-        ACMStreamHeader.cbSrcLength = m_dwTempPCMBufferSize;
-        ACMStreamHeader.cbSrcLengthUsed = 0;
-        ACMStreamHeader.dwSrcUser = 0; 
-        ACMStreamHeader.pbDst = pData; 
-        ACMStreamHeader.cbDstLength = pms->GetSize(); 
-        ACMStreamHeader.cbDstLengthUsed = 0; 
-        ACMStreamHeader.dwDstUser = 0; 
-        ACMStreamHeader.pbSrc = new BYTE[m_dwTempPCMBufferSize];
-        if (NULL == ACMStreamHeader.pbSrc) {
-            return E_OUTOFMEMORY;
-        }
-
-        WAVEFORMATEX wfexPCMAudio;
-
-        DerivePCMFormatFromADPCMFormatStructure(*pwfexCurrent, &wfexPCMAudio);
-
-        m_Synth->FillPCMAudioBuffer(wfexPCMAudio,
-                                    ACMStreamHeader.pbSrc,
-                                    ACMStreamHeader.cbSrcLength);
-
-        MMRESULT mmr = acmStreamPrepareHeader(m_hPCMToMSADPCMConversionStream,   
-                                              &ACMStreamHeader,
-                                              0);
-  
-        // acmStreamPrepareHeader() returns 0 if no errors occur.
-        if (mmr != 0) {
-            delete [] ACMStreamHeader.pbSrc;
-            return E_FAIL;
-        }
-
-        mmr = acmStreamConvert(m_hPCMToMSADPCMConversionStream,
-                               &ACMStreamHeader,
-                               ACM_STREAMCONVERTF_BLOCKALIGN);
-
-        MMRESULT mmrUnprepare = acmStreamUnprepareHeader(m_hPCMToMSADPCMConversionStream,   
-                                                         &ACMStreamHeader,
-                                                         0);
-
-        delete [] ACMStreamHeader.pbSrc;
-
-        // acmStreamConvert() andacmStreamUnprepareHeader() returns 0 if no errors occur.
-        if ((mmr != 0) || (mmrUnprepare != 0)) {
-            return E_FAIL;
-        }
-
-        hr = pms->SetActualDataLength(ACMStreamHeader.cbDstLengthUsed);
-        if (FAILED(hr)) {
-            return hr;
-        }
+		// who cares about ADPCM...
+		return E_FAIL;
     }
 
     // Set the sample's time stamps.  
@@ -495,7 +291,7 @@ HRESULT CSynthStream::FillBuffer(IMediaSample *pms)
 
 //
 // GetMediaType
-//
+// I believe "they" call this...
 HRESULT CSynthStream::GetMediaType(CMediaType *pmt) 
 {
     CheckPointer(pmt,E_POINTER);
@@ -530,45 +326,8 @@ HRESULT CSynthStream::GetMediaType(CMediaType *pmt)
     }
     else if(SYNTH_OF_MS_ADPCM == ofCurrent)
     {
-        DWORD dwMaxWAVEFORMATEXSize;
-
-        MMRESULT mmr = acmMetrics(NULL, ACM_METRIC_MAX_SIZE_FORMAT, 
-                                 (void*)&dwMaxWAVEFORMATEXSize);
-
-        // acmMetrics() returns 0 if no errors occur.
-        if(0 != mmr)
-        {
-            return E_FAIL;
-        }
-
-        pwfex = (WAVEFORMATEX *) pmt->AllocFormatBuffer(dwMaxWAVEFORMATEXSize);
-        if(NULL == pwfex)
-        {
-            return E_OUTOFMEMORY;
-        }
-
-        WAVEFORMATEX wfexSourceFormat;
-        m_Synth->GetPCMFormatStructure(&wfexSourceFormat);
-
-        ZeroMemory(pwfex, dwMaxWAVEFORMATEXSize);
-        pwfex->wFormatTag = WAVE_FORMAT_ADPCM;
-        pwfex->cbSize = (USHORT)(dwMaxWAVEFORMATEXSize - sizeof(WAVEFORMATEX));
-        pwfex->nChannels = wfexSourceFormat.nChannels;
-        pwfex->nSamplesPerSec = wfexSourceFormat.nSamplesPerSec;
-
-        mmr = acmFormatSuggest(NULL,
-                               &wfexSourceFormat,
-                               pwfex,
-                               dwMaxWAVEFORMATEXSize,
-                               ACM_FORMATSUGGESTF_WFORMATTAG | 
-                                    ACM_FORMATSUGGESTF_NSAMPLESPERSEC | 
-                                    ACM_FORMATSUGGESTF_NCHANNELS);
-        // acmFormatSuggest() returns 0 if no errors occur.
-        if(0 != mmr)
-        {
-            return E_FAIL;
-        }
-
+		  // !no ADPCM!
+		  return E_FAIL;
     }
     else
     {
@@ -591,6 +350,7 @@ HRESULT CSynthStream::CompleteConnect(IPin *pReceivePin)
 
     if(WAVE_FORMAT_PCM == pwfexCurrent->wFormatTag)
     {
+		// always create our pretty sin wave on connect...
         hr = m_Synth->AllocWaveCache(*pwfexCurrent);
         if(FAILED(hr))
         {
@@ -599,34 +359,12 @@ HRESULT CSynthStream::CompleteConnect(IPin *pReceivePin)
     }
     else if(WAVE_FORMAT_ADPCM == pwfexCurrent->wFormatTag)
     {
-        WAVEFORMATEX wfexSourceFormat;
-
-        DerivePCMFormatFromADPCMFormatStructure(*pwfexCurrent, &wfexSourceFormat);
-
-        hr = m_Synth->AllocWaveCache(wfexSourceFormat);
-        if(FAILED(hr))
-        {
-            return hr;
-        }
-
-        MMRESULT mmr = acmStreamOpen(&m_hPCMToMSADPCMConversionStream,
-                                    NULL,
-                                    &wfexSourceFormat,
-                                    pwfexCurrent,
-                                    NULL,
-                                    0,
-                                    0,
-                                    ACM_STREAMOPENF_NONREALTIME);
-        // acmStreamOpen() returns 0 if an no errors occur.                              
-        if(mmr != 0)
-        {
-            return E_FAIL;
-        }
+		// no ADPCM!
+		return E_FAIL;
     }
     else
     {
         ASSERT(NULL == m_hPCMToMSADPCMConversionStream);
-
     }
 
     hr = CDynamicSourceStream::CompleteConnect(pReceivePin);
@@ -651,25 +389,7 @@ HRESULT CSynthStream::CompleteConnect(IPin *pReceivePin)
 }
 
 
-void CSynthStream::DerivePCMFormatFromADPCMFormatStructure(const WAVEFORMATEX& wfexADPCM, 
-                                                           WAVEFORMATEX* pwfexPCM)
-{
-    ASSERT(pwfexPCM);
-    if (!pwfexPCM)
-        return;
-
-    pwfexPCM->wFormatTag = WAVE_FORMAT_PCM; 
-    pwfexPCM->wBitsPerSample = 16;
-    pwfexPCM->cbSize = 0;
-
-    pwfexPCM->nChannels = wfexADPCM.nChannels;
-    pwfexPCM->nSamplesPerSec = wfexADPCM.nSamplesPerSec;
-
-    pwfexPCM->nBlockAlign = (WORD)((pwfexPCM->nChannels * pwfexPCM->wBitsPerSample) / BITS_PER_BYTE);
-    pwfexPCM->nAvgBytesPerSec = pwfexPCM->nBlockAlign * pwfexPCM->nSamplesPerSec;
-}
-
-
+// pin connect was broken
 HRESULT CSynthStream::BreakConnect(void)
 {
     // This lock must be held because this function uses
@@ -890,7 +610,7 @@ HRESULT CAudioSynth::AllocWaveCache(const WAVEFORMATEX& wfex)
         }
     }
 
-    CalcCache(wfex);
+    CalcCache(wfex); // fill it with a sin wave...
 
     return S_OK;
 }
@@ -925,7 +645,7 @@ void CAudioSynth::GetPCMFormatStructure(WAVEFORMATEX* pwfex)
 //
 // FillAudioBuffer
 //
-//
+// This actually fills it with the sin wave...
 //
 void CAudioSynth::FillPCMAudioBuffer(const WAVEFORMATEX& wfex, BYTE pBuf[], int iSize)
 {

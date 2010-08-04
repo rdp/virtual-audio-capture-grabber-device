@@ -115,7 +115,7 @@ HRESULT LoopbackCapture(
     // note that AUDCLNT_STREAMFLAGS_LOOPBACK and AUDCLNT_STREAMFLAGS_EVENTCALLBACK
     // do not work together...
     // the "data ready" event never gets set
-    // so we're going to do a timer-driven loop
+    // so we're going to do a timer-driven loop...
     hr = pAudioClient->Initialize(
         AUDCLNT_SHAREMODE_SHARED,
         AUDCLNT_STREAMFLAGS_LOOPBACK,
