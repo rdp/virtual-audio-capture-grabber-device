@@ -234,7 +234,7 @@ HRESULT CSynthStream::FillBuffer(IMediaSample *pms)
 		return E_FAIL;
     }
 
-    // Set the sample's time stamps.  
+    // Set the sample's time stamps...hmm...  
     CRefTime rtStart = m_rtSampleTime;
 
     m_rtSampleTime = rtStart + (REFERENCE_TIME)(UNITS * pms->GetActualDataLength()) / 

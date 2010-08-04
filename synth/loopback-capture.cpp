@@ -1,9 +1,32 @@
 #include <windows.h>
+#include <streams.h>
+
+#include <math.h>
+#include <mmreg.h>
+#include <msacm.h>
+
+#include <initguid.h>
+#if (1100 > _MSC_VER)
+#include <olectlid.h>
+#else
+#include <olectl.h>
+#endif
+
+
+#define _AUDIOSYNTH_IMPLEMENTATION_
+
+#include "DynSrc.h"
+#include "isynth.h"
+#include "synth.h"
+#include "synthprp.h"
+
+
 #include <mmsystem.h>
 #include <mmdeviceapi.h>
 #include <audioclient.h>
 #include <stdio.h>
 #include <avrt.h>
+
 
 
 HRESULT get_default_device(IMMDevice **ppMMDevice) {
@@ -32,9 +55,7 @@ HRESULT get_default_device(IMMDevice **ppMMDevice) {
 }
 
 
-
-// I *think* you can pass NULL in for MMDevice...
-HRESULT LoopbackCapture()
+HRESULT LoopbackCapture(IMediaSample *pms)
  {
 
 	bool bInt16 = false;
