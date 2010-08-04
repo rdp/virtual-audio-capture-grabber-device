@@ -6,19 +6,50 @@
 #include <avrt.h>
 
 
-HRESULT LoopbackCapture(
-    IMMDevice *pMMDevice,
-    HMMIO hFile,
-    bool bInt16,
-    HANDLE hStartedEvent,
-    HANDLE hStopEvent,
-    PUINT32 pnFrames
-) {
-    HRESULT hr;
+HRESULT get_default_device(IMMDevice **ppMMDevice) {
+    HRESULT hr = S_OK;
+    IMMDeviceEnumerator *pMMDeviceEnumerator;
+    // activate a device enumerator
+    hr = CoCreateInstance(
+        __uuidof(MMDeviceEnumerator), NULL, CLSCTX_ALL, 
+        __uuidof(IMMDeviceEnumerator),
+        (void**)&pMMDeviceEnumerator
+    );
+    if (FAILED(hr)) {
+        printf("CoCreateInstance(IMMDeviceEnumerator) failed: hr = 0x%08x\n", hr);
+        return hr;
+    }
 
-    // activate an IAudioClient
+    // get the default render endpoint
+    hr = pMMDeviceEnumerator->GetDefaultAudioEndpoint(eRender, eConsole, ppMMDevice);
+    pMMDeviceEnumerator->Release();
+    if (FAILED(hr)) {
+        printf("IMMDeviceEnumerator::GetDefaultAudioEndpoint failed: hr = 0x%08x\n", hr);
+        return hr;
+    }
+
+    return S_OK;
+}
+
+
+
+// I *think* you can pass NULL in for MMDevice...
+HRESULT LoopbackCapture()
+ {
+
+	bool bInt16 = false;
+	UINT32 pnFrames = 0;
+
+    HRESULT hr;
+    IMMDevice *m_pMMDevice;
+    hr = get_default_device(&m_pMMDevice); // so it can re-place our pointer...
+    if (FAILED(hr)) {
+        return hr;
+    }
+
+    // activate an (the default, for us) IAudioClient
     IAudioClient *pAudioClient;
-    hr = pMMDevice->Activate(
+    hr = m_pMMDevice->Activate(
         __uuidof(IAudioClient),
         CLSCTX_ALL, NULL,
         (void**)&pAudioClient
@@ -92,7 +123,6 @@ HRESULT LoopbackCapture(
     // create a periodic waitable timer
 	
     UINT32 nBlockAlign = pwfx->nBlockAlign;
-    *pnFrames = 0;
     
     // call IAudioClient::Initialize
     // note that AUDCLNT_STREAMFLAGS_LOOPBACK and AUDCLNT_STREAMFLAGS_EVENTCALLBACK
@@ -146,7 +176,6 @@ HRESULT LoopbackCapture(
         pAudioClient->Release();
         return hr;
     }
-    SetEvent(hStartedEvent);
     
     bool bDone = false;
     bool bFirstPacket = true;
@@ -158,11 +187,11 @@ HRESULT LoopbackCapture(
     // loop forever until bDone is set by the keyboard
     for (UINT32 nPasses = 0; !bDone; nPasses++) {
 
-        // TODO sleep until there is data available...
+        // TODO sleep until there is data available [?] or can it poll me... [lodo]
         UINT32 nNextPacketSize;
         hr = pAudioCaptureClient->GetNextPacketSize(&nNextPacketSize);
         if (FAILED(hr)) {
-            printf("IAudioCaptureClient::GetNextPacketSize failed on pass %u after %u frames: hr = 0x%08x\n", nPasses, *pnFrames, hr);
+            printf("IAudioCaptureClient::GetNextPacketSize failed on pass %u after %u frames: hr = 0x%08x\n", nPasses, pnFrames, hr);
             pAudioClient->Stop();
             AvRevertMmThreadCharacteristics(hTask);
             pAudioCaptureClient->Release();
@@ -191,7 +220,7 @@ HRESULT LoopbackCapture(
         
         
         if (FAILED(hr)) {
-            printf("IAudioCaptureClient::GetBuffer failed on pass %u after %u frames: hr = 0x%08x\n", nPasses, *pnFrames, hr);
+            printf("IAudioCaptureClient::GetBuffer failed on pass %u after %u frames: hr = 0x%08x\n", nPasses, pnFrames, hr);
             pAudioClient->Stop();
             AvRevertMmThreadCharacteristics(hTask);
             pAudioCaptureClient->Release();
@@ -202,7 +231,7 @@ HRESULT LoopbackCapture(
         if (bFirstPacket && AUDCLNT_BUFFERFLAGS_DATA_DISCONTINUITY == dwFlags) {
             printf("Probably spurious glitch reported on first packet\n");
         } else if (0 != dwFlags) {
-            printf("IAudioCaptureClient::GetBuffer set flags to 0x%08x on pass %u after %u frames\n", dwFlags, nPasses, *pnFrames);
+            printf("IAudioCaptureClient::GetBuffer set flags to 0x%08x on pass %u after %u frames\n", dwFlags, nPasses, pnFrames);
             pAudioClient->Stop();
             AvRevertMmThreadCharacteristics(hTask);
             pAudioCaptureClient->Release();
@@ -211,30 +240,32 @@ HRESULT LoopbackCapture(
         }
 
         if (0 == nNumFramesToRead) {
-            printf("IAudioCaptureClient::GetBuffer said to read 0 frames on pass %u after %u frames\n", nPasses, *pnFrames);
+            printf("IAudioCaptureClient::GetBuffer said to read 0 frames on pass %u after %u frames\n", nPasses, pnFrames);
             pAudioClient->Stop();
             AvRevertMmThreadCharacteristics(hTask);
             pAudioCaptureClient->Release();
             pAudioClient->Release();            
             return E_UNEXPECTED;            
-        }
+        } else {
+			pnFrames += nNumFramesToRead;
+		}
 
         LONG lBytesToWrite = nNumFramesToRead * nBlockAlign;
 #pragma prefast(suppress: __WARNING_INCORRECT_ANNOTATION, "IAudioCaptureClient::GetBuffer SAL annotation implies a 1-byte buffer")
-        LONG lBytesWritten = mmioWrite(hFile, reinterpret_cast<PCHAR>(pData), lBytesToWrite);
+        // TODO WRITE TO OUTGOING [?]
+		/* LONG lBytesWritten = mmioWrite(hFile, reinterpret_cast<PCHAR>(pData), lBytesToWrite);
         if (lBytesToWrite != lBytesWritten) {
-            printf("mmioWrite wrote %u bytes on pass %u after %u frames: expected %u bytes\n", lBytesWritten, nPasses, *pnFrames, lBytesToWrite);
+            printf("mmioWrite wrote %u bytes on pass %u after %u frames: expected %u bytes\n", lBytesWritten, nPasses, pnFrames, lBytesToWrite);
             pAudioClient->Stop();
             AvRevertMmThreadCharacteristics(hTask);
             pAudioCaptureClient->Release();
             pAudioClient->Release();            
             return E_UNEXPECTED;
-        }
-        *pnFrames += nNumFramesToRead;
+        }*/
         
         hr = pAudioCaptureClient->ReleaseBuffer(nNumFramesToRead);
         if (FAILED(hr)) {
-            printf("IAudioCaptureClient::ReleaseBuffer failed on pass %u after %u frames: hr = 0x%08x\n", nPasses, *pnFrames, hr);
+            printf("IAudioCaptureClient::ReleaseBuffer failed on pass %u after %u frames: hr = 0x%08x\n", nPasses, pnFrames, hr);
             pAudioClient->Stop();
             AvRevertMmThreadCharacteristics(hTask);
             pAudioCaptureClient->Release();
@@ -249,6 +280,10 @@ HRESULT LoopbackCapture(
     AvRevertMmThreadCharacteristics(hTask);
     pAudioCaptureClient->Release();
     pAudioClient->Release();
+    if (NULL != m_pMMDevice) {
+        m_pMMDevice->Release();
+    }
 
     return hr;
 }
+

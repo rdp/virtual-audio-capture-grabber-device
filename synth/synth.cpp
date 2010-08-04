@@ -195,6 +195,7 @@ CSynthStream::~CSynthStream(void)
 // Stuffs the buffer with data
 // "they" call this
 // then "they" call Deliver...so I guess we just fill it with something?
+// they *must* call this only every so often...
 HRESULT CSynthStream::FillBuffer(IMediaSample *pms) 
 {
     CheckPointer(pms,E_POINTER);
@@ -292,6 +293,9 @@ HRESULT CSynthStream::FillBuffer(IMediaSample *pms)
 //
 // GetMediaType
 // I believe "they" call this...
+// we only have one type at a time...
+// so we just return our one type...
+// which we already told them what it was.
 HRESULT CSynthStream::GetMediaType(CMediaType *pmt) 
 {
     CheckPointer(pmt,E_POINTER);
@@ -334,7 +338,7 @@ HRESULT CSynthStream::GetMediaType(CMediaType *pmt)
         return E_UNEXPECTED;
     }
 
-    return CreateAudioMediaType(pwfex, pmt, FALSE);
+    return CreateAudioMediaType(pwfex, pmt, FALSE); // not ours...
 }
 
 
