@@ -88,14 +88,6 @@ HRESULT LoopbackCapture(
 
     MMCKINFO ckRIFF = {0};
     MMCKINFO ckData = {0};
-	/*
-    hr = WriteWaveHeader(hFile, pwfx, &ckRIFF, &ckData);
-    if (FAILED(hr)) {
-        // WriteWaveHeader does its own logging
-        CoTaskMemFree(pwfx);
-        pAudioClient->Release();
-        return hr;
-    }*/
 
     // create a periodic waitable timer
 	
@@ -158,11 +150,15 @@ HRESULT LoopbackCapture(
     
     bool bDone = false;
     bool bFirstPacket = true;
+
+
+
+
+
     // loop forever until bDone is set by the keyboard
     for (UINT32 nPasses = 0; !bDone; nPasses++) {
-		// wait for either the timer to tick, or the keyboard to be hit
 
-        // got a "wake up" event - see if there's data
+        // TODO sleep until there is data available...
         UINT32 nNextPacketSize;
         hr = pAudioCaptureClient->GetNextPacketSize(&nNextPacketSize);
         if (FAILED(hr)) {
