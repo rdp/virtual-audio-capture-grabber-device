@@ -234,7 +234,7 @@ HRESULT CSynthStream::FillBuffer(IMediaSample *pms)
 		return E_FAIL;
     }
 
-    // Set the sample's time stamps...hmm...  
+    // Set the sample's start and end time stamps...
     CRefTime rtStart = m_rtSampleTime;
 
     m_rtSampleTime = rtStart + (REFERENCE_TIME)(UNITS * pms->GetActualDataLength()) / 
@@ -649,7 +649,7 @@ void CAudioSynth::GetPCMFormatStructure(WAVEFORMATEX* pwfex)
 //
 // FillAudioBuffer
 //
-// This actually fills it with the sin wave...
+// This actually fills it with the sin wave by copying it verbatim into the output...
 //
 void CAudioSynth::FillPCMAudioBuffer(const WAVEFORMATEX& wfex, BYTE pBuf[], int iSize)
 {
@@ -681,11 +681,17 @@ void CAudioSynth::FillPCMAudioBuffer(const WAVEFORMATEX& wfex, BYTE pBuf[], int 
 
     if(fCalcCache)
     {
+		// recalculate the sin wave...
         CalcCache(wfex);
     }
 
     // Copy cache to output buffers
-    if(wfex.wBitsPerSample == 8 && wfex.nChannels == 1)
+    copyCacheToOutputBuffers(wfex, pBuf, iSize);
+}
+
+void CAudioSynth::copyCacheToOutputBuffers(const WAVEFORMATEX& wfex, BYTE pBuf[], int iSize)
+{
+	if(wfex.wBitsPerSample == 8 && wfex.nChannels == 1)
     {
         while(iSize--)
         {
@@ -732,7 +738,6 @@ void CAudioSynth::FillPCMAudioBuffer(const WAVEFORMATEX& wfex, BYTE pBuf[], int 
         }
     }
 }
-
 
 void CAudioSynth::CalcCache(const WAVEFORMATEX& wfex)
 {

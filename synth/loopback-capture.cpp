@@ -12,6 +12,7 @@
 #include <olectl.h>
 #endif
 
+// ughly
 
 #define _AUDIOSYNTH_IMPLEMENTATION_
 
@@ -26,7 +27,6 @@
 #include <audioclient.h>
 #include <stdio.h>
 #include <avrt.h>
-
 
 
 HRESULT get_default_device(IMMDevice **ppMMDevice) {
