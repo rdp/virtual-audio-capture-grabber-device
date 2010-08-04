@@ -247,27 +247,11 @@ HRESULT LoopbackCapture(
         }
         
         bFirstPacket = false;
-    } // capture loop
-	// some pretty sick redundancy in here...
+    } // capture loop...
 
-/*    hr = FinishWaveFile(hFile, &ckData, &ckRIFF);
-    if (FAILED(hr)) {
-        // FinishWaveFile does it's own logging
-        pAudioClient->Stop();
-        CancelWaitableTimer(hWakeUp);
-        AvRevertMmThreadCharacteristics(hTask);
-        pAudioCaptureClient->Release();
-        CloseHandle(hWakeUp);
-        pAudioClient->Release();
-        return hr;
-    }
-	*/
-    
     pAudioClient->Stop();
-    //CancelWaitableTimer(hWakeUp);
     AvRevertMmThreadCharacteristics(hTask);
     pAudioCaptureClient->Release();
-    //CloseHandle(hWakeUp);
     pAudioClient->Release();
 
     return hr;
