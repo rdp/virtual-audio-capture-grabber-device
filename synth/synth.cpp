@@ -226,7 +226,7 @@ HRESULT CSynthStream::FillBuffer(IMediaSample *pms)
         if (FAILED(hr))
             return hr;
 
-    } 
+    }
     else 
     {
 		// who cares about ADPCM...

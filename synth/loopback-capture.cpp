@@ -99,15 +99,6 @@ HRESULT LoopbackCapture(
 
     // create a periodic waitable timer
 	
-    HANDLE hWakeUp = CreateWaitableTimer(NULL, FALSE, NULL);
-    if (NULL == hWakeUp) {
-        DWORD dwErr = GetLastError();
-        printf("CreateWaitableTimer failed: last error = %u\n", dwErr);
-        CoTaskMemFree(pwfx);
-        pAudioClient->Release();
-        return HRESULT_FROM_WIN32(dwErr);
-    }
-
     UINT32 nBlockAlign = pwfx->nBlockAlign;
     *pnFrames = 0;
     
@@ -154,71 +145,22 @@ HRESULT LoopbackCapture(
         return HRESULT_FROM_WIN32(dwErr);
     }    
 
-    // set the waitable timer
-	// it will wake up, grab available data from the device, then sleep.
-
-    LARGE_INTEGER liFirstFire;
-    liFirstFire.QuadPart = -hnsDefaultDevicePeriod / 2; // negative means relative time
-    LONG lTimeBetweenFires = (LONG)hnsDefaultDevicePeriod / 2 / (10 * 1000); // convert to milliseconds
-    BOOL bOK = SetWaitableTimer(
-        hWakeUp,
-        &liFirstFire,
-        lTimeBetweenFires,
-        NULL, NULL, FALSE
-    );
-    if (!bOK) {
-        DWORD dwErr = GetLastError();
-        printf("SetWaitableTimer failed: last error = %u\n", dwErr);
-        AvRevertMmThreadCharacteristics(hTask);
-        pAudioCaptureClient->Release();
-        CloseHandle(hWakeUp);
-        pAudioClient->Release();
-        return HRESULT_FROM_WIN32(dwErr);
-    }
-    
     // call IAudioClient::Start
     hr = pAudioClient->Start();
     if (FAILED(hr)) {
         printf("IAudioClient::Start failed: hr = 0x%08x\n", hr);
         AvRevertMmThreadCharacteristics(hTask);
         pAudioCaptureClient->Release();
-        CloseHandle(hWakeUp);
         pAudioClient->Release();
         return hr;
     }
     SetEvent(hStartedEvent);
     
-    // loopback capture loop
-    HANDLE waitArray[2] = { hStopEvent, hWakeUp };
-    DWORD dwWaitResult;
-
     bool bDone = false;
     bool bFirstPacket = true;
     // loop forever until bDone is set by the keyboard
     for (UINT32 nPasses = 0; !bDone; nPasses++) {
 		// wait for either the timer to tick, or the keyboard to be hit
-        dwWaitResult = WaitForMultipleObjects(
-            ARRAYSIZE(waitArray), waitArray,
-            FALSE, INFINITE
-        );
-
-        if (WAIT_OBJECT_0 == dwWaitResult) {
-			// keyboard was hit
-            printf("Received stop event after %u passes and %u frames\n", nPasses, *pnFrames);
-            bDone = true;
-            continue; // exits loop
-        }
-
-        if (WAIT_OBJECT_0 + 1 != dwWaitResult) {
-            printf("Unexpected WaitForMultipleObjects return value %u on pass %u after %u frames\n", dwWaitResult, nPasses, *pnFrames);
-            pAudioClient->Stop();
-            CancelWaitableTimer(hWakeUp);
-            AvRevertMmThreadCharacteristics(hTask);
-            pAudioCaptureClient->Release();
-            CloseHandle(hWakeUp);
-            pAudioClient->Release();
-            return E_UNEXPECTED;
-        }
 
         // got a "wake up" event - see if there's data
         UINT32 nNextPacketSize;
@@ -226,10 +168,8 @@ HRESULT LoopbackCapture(
         if (FAILED(hr)) {
             printf("IAudioCaptureClient::GetNextPacketSize failed on pass %u after %u frames: hr = 0x%08x\n", nPasses, *pnFrames, hr);
             pAudioClient->Stop();
-            CancelWaitableTimer(hWakeUp);
             AvRevertMmThreadCharacteristics(hTask);
             pAudioCaptureClient->Release();
-            CloseHandle(hWakeUp);
             pAudioClient->Release();            
             return hr;
         }
@@ -257,10 +197,8 @@ HRESULT LoopbackCapture(
         if (FAILED(hr)) {
             printf("IAudioCaptureClient::GetBuffer failed on pass %u after %u frames: hr = 0x%08x\n", nPasses, *pnFrames, hr);
             pAudioClient->Stop();
-            CancelWaitableTimer(hWakeUp);
             AvRevertMmThreadCharacteristics(hTask);
             pAudioCaptureClient->Release();
-            CloseHandle(hWakeUp);
             pAudioClient->Release();            
             return hr;            
         }
@@ -270,10 +208,8 @@ HRESULT LoopbackCapture(
         } else if (0 != dwFlags) {
             printf("IAudioCaptureClient::GetBuffer set flags to 0x%08x on pass %u after %u frames\n", dwFlags, nPasses, *pnFrames);
             pAudioClient->Stop();
-            CancelWaitableTimer(hWakeUp);
             AvRevertMmThreadCharacteristics(hTask);
             pAudioCaptureClient->Release();
-            CloseHandle(hWakeUp);
             pAudioClient->Release();            
             return E_UNEXPECTED;
         }
@@ -281,10 +217,8 @@ HRESULT LoopbackCapture(
         if (0 == nNumFramesToRead) {
             printf("IAudioCaptureClient::GetBuffer said to read 0 frames on pass %u after %u frames\n", nPasses, *pnFrames);
             pAudioClient->Stop();
-            CancelWaitableTimer(hWakeUp);
             AvRevertMmThreadCharacteristics(hTask);
             pAudioCaptureClient->Release();
-            CloseHandle(hWakeUp);
             pAudioClient->Release();            
             return E_UNEXPECTED;            
         }
@@ -295,10 +229,8 @@ HRESULT LoopbackCapture(
         if (lBytesToWrite != lBytesWritten) {
             printf("mmioWrite wrote %u bytes on pass %u after %u frames: expected %u bytes\n", lBytesWritten, nPasses, *pnFrames, lBytesToWrite);
             pAudioClient->Stop();
-            CancelWaitableTimer(hWakeUp);
             AvRevertMmThreadCharacteristics(hTask);
             pAudioCaptureClient->Release();
-            CloseHandle(hWakeUp);
             pAudioClient->Release();            
             return E_UNEXPECTED;
         }
@@ -308,10 +240,8 @@ HRESULT LoopbackCapture(
         if (FAILED(hr)) {
             printf("IAudioCaptureClient::ReleaseBuffer failed on pass %u after %u frames: hr = 0x%08x\n", nPasses, *pnFrames, hr);
             pAudioClient->Stop();
-//            CancelWaitableTimer(hWakeUp);
             AvRevertMmThreadCharacteristics(hTask);
             pAudioCaptureClient->Release();
-            //CloseHandle(hWakeUp);
             pAudioClient->Release();            
             return hr;            
         }
