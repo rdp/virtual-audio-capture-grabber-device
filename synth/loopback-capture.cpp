@@ -37,7 +37,7 @@ HRESULT LoopbackCapture(
         return hr;
     }
 
-    // get the default device format
+    // get the default device format (incoming...)
     WAVEFORMATEX *pwfx;
     hr = pAudioClient->GetMixFormat(&pwfx);
     if (FAILED(hr)) {
@@ -98,6 +98,7 @@ HRESULT LoopbackCapture(
     }*/
 
     // create a periodic waitable timer
+	
     HANDLE hWakeUp = CreateWaitableTimer(NULL, FALSE, NULL);
     if (NULL == hWakeUp) {
         DWORD dwErr = GetLastError();
@@ -122,7 +123,7 @@ HRESULT LoopbackCapture(
     );
     if (FAILED(hr)) {
         printf("IAudioClient::Initialize failed: hr = 0x%08x\n", hr);
-        CloseHandle(hWakeUp);
+        //CloseHandle(hWakeUp);
         pAudioClient->Release();
         return hr;
     }
@@ -136,7 +137,7 @@ HRESULT LoopbackCapture(
     );
     if (FAILED(hr)) {
         printf("IAudioClient::GetService(IAudioCaptureClient) failed: hr 0x%08x\n", hr);
-        CloseHandle(hWakeUp);
+        //CloseHandle(hWakeUp);
         pAudioClient->Release();
         return hr;
     }
@@ -148,12 +149,14 @@ HRESULT LoopbackCapture(
         DWORD dwErr = GetLastError();
         printf("AvSetMmThreadCharacteristics failed: last error = %u\n", dwErr);
         pAudioCaptureClient->Release();
-        CloseHandle(hWakeUp);
+        //CloseHandle(hWakeUp);
         pAudioClient->Release();
         return HRESULT_FROM_WIN32(dwErr);
     }    
 
     // set the waitable timer
+	// it will wake up, grab available data from the device, then sleep.
+
     LARGE_INTEGER liFirstFire;
     liFirstFire.QuadPart = -hnsDefaultDevicePeriod / 2; // negative means relative time
     LONG lTimeBetweenFires = (LONG)hnsDefaultDevicePeriod / 2 / (10 * 1000); // convert to milliseconds
@@ -191,13 +194,16 @@ HRESULT LoopbackCapture(
 
     bool bDone = false;
     bool bFirstPacket = true;
+    // loop forever until bDone is set by the keyboard
     for (UINT32 nPasses = 0; !bDone; nPasses++) {
+		// wait for either the timer to tick, or the keyboard to be hit
         dwWaitResult = WaitForMultipleObjects(
             ARRAYSIZE(waitArray), waitArray,
             FALSE, INFINITE
         );
 
         if (WAIT_OBJECT_0 == dwWaitResult) {
+			// keyboard was hit
             printf("Received stop event after %u passes and %u frames\n", nPasses, *pnFrames);
             bDone = true;
             continue; // exits loop
@@ -302,16 +308,17 @@ HRESULT LoopbackCapture(
         if (FAILED(hr)) {
             printf("IAudioCaptureClient::ReleaseBuffer failed on pass %u after %u frames: hr = 0x%08x\n", nPasses, *pnFrames, hr);
             pAudioClient->Stop();
-            CancelWaitableTimer(hWakeUp);
+//            CancelWaitableTimer(hWakeUp);
             AvRevertMmThreadCharacteristics(hTask);
             pAudioCaptureClient->Release();
-            CloseHandle(hWakeUp);
+            //CloseHandle(hWakeUp);
             pAudioClient->Release();            
             return hr;            
         }
         
         bFirstPacket = false;
     } // capture loop
+	// some pretty sick redundancy in here...
 
 /*    hr = FinishWaveFile(hFile, &ckData, &ckRIFF);
     if (FAILED(hr)) {
@@ -327,10 +334,10 @@ HRESULT LoopbackCapture(
 	*/
     
     pAudioClient->Stop();
-    CancelWaitableTimer(hWakeUp);
+    //CancelWaitableTimer(hWakeUp);
     AvRevertMmThreadCharacteristics(hTask);
     pAudioCaptureClient->Release();
-    CloseHandle(hWakeUp);
+    //CloseHandle(hWakeUp);
     pAudioClient->Release();
 
     return hr;
