@@ -30,6 +30,9 @@
     <ClCompile Include="loopback-capture.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="loopback-capture-helpers.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="synth.def">

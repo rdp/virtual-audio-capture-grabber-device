@@ -658,7 +658,7 @@ void CAudioSynth::GetPCMFormatStructure(WAVEFORMATEX* pwfex)
 }
 
 
-
+int useOld = 0;
 //
 // FillAudioBuffer
 //
@@ -698,12 +698,15 @@ void CAudioSynth::FillPCMAudioBuffer(const WAVEFORMATEX& wfex, BYTE pBuf[], int 
         CalcCache(wfex);
     }
 
-	// sin wave (old way)
-    // Copy cache to output buffers
-    //copyCacheToOutputBuffers(wfex, pBuf, iSize);
-
-	// new way:
-	LoopbackCapture(wfex, pBuf, iSize, NULL);
+	if(useOld){
+	  // sin wave (old way)
+      // Copy cache to output buffers
+      copyCacheToOutputBuffers(wfex, pBuf, iSize);
+	}
+	else {
+	  // new way:
+	  LoopbackCapture(wfex, pBuf, iSize, NULL);
+	}
 }
 
 void CAudioSynth::copyCacheToOutputBuffers(const WAVEFORMATEX& wfex, BYTE pBuf[], int iSize)

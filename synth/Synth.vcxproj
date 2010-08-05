@@ -175,6 +175,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="dynsrc.cpp" />
+    <ClCompile Include="loopback-capture-helpers.cpp" />
     <ClCompile Include="loopback-capture.cpp" />
     <ClCompile Include="synth.cpp" />
     <ClCompile Include="synthprp.cpp" />

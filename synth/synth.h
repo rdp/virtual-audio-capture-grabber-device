@@ -38,6 +38,8 @@ const int WaveBufferSize = 16*1024;     // Size of each allocated buffer
                                         // audio breaks with a transform in the
                                         // middle.
 
+// huh?
+
 enum Waveforms {
     WAVE_SINE = 0,
     WAVE_SQUARE,

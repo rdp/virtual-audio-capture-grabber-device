@@ -7,39 +7,15 @@
 #include <stdio.h>
 #include <avrt.h>
 
+HRESULT open_file(LPCWSTR szFileName, HMMIO *phFile);
 
-HRESULT get_default_device(IMMDevice **ppMMDevice) {
-    HRESULT hr = S_OK;
-    IMMDeviceEnumerator *pMMDeviceEnumerator;
-    // activate a device enumerator
-    hr = CoCreateInstance(
-        __uuidof(MMDeviceEnumerator), NULL, CLSCTX_ALL, 
-        __uuidof(IMMDeviceEnumerator),
-        (void**)&pMMDeviceEnumerator
-    );
-    if (FAILED(hr)) {
-        printf("CoCreateInstance(IMMDeviceEnumerator) failed: hr = 0x%08x\n", hr);
-        return hr;
-    }
-
-    // get the default render endpoint
-    hr = pMMDeviceEnumerator->GetDefaultAudioEndpoint(eRender, eConsole, ppMMDevice);
-    pMMDeviceEnumerator->Release();
-    if (FAILED(hr)) {
-        printf("IMMDeviceEnumerator::GetDefaultAudioEndpoint failed: hr = 0x%08x\n", hr);
-        return hr;
-    }
-
-    return S_OK;
-}
-
+HRESULT get_default_device(IMMDevice **ppMMDevice);
 
 // size is size of the BYTE buffer...but...I guess...we just have to fill it all the way with data...I guess...
-// sniff...sniff...
 HRESULT LoopbackCapture(const WAVEFORMATEX& wfex, BYTE pBuf[], int iSize, WAVEFORMATEX* ifNotNullThenJustSetTypeOnly)
  {
+	bool bInt16 = true; // makes it actually work, for some reason...
 
-	bool bInt16 = false;
 	UINT32 pnFrames = 0;
 
     HRESULT hr;
@@ -97,8 +73,7 @@ HRESULT LoopbackCapture(const WAVEFORMATEX& wfex, BYTE pBuf[], int iSize, WAVEFO
                     // naked scope for case-local variable
                     PWAVEFORMATEXTENSIBLE pEx = reinterpret_cast<PWAVEFORMATEXTENSIBLE>(pwfx);
                     if (IsEqualGUID(KSDATAFORMAT_SUBTYPE_IEEE_FLOAT, pEx->SubFormat)) {
-					    FILE *fp = fopen("/doing freaky 16 thing", "w");
-					    fclose(fp);
+						// WE GET HERE!
                         pEx->SubFormat = KSDATAFORMAT_SUBTYPE_PCM;
                         pEx->Samples.wValidBitsPerSample = 16;
                         pwfx->wBitsPerSample = 16;
@@ -230,7 +205,7 @@ HRESULT LoopbackCapture(const WAVEFORMATEX& wfex, BYTE pBuf[], int iSize, WAVEFO
 
         if (0 == nNextPacketSize) {
             // no data yet
-			Sleep(0);// LODO ?
+			Sleep(0);// LODO (?)
             continue;
         }
 
@@ -279,21 +254,17 @@ HRESULT LoopbackCapture(const WAVEFORMATEX& wfex, BYTE pBuf[], int iSize, WAVEFO
             pAudioClient->Release();            
             return E_UNEXPECTED;            
         } else {
-			pnFrames += nNumFramesToRead;
+			pnFrames += nNumFramesToRead; // increment total count...
 		}
 
         LONG lBytesToWrite = nNumFramesToRead * nBlockAlign;
 #pragma prefast(suppress: __WARNING_INCORRECT_ANNOTATION, "IAudioCaptureClient::GetBuffer SAL annotation implies a 1-byte buffer")
         // TODO WRITE TO OUTGOING [?]
-		/* LONG lBytesWritten = mmioWrite(hFile, reinterpret_cast<PCHAR>(pData), lBytesToWrite);
-        if (lBytesToWrite != lBytesWritten) {
-            printf("mmioWrite wrote %u bytes on pass %u after %u frames: expected %u bytes\n", lBytesWritten, nPasses, pnFrames, lBytesToWrite);
-            pAudioClient->Stop();
-            AvRevertMmThreadCharacteristics(hTask);
-            pAudioCaptureClient->Release();
-            pAudioClient->Release();            
-            return E_UNEXPECTED;
-        }*/
+		for(int i = 0; i < lBytesToWrite && nBitsWrote < iSize;i++) {
+
+			pBuf[nBitsWrote++] = pData[i]; // lodo use a straight call...
+
+		}
         
         hr = pAudioCaptureClient->ReleaseBuffer(nNumFramesToRead);
         if (FAILED(hr)) {
