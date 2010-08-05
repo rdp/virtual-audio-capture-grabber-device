@@ -34,7 +34,7 @@ HRESULT get_default_device(IMMDevice **ppMMDevice) {
 }
 
 
-HRESULT LoopbackCapture(const WAVEFORMATEX& wfex, BYTE pBuf[], int iSize)
+HRESULT LoopbackCapture(const WAVEFORMATEX& wfex, BYTE pBuf[], int iSize, WAVEFORMATEX* ifNotNullThenJustSetTypeOnly)
  {
 
 	bool bInt16 = false;
@@ -69,7 +69,7 @@ HRESULT LoopbackCapture(const WAVEFORMATEX& wfex, BYTE pBuf[], int iSize)
     }
 
     // get the default device format (incoming...)
-    WAVEFORMATEX *pwfx;
+    WAVEFORMATEX *pwfx; // incoming wave...
     hr = pAudioClient->GetMixFormat(&pwfx);
     if (FAILED(hr)) {
         printf("IAudioClient::GetMixFormat failed: hr = 0x%08x\n", hr);
@@ -95,6 +95,8 @@ HRESULT LoopbackCapture(const WAVEFORMATEX& wfex, BYTE pBuf[], int iSize)
                     // naked scope for case-local variable
                     PWAVEFORMATEXTENSIBLE pEx = reinterpret_cast<PWAVEFORMATEXTENSIBLE>(pwfx);
                     if (IsEqualGUID(KSDATAFORMAT_SUBTYPE_IEEE_FLOAT, pEx->SubFormat)) {
+					    FILE *fp = fopen("/doing freaky 16 thing", "w");
+					    fclose(fp);
                         pEx->SubFormat = KSDATAFORMAT_SUBTYPE_PCM;
                         pEx->Samples.wValidBitsPerSample = 16;
                         pwfx->wBitsPerSample = 16;
@@ -117,6 +119,35 @@ HRESULT LoopbackCapture(const WAVEFORMATEX& wfex, BYTE pBuf[], int iSize)
         }
     }
 
+	if(ifNotNullThenJustSetTypeOnly) {
+		// pwfx is set at this point...
+		WAVEFORMATEX* pwfex = ifNotNullThenJustSetTypeOnly;
+		// copy them all out as the possible format...hmm...
+
+
+		                pwfx->wFormatTag = WAVE_FORMAT_PCM;
+                pwfx->wBitsPerSample = 16;
+                pwfx->nBlockAlign = pwfx->nChannels * pwfx->wBitsPerSample / 8;
+                pwfx->nAvgBytesPerSec = pwfx->nBlockAlign * pwfx->nSamplesPerSec;
+
+
+		pwfex->wFormatTag = pwfx->wFormatTag;
+		pwfex->nChannels = pwfx->nChannels;
+        pwfex->nSamplesPerSec = pwfx->nSamplesPerSec;
+        pwfex->wBitsPerSample = pwfx->wBitsPerSample;
+        pwfex->nBlockAlign = pwfx->nBlockAlign;
+        pwfex->nAvgBytesPerSec = pwfx->nAvgBytesPerSec;
+        pwfex->cbSize = pwfx->cbSize;
+		FILE *fp = fopen("/abc", "w");
+		fprintf(fp, "hello world %d %d %d %d %d %d %d", pwfex->wFormatTag, pwfex->nChannels, 
+			pwfex->nSamplesPerSec, pwfex->wBitsPerSample, pwfex->nBlockAlign, pwfex->nAvgBytesPerSec, pwfex->cbSize );
+		fclose(fp);
+		// cleanup
+		// I might be leaking here...
+        m_pMMDevice->Release();
+		return hr;
+	}
+
     MMCKINFO ckRIFF = {0};
     MMCKINFO ckData = {0};
 
@@ -136,7 +167,6 @@ HRESULT LoopbackCapture(const WAVEFORMATEX& wfex, BYTE pBuf[], int iSize)
     );
     if (FAILED(hr)) {
         printf("IAudioClient::Initialize failed: hr = 0x%08x\n", hr);
-        //CloseHandle(hWakeUp);
         pAudioClient->Release();
         return hr;
     }
@@ -179,9 +209,6 @@ HRESULT LoopbackCapture(const WAVEFORMATEX& wfex, BYTE pBuf[], int iSize)
     
     bool bDone = false;
     bool bFirstPacket = true;
-
-
-
 
 
     // loop forever until bDone is set by the keyboard
@@ -280,10 +307,7 @@ HRESULT LoopbackCapture(const WAVEFORMATEX& wfex, BYTE pBuf[], int iSize)
     AvRevertMmThreadCharacteristics(hTask);
     pAudioCaptureClient->Release();
     pAudioClient->Release();
-    if (NULL != m_pMMDevice) {
-        m_pMMDevice->Release();
-    }
-
+    m_pMMDevice->Release();
     return hr;
 }
 

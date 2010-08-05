@@ -28,6 +28,7 @@
 #include "isynth.h"
 #include "synth.h"
 #include "synthprp.h"
+#include <stdio.h>
 
 // setup data
 
@@ -196,6 +197,7 @@ CSynthStream::~CSynthStream(void)
 // "they" call this
 // then "they" call Deliver...so I guess we just fill it with something?
 // they *must* call this only every so often...
+// you probably should fill the entire buffer...hmm...
 HRESULT CSynthStream::FillBuffer(IMediaSample *pms) 
 {
     CheckPointer(pms,E_POINTER);
@@ -308,7 +310,13 @@ HRESULT CSynthStream::GetMediaType(CMediaType *pmt)
     // state lock is held.
     ASSERT(CritCheckIn(m_pParent->pStateLock()));
 
-    WAVEFORMATEX *pwfex;
+	return setAsNormal(pmt);	
+}
+
+HRESULT LoopbackCapture(const WAVEFORMATEX& wfex, BYTE pBuf[], int iSize, WAVEFORMATEX* ifNotNullThenJustSetTypeOnly);
+
+HRESULT CSynthStream::setAsNormal(CMediaType *pmt) {
+	    WAVEFORMATEX *pwfex;
     SYNTH_OUTPUT_FORMAT ofCurrent;
 
     HRESULT hr = m_Synth->get_OutputFormat( &ofCurrent );
@@ -319,13 +327,21 @@ HRESULT CSynthStream::GetMediaType(CMediaType *pmt)
     
     if(SYNTH_OF_PCM == ofCurrent)
     {
+		// we always get here...
         pwfex = (WAVEFORMATEX *) pmt->AllocFormatBuffer(sizeof(WAVEFORMATEX));
         if(NULL == pwfex)
         {
             return E_OUTOFMEMORY;
         }
 
-        m_Synth->GetPCMFormatStructure(pwfex);
+		// we'll set it as PCM or what not, within this call...
+
+		// now tell them "this is what we will give you..."
+		WAVEFORMATEX unused;
+		LoopbackCapture(unused, NULL, -1, pwfex);
+        
+		// old sin wave way...
+		//m_Synth->GetPCMFormatStructure(pwfex);
 
     }
     else if(SYNTH_OF_MS_ADPCM == ofCurrent)
@@ -339,6 +355,7 @@ HRESULT CSynthStream::GetMediaType(CMediaType *pmt)
     }
 
     return CreateAudioMediaType(pwfex, pmt, FALSE); // not ours...
+
 }
 
 
@@ -446,21 +463,8 @@ HRESULT CSynthStream::DecideBufferSize(IMemAllocator *pAlloc,
     }
     else
     {
-        // This filter only supports two formats: PCM and ADPCM. 
-        ASSERT(WAVE_FORMAT_ADPCM == pwfexCurrent->wFormatTag);
-
-        pProperties->cbBuffer = pwfexCurrent->nBlockAlign;
-
-        MMRESULT mmr = acmStreamSize(m_hPCMToMSADPCMConversionStream,
-                                     pwfexCurrent->nBlockAlign,
-                                     &m_dwTempPCMBufferSize,
-                                     ACM_STREAMSIZEF_DESTINATION);
-
-        // acmStreamSize() returns 0 if no error occurs.
-        if(0 != mmr)
-        {
-            return E_FAIL;
-        }
+		// no ADMCP!
+        return E_FAIL;        
     }
 
     int nBitsPerSample = pwfexCurrent->wBitsPerSample;
@@ -620,11 +624,10 @@ HRESULT CAudioSynth::AllocWaveCache(const WAVEFORMATEX& wfex)
 }
 
 
+
 void CAudioSynth::GetPCMFormatStructure(WAVEFORMATEX* pwfex)
 {
     ASSERT(pwfex);
-    if (!pwfex)
-        return;
 
     // The caller must hold the state lock because this function uses
     // m_wChannels, m_wBitsPerSample and m_dwSamplesPerSec.
@@ -643,10 +646,15 @@ void CAudioSynth::GetPCMFormatStructure(WAVEFORMATEX* pwfex)
     pwfex->nBlockAlign = (WORD)((pwfex->wBitsPerSample * pwfex->nChannels) / BITS_PER_BYTE);
     pwfex->nAvgBytesPerSec = pwfex->nBlockAlign * pwfex->nSamplesPerSec;
     pwfex->cbSize = 0;
+
+	FILE *fp = fopen("/normal is", "w");
+
+	fprintf(fp, "hello world %d %d %d %d %d %d %d", pwfex->wFormatTag, pwfex->nChannels, 
+		pwfex->nSamplesPerSec, pwfex->wBitsPerSample, pwfex->nBlockAlign, pwfex->nAvgBytesPerSec, pwfex->cbSize );
+	fclose(fp);
+
 }
 
-
-HRESULT LoopbackCapture(const WAVEFORMATEX& wfex, BYTE pBuf[], int iSize);
 
 
 //
@@ -691,7 +699,7 @@ void CAudioSynth::FillPCMAudioBuffer(const WAVEFORMATEX& wfex, BYTE pBuf[], int 
     // Copy cache to output buffers
 	// sin wave?
     //copyCacheToOutputBuffers(wfex, pBuf, iSize);
-	LoopbackCapture(wfex, pBuf, iSize);
+	LoopbackCapture(wfex, pBuf, iSize, NULL);
 }
 
 void CAudioSynth::copyCacheToOutputBuffers(const WAVEFORMATEX& wfex, BYTE pBuf[], int iSize)

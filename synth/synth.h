@@ -228,6 +228,7 @@ public:
                              ALLOCATOR_PROPERTIES *pProperties);
 
     HRESULT GetMediaType(CMediaType *pmt);
+	HRESULT setAsNormal(CMediaType *pmt);
 
     HRESULT CompleteConnect(IPin *pReceivePin);
     HRESULT BreakConnect(void);
