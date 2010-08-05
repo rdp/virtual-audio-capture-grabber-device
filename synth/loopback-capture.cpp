@@ -34,6 +34,8 @@ HRESULT get_default_device(IMMDevice **ppMMDevice) {
 }
 
 
+// size is size of the BYTE buffer...but...I guess...we just have to fill it all the way with data...I guess...
+// sniff...sniff...
 HRESULT LoopbackCapture(const WAVEFORMATEX& wfex, BYTE pBuf[], int iSize, WAVEFORMATEX* ifNotNullThenJustSetTypeOnly)
  {
 
@@ -212,13 +214,13 @@ HRESULT LoopbackCapture(const WAVEFORMATEX& wfex, BYTE pBuf[], int iSize, WAVEFO
 
 
     // loop forever until bDone is set by the keyboard
-    for (UINT32 nPasses = 0; !bDone; nPasses++) {
+    for (UINT32 nBitsWrote = 0; nBitsWrote < iSize; ) {
 
         // TODO sleep until there is data available [?] or can it poll me... [lodo]
         UINT32 nNextPacketSize;
         hr = pAudioCaptureClient->GetNextPacketSize(&nNextPacketSize);
         if (FAILED(hr)) {
-            printf("IAudioCaptureClient::GetNextPacketSize failed on pass %u after %u frames: hr = 0x%08x\n", nPasses, pnFrames, hr);
+            printf("IAudioCaptureClient::GetNextPacketSize failed on pass %u after %u frames: hr = 0x%08x\n", nBitsWrote, pnFrames, hr);
             pAudioClient->Stop();
             AvRevertMmThreadCharacteristics(hTask);
             pAudioCaptureClient->Release();
@@ -228,6 +230,7 @@ HRESULT LoopbackCapture(const WAVEFORMATEX& wfex, BYTE pBuf[], int iSize, WAVEFO
 
         if (0 == nNextPacketSize) {
             // no data yet
+			Sleep(0);// LODO ?
             continue;
         }
 
@@ -235,6 +238,8 @@ HRESULT LoopbackCapture(const WAVEFORMATEX& wfex, BYTE pBuf[], int iSize, WAVEFO
         BYTE *pData;
         UINT32 nNumFramesToRead;
         DWORD dwFlags;
+
+		// I guess it gives us...umm...as much as possible?
 
         hr = pAudioCaptureClient->GetBuffer(
             &pData,
@@ -247,7 +252,7 @@ HRESULT LoopbackCapture(const WAVEFORMATEX& wfex, BYTE pBuf[], int iSize, WAVEFO
         
         
         if (FAILED(hr)) {
-            printf("IAudioCaptureClient::GetBuffer failed on pass %u after %u frames: hr = 0x%08x\n", nPasses, pnFrames, hr);
+            printf("IAudioCaptureClient::GetBuffer failed on pass %u after %u frames: hr = 0x%08x\n", nBitsWrote, pnFrames, hr);
             pAudioClient->Stop();
             AvRevertMmThreadCharacteristics(hTask);
             pAudioCaptureClient->Release();
@@ -258,7 +263,7 @@ HRESULT LoopbackCapture(const WAVEFORMATEX& wfex, BYTE pBuf[], int iSize, WAVEFO
         if (bFirstPacket && AUDCLNT_BUFFERFLAGS_DATA_DISCONTINUITY == dwFlags) {
             printf("Probably spurious glitch reported on first packet\n");
         } else if (0 != dwFlags) {
-            printf("IAudioCaptureClient::GetBuffer set flags to 0x%08x on pass %u after %u frames\n", dwFlags, nPasses, pnFrames);
+            printf("IAudioCaptureClient::GetBuffer set flags to 0x%08x on pass %u after %u frames\n", dwFlags, nBitsWrote, pnFrames);
             pAudioClient->Stop();
             AvRevertMmThreadCharacteristics(hTask);
             pAudioCaptureClient->Release();
@@ -267,7 +272,7 @@ HRESULT LoopbackCapture(const WAVEFORMATEX& wfex, BYTE pBuf[], int iSize, WAVEFO
         }
 
         if (0 == nNumFramesToRead) {
-            printf("IAudioCaptureClient::GetBuffer said to read 0 frames on pass %u after %u frames\n", nPasses, pnFrames);
+            printf("IAudioCaptureClient::GetBuffer said to read 0 frames on pass %u after %u frames\n", nBitsWrote, pnFrames);
             pAudioClient->Stop();
             AvRevertMmThreadCharacteristics(hTask);
             pAudioCaptureClient->Release();
@@ -292,7 +297,7 @@ HRESULT LoopbackCapture(const WAVEFORMATEX& wfex, BYTE pBuf[], int iSize, WAVEFO
         
         hr = pAudioCaptureClient->ReleaseBuffer(nNumFramesToRead);
         if (FAILED(hr)) {
-            printf("IAudioCaptureClient::ReleaseBuffer failed on pass %u after %u frames: hr = 0x%08x\n", nPasses, pnFrames, hr);
+            printf("IAudioCaptureClient::ReleaseBuffer failed on pass %u after %u frames: hr = 0x%08x\n", nBitsWrote, pnFrames, hr);
             pAudioClient->Stop();
             AvRevertMmThreadCharacteristics(hTask);
             pAudioCaptureClient->Release();

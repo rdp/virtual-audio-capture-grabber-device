@@ -459,7 +459,7 @@ HRESULT CSynthStream::DecideBufferSize(IMemAllocator *pAlloc,
 
     if(WAVE_FORMAT_PCM == pwfexCurrent->wFormatTag)
     {
-        pProperties->cbBuffer = WaveBufferSize;
+        pProperties->cbBuffer = WaveBufferSize; // guess 16K is standard for PCM? what?
     }
     else
     {
@@ -471,6 +471,8 @@ HRESULT CSynthStream::DecideBufferSize(IMemAllocator *pAlloc,
     int nSamplesPerSec = pwfexCurrent->nSamplesPerSec;
     int nChannels = pwfexCurrent->nChannels;
 
+	// Get 1 second worth of buffers
+
     pProperties->cBuffers = (nChannels * nSamplesPerSec * nBitsPerSample) / 
                             (pProperties->cbBuffer * BITS_PER_BYTE);
 
@@ -479,7 +481,7 @@ HRESULT CSynthStream::DecideBufferSize(IMemAllocator *pAlloc,
     if(pProperties->cBuffers < 1)
         pProperties->cBuffers = 1 ;
 
-    // Ask the allocator to reserve us the memory
+    // Ask the allocator to reserve us the memory...
 
     ALLOCATOR_PROPERTIES Actual;
     HRESULT hr = pAlloc->SetProperties(pProperties,&Actual);
@@ -696,9 +698,11 @@ void CAudioSynth::FillPCMAudioBuffer(const WAVEFORMATEX& wfex, BYTE pBuf[], int 
         CalcCache(wfex);
     }
 
+	// sin wave (old way)
     // Copy cache to output buffers
-	// sin wave?
     //copyCacheToOutputBuffers(wfex, pBuf, iSize);
+
+	// new way:
 	LoopbackCapture(wfex, pBuf, iSize, NULL);
 }
 
