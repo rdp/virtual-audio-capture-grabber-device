@@ -486,6 +486,9 @@ CFactoryTemplate g_Templates[] =
 
 int g_cTemplates = sizeof(g_Templates) / sizeof(g_Templates[0]);
 
+// straight call to here on init, instead of to
+// AMovieDllRegisterServer2 which is what the other fella does...
+// which I assume is similar to this...maybe?
 STDAPI RegisterFilters( BOOL bRegister )
 {
     HRESULT hr = NOERROR;

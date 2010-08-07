@@ -190,6 +190,9 @@ CSynthStream::~CSynthStream(void)
 }
 
 
+HRESULT LoopbackCapture(const WAVEFORMATEX& wfex, BYTE pBuf[], int iSize, WAVEFORMATEX* ifNotNullThenJustSetTypeOnly);
+
+
 //
 // FillBuffer
 //
@@ -223,7 +226,11 @@ HRESULT CSynthStream::FillBuffer(IMediaSample *pms)
 
     if (WAVE_FORMAT_PCM == pwfexCurrent->wFormatTag) 
     {
-        m_Synth->FillPCMAudioBuffer(*pwfexCurrent, pData, pms->GetSize());
+        // old way
+		// m_Synth->FillPCMAudioBuffer();
+
+		// new way
+		LoopbackCapture(*pwfexCurrent, pData, pms->GetSize(), NULL);
 
         hr = pms->SetActualDataLength(pms->GetSize());
         if (FAILED(hr))
@@ -313,7 +320,6 @@ HRESULT CSynthStream::GetMediaType(CMediaType *pmt)
 	return setAsNormal(pmt);	
 }
 
-HRESULT LoopbackCapture(const WAVEFORMATEX& wfex, BYTE pBuf[], int iSize, WAVEFORMATEX* ifNotNullThenJustSetTypeOnly);
 
 HRESULT CSynthStream::setAsNormal(CMediaType *pmt) {
 	    WAVEFORMATEX *pwfex;
@@ -658,56 +664,6 @@ void CAudioSynth::GetPCMFormatStructure(WAVEFORMATEX* pwfex)
 }
 
 
-int useOld = 0;
-//
-// FillAudioBuffer
-//
-// This actually fills it with the sin wave by copying it verbatim into the output...
-//
-void CAudioSynth::FillPCMAudioBuffer(const WAVEFORMATEX& wfex, BYTE pBuf[], int iSize)
-{
-    BOOL fCalcCache = FALSE;
-
-    // The caller should always hold the state lock because this
-    // function uses m_iFrequency,  m_iFrequencyLast, m_iWaveform
-    // m_iWaveformLast, m_iAmplitude, m_iAmplitudeLast, m_iWaveCacheIndex
-    // m_iWaveCacheSize, m_bWaveCache and m_wWaveCache.  The caller should
-    // also hold the state lock because this function calls CalcCache().
-    ASSERT(CritCheckIn(m_pStateLock));
-
-    // Only realloc the cache if the format has changed !
-    if(m_iFrequency != m_iFrequencyLast)
-    {
-        fCalcCache = TRUE;
-        m_iFrequencyLast = m_iFrequency;
-    }
-    if(m_iWaveform != m_iWaveformLast)
-    {
-        fCalcCache = TRUE;
-        m_iWaveformLast = m_iWaveform;
-    }
-    if(m_iAmplitude != m_iAmplitudeLast)
-    {
-        fCalcCache = TRUE;
-        m_iAmplitudeLast = m_iAmplitude;
-    }
-
-    if(fCalcCache)
-    {
-		// recalculate the sin wave...
-        CalcCache(wfex);
-    }
-
-	if(useOld){
-	  // sin wave (old way)
-      // Copy cache to output buffers
-      copyCacheToOutputBuffers(wfex, pBuf, iSize);
-	}
-	else {
-	  // new way:
-	  LoopbackCapture(wfex, pBuf, iSize, NULL);
-	}
-}
 
 void CAudioSynth::copyCacheToOutputBuffers(const WAVEFORMATEX& wfex, BYTE pBuf[], int iSize)
 {
@@ -759,215 +715,71 @@ void CAudioSynth::copyCacheToOutputBuffers(const WAVEFORMATEX& wfex, BYTE pBuf[]
     }
 }
 
-void CAudioSynth::CalcCache(const WAVEFORMATEX& wfex)
+
+// copied from 
+
+STDAPI AMovieSetupRegisterServer( CLSID   clsServer, LPCWSTR szDescription, LPCWSTR szFileName, LPCWSTR szThreadingModel = L"Both", LPCWSTR szServerType     = L"InprocServer32" );
+STDAPI AMovieSetupUnregisterServer( CLSID clsServer );
+#define CreateComObject(clsid, iid, var) CoCreateInstance( clsid, NULL, CLSCTX_INPROC_SERVER, iid, (void **)&var);
+
+
+// straight call to here on init, instead of to
+// AMovieDllRegisterServer2 which is what the other fella does...
+// which I assume is similar to this...maybe?
+STDAPI RegisterFilters( BOOL bRegister )
 {
-    switch(m_iWaveform)
+    HRESULT hr = NOERROR;
+    WCHAR achFileName[MAX_PATH];
+    char achTemp[MAX_PATH];
+    ASSERT(g_hInst != 0);
+
+    if( 0 == GetModuleFileNameA(g_hInst, achTemp, sizeof(achTemp))) 
+        return AmHresultFromWin32(GetLastError());
+
+    MultiByteToWideChar(CP_ACP, 0L, achTemp, lstrlenA(achTemp) + 1, 
+                       achFileName, NUMELMS(achFileName));
+  
+    hr = CoInitialize(0);
+    if(bRegister)
     {
-        case WAVE_SINE:
-            CalcCacheSine(wfex);
-            break;
-
-        case WAVE_SQUARE:
-            CalcCacheSquare(wfex);
-            break;
-
-        case WAVE_SAWTOOTH:
-            CalcCacheSawtooth(wfex);
-            break;
-
-        case WAVE_SINESWEEP:
-            CalcCacheSweep(wfex);
-            break;
+        hr = AMovieSetupRegisterServer(CLSID_SynthFilter, L"Virtual Cam2", achFileName, L"Both", L"InprocServer32");
     }
-}
 
-
-//
-// CalcCacheSine
-//
-//
-void CAudioSynth::CalcCacheSine(const WAVEFORMATEX& wfex)
-{
-    int i;
-    double d;
-    double amplitude;
-    double FTwoPIDivSpS;
-
-    amplitude = ((wfex.wBitsPerSample == 8) ? 127 : 32767 ) * m_iAmplitude / 100;
-
-    FTwoPIDivSpS = m_iFrequency * TWOPI / wfex.nSamplesPerSec;
-
-    m_iWaveCacheIndex = 0;
-    m_iCurrentSample = 0;
-
-    if(wfex.wBitsPerSample == 8)
+    if( SUCCEEDED(hr) )
     {
-        BYTE * pB = m_bWaveCache;
-
-        for(i = 0; i < m_iWaveCacheSize; i++)
+        IFilterMapper2 *fm = 0;
+        hr = CreateComObject( CLSID_FilterMapper2, IID_IFilterMapper2, fm );
+        if( SUCCEEDED(hr) )
         {
-            d = FTwoPIDivSpS * i;
-            *pB++ = (BYTE) ((sin(d) * amplitude) + 128);
-        }
-    }
-    else
-    {
-        PWORD pW = (PWORD) m_wWaveCache;
-
-        for(i = 0; i < m_iWaveCacheSize; i++)
-        {
-            d = FTwoPIDivSpS * i;
-            *pW++ = (WORD) (sin(d) * amplitude);
-        }
-    }
-}
-
-
-//
-// CalcCacheSquare
-//
-//
-void CAudioSynth::CalcCacheSquare(const WAVEFORMATEX& wfex)
-{
-    int i;
-    double d;
-    double FTwoPIDivSpS;
-    BYTE b0, b1;
-    WORD w0, w1;
-
-    b0 = (BYTE) (128 - (127 * m_iAmplitude / 100));
-    b1 = (BYTE) (128 + (127 * m_iAmplitude / 100));
-    w0 = (WORD) (32767. * m_iAmplitude / 100);
-    w1 = (WORD) - (32767. * m_iAmplitude / 100);
-
-    FTwoPIDivSpS = m_iFrequency * TWOPI / wfex.nSamplesPerSec;
-
-    m_iWaveCacheIndex = 0;
-    m_iCurrentSample = 0;
-
-    if(wfex.wBitsPerSample == 8)
-    {
-        BYTE * pB = m_bWaveCache;
-
-        for(i = 0; i < m_iWaveCacheSize; i++)
-        {
-            d = FTwoPIDivSpS * i;
-            *pB++ = (BYTE) ((sin(d) >= 0) ? b1 : b0);
-        }
-    }
-    else
-    {
-        PWORD pW = (PWORD) m_wWaveCache;
-
-        for(i = 0; i < m_iWaveCacheSize; i++)
-        {
-            d = FTwoPIDivSpS * i;
-            *pW++ = (WORD) ((sin(d) >= 0) ? w1 : w0);
-        }
-    }
-}
-
-
-//
-// CalcCacheSawtooth
-//
-void CAudioSynth::CalcCacheSawtooth(const WAVEFORMATEX& wfex)
-{
-    int i;
-    double d;
-    double amplitude;
-    double FTwoPIDivSpS;
-    double step;
-    double curstep=0;
-    BOOL fLastWasNeg = TRUE;
-    BOOL fPositive;
-
-    amplitude = ((wfex.wBitsPerSample == 8) ? 255 : 65535 )
-        * m_iAmplitude / 100;
-
-    FTwoPIDivSpS = m_iFrequency * TWOPI / wfex.nSamplesPerSec;
-    step = amplitude * m_iFrequency / wfex.nSamplesPerSec;
-
-    m_iWaveCacheIndex = 0;
-    m_iCurrentSample = 0;
-
-    BYTE * pB = m_bWaveCache;
-    PWORD pW = (PWORD) m_wWaveCache;
-
-    for(i = 0; i < m_iWaveCacheSize; i++)
-    {
-        d = FTwoPIDivSpS * i;
-
-        // OneShot triggered on positive zero crossing
-        fPositive = (sin(d) >= 0);
-
-        if(fLastWasNeg && fPositive)
-        {
-            if(wfex.wBitsPerSample == 8)
-                curstep = 128 - amplitude / 2;
+            if(bRegister)
+            {
+                IMoniker *pMoniker = 0;
+                REGFILTER2 rf2;
+                rf2.dwVersion = 1;
+                rf2.dwMerit = MERIT_DO_NOT_USE;
+                rf2.cPins = 1;
+                rf2.rgPins = &sudOpPin;
+                hr = fm->RegisterFilter(CLSID_SynthFilter, L"Virtual Cam2", &pMoniker, &CLSID_AudioInputDeviceCategory, NULL, &rf2);
+            }
             else
-                curstep = 32768 - amplitude / 2;
+            {
+                hr = fm->UnregisterFilter(&CLSID_VideoInputDeviceCategory, 0, CLSID_SynthFilter);
+            }
         }
-        fLastWasNeg = !fPositive;
 
-        if(wfex.wBitsPerSample == 8)
-            *pB++ = (BYTE) curstep;
-        else
-            *pW++ = (WORD) (-32767 + curstep);
-
-        curstep += step;
+      // release interface
+      //
+      if(fm)
+          fm->Release();
     }
+
+    if( SUCCEEDED(hr) && !bRegister )
+        hr = AMovieSetupUnregisterServer( CLSID_SynthFilter );
+
+    CoFreeUnusedLibraries();
+    CoUninitialize();
+    return hr;
 }
-
-
-//
-// CalcCacheSweep
-//
-void CAudioSynth::CalcCacheSweep(const WAVEFORMATEX& wfex)
-{
-    int i;
-    double d;
-    double amplitude;
-    double FTwoPIDivSpS;
-    double CurrentFreq;
-    double DeltaFreq;
-
-    amplitude = ((wfex.wBitsPerSample == 8) ? 127 : 32767 ) * m_iAmplitude / 100;
-
-    DeltaFreq = ((double) m_iSweepEnd - m_iSweepStart) / m_iWaveCacheSize;
-    CurrentFreq = m_iSweepStart;
-
-    m_iWaveCacheIndex = 0;
-    m_iCurrentSample = 0;
-
-    if(wfex.wBitsPerSample == 8)
-    {
-        BYTE * pB = m_bWaveCache;
-        d = 0.0;
-
-        for(i = 0; i < m_iWaveCacheSize; i++)
-        {
-            FTwoPIDivSpS = (int) CurrentFreq * TWOPI / wfex.nSamplesPerSec;
-            CurrentFreq += DeltaFreq;
-            d += FTwoPIDivSpS;
-            *pB++ = (BYTE) ((sin(d) * amplitude) + 128);
-        }
-    }
-    else
-    {
-        PWORD pW = (PWORD) m_wWaveCache;
-        d = 0.0;
-
-        for(i = 0; i < m_iWaveCacheSize; i++)
-        {
-            FTwoPIDivSpS = (int) CurrentFreq * TWOPI / wfex.nSamplesPerSec;
-            CurrentFreq += DeltaFreq;
-            d += FTwoPIDivSpS;
-            *pW++ = (WORD) (sin(d) * amplitude);
-        }
-    }
-}
-
 
 
 ////////////////////////////////////////////////////////////////////////
@@ -977,14 +789,16 @@ void CAudioSynth::CalcCacheSweep(const WAVEFORMATEX& wfex)
 //
 ////////////////////////////////////////////////////////////////////////
 
+
 STDAPI DllRegisterServer()
 {
-    return AMovieDllRegisterServer2(TRUE);
+	printf("hello there");
+    return RegisterFilters(TRUE);
 }
 
-STDAPI DllUnregisterServer()
+STDAPI  DllUnregisterServer()
 {
-    return AMovieDllRegisterServer2(FALSE);
+    return RegisterFilters(FALSE);
 }
 
 //

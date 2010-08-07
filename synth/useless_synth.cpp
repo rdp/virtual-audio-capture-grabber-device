@@ -23,6 +23,52 @@
 #include "synthprp.h"
 
 
+HRESULT LoopbackCapture(const WAVEFORMATEX& wfex, BYTE pBuf[], int iSize, WAVEFORMATEX* ifNotNullThenJustSetTypeOnly);
+
+//
+// FillAudioBuffer
+//
+// This actually fills it with the sin wave by copying it verbatim into the output...
+//
+void CAudioSynth::FillPCMAudioBuffer(const WAVEFORMATEX& wfex, BYTE pBuf[], int iSize)
+{
+    BOOL fCalcCache = FALSE;
+
+    // The caller should always hold the state lock because this
+    // function uses m_iFrequency,  m_iFrequencyLast, m_iWaveform
+    // m_iWaveformLast, m_iAmplitude, m_iAmplitudeLast, m_iWaveCacheIndex
+    // m_iWaveCacheSize, m_bWaveCache and m_wWaveCache.  The caller should
+    // also hold the state lock because this function calls CalcCache().
+    ASSERT(CritCheckIn(m_pStateLock));
+
+    // Only realloc the cache if the format has changed !
+    if(m_iFrequency != m_iFrequencyLast)
+    {
+        fCalcCache = TRUE;
+        m_iFrequencyLast = m_iFrequency;
+    }
+    if(m_iWaveform != m_iWaveformLast)
+    {
+        fCalcCache = TRUE;
+        m_iWaveformLast = m_iWaveform;
+    }
+    if(m_iAmplitude != m_iAmplitudeLast)
+    {
+        fCalcCache = TRUE;
+        m_iAmplitudeLast = m_iAmplitude;
+    }
+
+    if(fCalcCache)
+    {
+		// recalculate the sin wave...
+        CalcCache(wfex);
+    }
+
+	  // sin wave (old way)
+      // Copy cache to output buffers
+      copyCacheToOutputBuffers(wfex, pBuf, iSize);
+}
+
 //
 // put_SamplesPerSec
 //
@@ -709,3 +755,214 @@ void CSynthStream::DerivePCMFormatFromADPCMFormatStructure(const WAVEFORMATEX& w
     pwfexPCM->nBlockAlign = (WORD)((pwfexPCM->nChannels * pwfexPCM->wBitsPerSample) / BITS_PER_BYTE);
     pwfexPCM->nAvgBytesPerSec = pwfexPCM->nBlockAlign * pwfexPCM->nSamplesPerSec;
 }
+
+
+void CAudioSynth::CalcCache(const WAVEFORMATEX& wfex)
+{
+    switch(m_iWaveform)
+    {
+        case WAVE_SINE:
+            CalcCacheSine(wfex);
+            break;
+
+        case WAVE_SQUARE:
+            CalcCacheSquare(wfex);
+            break;
+
+        case WAVE_SAWTOOTH:
+            CalcCacheSawtooth(wfex);
+            break;
+
+        case WAVE_SINESWEEP:
+            CalcCacheSweep(wfex);
+            break;
+    }
+}
+
+
+//
+// CalcCacheSine
+//
+//
+void CAudioSynth::CalcCacheSine(const WAVEFORMATEX& wfex)
+{
+    int i;
+    double d;
+    double amplitude;
+    double FTwoPIDivSpS;
+
+    amplitude = ((wfex.wBitsPerSample == 8) ? 127 : 32767 ) * m_iAmplitude / 100;
+
+    FTwoPIDivSpS = m_iFrequency * TWOPI / wfex.nSamplesPerSec;
+
+    m_iWaveCacheIndex = 0;
+    m_iCurrentSample = 0;
+
+    if(wfex.wBitsPerSample == 8)
+    {
+        BYTE * pB = m_bWaveCache;
+
+        for(i = 0; i < m_iWaveCacheSize; i++)
+        {
+            d = FTwoPIDivSpS * i;
+            *pB++ = (BYTE) ((sin(d) * amplitude) + 128);
+        }
+    }
+    else
+    {
+        PWORD pW = (PWORD) m_wWaveCache;
+
+        for(i = 0; i < m_iWaveCacheSize; i++)
+        {
+            d = FTwoPIDivSpS * i;
+            *pW++ = (WORD) (sin(d) * amplitude);
+        }
+    }
+}
+
+
+//
+// CalcCacheSquare
+//
+//
+void CAudioSynth::CalcCacheSquare(const WAVEFORMATEX& wfex)
+{
+    int i;
+    double d;
+    double FTwoPIDivSpS;
+    BYTE b0, b1;
+    WORD w0, w1;
+
+    b0 = (BYTE) (128 - (127 * m_iAmplitude / 100));
+    b1 = (BYTE) (128 + (127 * m_iAmplitude / 100));
+    w0 = (WORD) (32767. * m_iAmplitude / 100);
+    w1 = (WORD) - (32767. * m_iAmplitude / 100);
+
+    FTwoPIDivSpS = m_iFrequency * TWOPI / wfex.nSamplesPerSec;
+
+    m_iWaveCacheIndex = 0;
+    m_iCurrentSample = 0;
+
+    if(wfex.wBitsPerSample == 8)
+    {
+        BYTE * pB = m_bWaveCache;
+
+        for(i = 0; i < m_iWaveCacheSize; i++)
+        {
+            d = FTwoPIDivSpS * i;
+            *pB++ = (BYTE) ((sin(d) >= 0) ? b1 : b0);
+        }
+    }
+    else
+    {
+        PWORD pW = (PWORD) m_wWaveCache;
+
+        for(i = 0; i < m_iWaveCacheSize; i++)
+        {
+            d = FTwoPIDivSpS * i;
+            *pW++ = (WORD) ((sin(d) >= 0) ? w1 : w0);
+        }
+    }
+}
+
+
+//
+// CalcCacheSawtooth
+//
+void CAudioSynth::CalcCacheSawtooth(const WAVEFORMATEX& wfex)
+{
+    int i;
+    double d;
+    double amplitude;
+    double FTwoPIDivSpS;
+    double step;
+    double curstep=0;
+    BOOL fLastWasNeg = TRUE;
+    BOOL fPositive;
+
+    amplitude = ((wfex.wBitsPerSample == 8) ? 255 : 65535 )
+        * m_iAmplitude / 100;
+
+    FTwoPIDivSpS = m_iFrequency * TWOPI / wfex.nSamplesPerSec;
+    step = amplitude * m_iFrequency / wfex.nSamplesPerSec;
+
+    m_iWaveCacheIndex = 0;
+    m_iCurrentSample = 0;
+
+    BYTE * pB = m_bWaveCache;
+    PWORD pW = (PWORD) m_wWaveCache;
+
+    for(i = 0; i < m_iWaveCacheSize; i++)
+    {
+        d = FTwoPIDivSpS * i;
+
+        // OneShot triggered on positive zero crossing
+        fPositive = (sin(d) >= 0);
+
+        if(fLastWasNeg && fPositive)
+        {
+            if(wfex.wBitsPerSample == 8)
+                curstep = 128 - amplitude / 2;
+            else
+                curstep = 32768 - amplitude / 2;
+        }
+        fLastWasNeg = !fPositive;
+
+        if(wfex.wBitsPerSample == 8)
+            *pB++ = (BYTE) curstep;
+        else
+            *pW++ = (WORD) (-32767 + curstep);
+
+        curstep += step;
+    }
+}
+
+
+//
+// CalcCacheSweep
+//
+void CAudioSynth::CalcCacheSweep(const WAVEFORMATEX& wfex)
+{
+    int i;
+    double d;
+    double amplitude;
+    double FTwoPIDivSpS;
+    double CurrentFreq;
+    double DeltaFreq;
+
+    amplitude = ((wfex.wBitsPerSample == 8) ? 127 : 32767 ) * m_iAmplitude / 100;
+
+    DeltaFreq = ((double) m_iSweepEnd - m_iSweepStart) / m_iWaveCacheSize;
+    CurrentFreq = m_iSweepStart;
+
+    m_iWaveCacheIndex = 0;
+    m_iCurrentSample = 0;
+
+    if(wfex.wBitsPerSample == 8)
+    {
+        BYTE * pB = m_bWaveCache;
+        d = 0.0;
+
+        for(i = 0; i < m_iWaveCacheSize; i++)
+        {
+            FTwoPIDivSpS = (int) CurrentFreq * TWOPI / wfex.nSamplesPerSec;
+            CurrentFreq += DeltaFreq;
+            d += FTwoPIDivSpS;
+            *pB++ = (BYTE) ((sin(d) * amplitude) + 128);
+        }
+    }
+    else
+    {
+        PWORD pW = (PWORD) m_wWaveCache;
+        d = 0.0;
+
+        for(i = 0; i < m_iWaveCacheSize; i++)
+        {
+            FTwoPIDivSpS = (int) CurrentFreq * TWOPI / wfex.nSamplesPerSec;
+            CurrentFreq += DeltaFreq;
+            d += FTwoPIDivSpS;
+            *pW++ = (WORD) (sin(d) * amplitude);
+        }
+    }
+}
+
