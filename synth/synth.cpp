@@ -742,7 +742,7 @@ STDAPI RegisterFilters( BOOL bRegister )
     hr = CoInitialize(0);
     if(bRegister)
     {
-        hr = AMovieSetupRegisterServer(CLSID_SynthFilter, L"Virtual Cam2", achFileName, L"Both", L"InprocServer32");
+        hr = AMovieSetupRegisterServer(CLSID_SynthFilter, L"Audio Synthesizer", achFileName, L"Both", L"InprocServer32");
     }
 
     if( SUCCEEDED(hr) )
@@ -759,11 +759,11 @@ STDAPI RegisterFilters( BOOL bRegister )
                 rf2.dwMerit = MERIT_DO_NOT_USE;
                 rf2.cPins = 1;
                 rf2.rgPins = &sudOpPin;
-                hr = fm->RegisterFilter(CLSID_SynthFilter, L"Virtual Cam2", &pMoniker, &CLSID_AudioInputDeviceCategory, NULL, &rf2);
+                hr = fm->RegisterFilter(CLSID_SynthFilter, L"Audio Synthesizer", &pMoniker, &CLSID_AudioInputDeviceCategory, NULL, &rf2);
             }
             else
             {
-                hr = fm->UnregisterFilter(&CLSID_VideoInputDeviceCategory, 0, CLSID_SynthFilter);
+                hr = fm->UnregisterFilter(&CLSID_AudioInputDeviceCategory, 0, CLSID_SynthFilter);
             }
         }
 
@@ -792,7 +792,7 @@ STDAPI RegisterFilters( BOOL bRegister )
 
 STDAPI DllRegisterServer()
 {
-	printf("hello there");
+	//printf("hello there");
     return RegisterFilters(TRUE);
 }
 
