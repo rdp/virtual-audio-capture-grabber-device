@@ -87,7 +87,7 @@ public:
     
 private:
     CVCam *m_pParent;
-    REFERENCE_TIME m_rtLastTime;
+    // unused now? REFERENCE_TIME m_rtLastTime;
     HBITMAP m_hLogoBmp;
     CCritSec m_cSharedState;
     IReferenceClock *m_pClock;
@@ -121,7 +121,7 @@ CVCam::CVCam(LPUNKNOWN lpunk, HRESULT *phr) :
     CSource(NAME("Virtual Cam3"), lpunk, CLSID_VirtualCam)
 {
     ASSERT(phr);
-    CAutoLock cAutoLock(&m_cStateLock);
+    //CAutoLock cAutoLock(&m_cStateLock);
     // Create the one and only output pin
     m_paStreams = (CSourceStream **) new CVCamStream*[1];
     m_paStreams[0] = new CVCamStream(phr, this, L"Virtual Cam3");
@@ -145,14 +145,15 @@ CVCamStream::CVCamStream(HRESULT *phr, CVCam *pParent, LPCWSTR pPinName) :
 {
 
     // Set the media type...
-    GetMediaType(0, &m_mt);
     m_fFirstSampleDelivered = FALSE;
     m_llSampleMediaTimeStart = 0;
+    GetMediaType(0, &m_mt);
 
 }
 
 CVCamStream::~CVCamStream()
 {
+	// hmm...
 } 
 
 HRESULT CVCamStream::QueryInterface(REFIID riid, void **ppv)
@@ -217,8 +218,16 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
 		// m_Synth->FillPCMAudioBuffer();
 
 		// new way
-		LoopbackCapture(pData, pms->GetSize(), NULL);
+		// using rand here doesn't help...
+		bool use_loopback = true;
 
+		if(use_loopback){
+		//LoopbackCapture(pData, pms->GetSize(), NULL);
+		} else {
+		  for(int i = 0; i < pms->GetSize(); i++) {
+			  pData[i] = rand() % 256;
+		  }
+		}
         hr = pms->SetActualDataLength(pms->GetSize());
         if (FAILED(hr))
             return hr;
@@ -253,8 +262,8 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
         return hr;
     }
    
-    //hr = pms->SetDiscontinuity(!m_fFirstSampleDelivered);	
-	hr = pms->SetDiscontinuity(TRUE);	
+    hr = pms->SetDiscontinuity(!m_fFirstSampleDelivered);
+	//hr = pms->SetDiscontinuity(TRUE);	
     if (FAILED(hr)) {
         return hr;
     }
@@ -431,7 +440,9 @@ HRESULT CVCamStream::DecideBufferSize(IMemAllocator *pAlloc,
 // Called when graph is run
 HRESULT CVCamStream::OnThreadCreate()
 {
-    m_rtLastTime = 0;
+    m_fFirstSampleDelivered = FALSE;
+    m_llSampleMediaTimeStart = 0;
+    GetMediaType(0, &m_mt);
     return NOERROR;
 } // OnThreadCreate
 
