@@ -13,6 +13,7 @@
 #include <streams.h>
 #include <initguid.h>
 #include <dllsetup.h>
+#include <malloc.h> // _alloca
 
 #pragma once
 
@@ -404,64 +405,28 @@ HRESULT STDMETHODCALLTYPE CVCamStream::GetNumberOfCapabilities(int *piCount, int
 
 HRESULT STDMETHODCALLTYPE CVCamStream::GetStreamCaps(int iIndex, AM_MEDIA_TYPE **pmt, BYTE *pSCC)
 {
+
     *pmt = CreateMediaType(&m_mt);
-    DECLARE_PTR(VIDEOINFOHEADER, pvi, (*pmt)->pbFormat);
+    DECLARE_PTR(AUDIO_STREAM_CONFIG_CAPS, pvi, (*pmt)->pbFormat);
+	
+    WAVEFORMATEX* pwfex = (WAVEFORMATEX *) _alloca(sizeof(WAVEFORMATEX));
 
-    if (iIndex == 0) iIndex = 4;
+	WAVEFORMATEX unused;
+	LoopbackCapture(unused, NULL, -1, pwfex);
 
-    pvi->bmiHeader.biCompression = BI_RGB;
-    pvi->bmiHeader.biBitCount    = 24;
-    pvi->bmiHeader.biSize       = sizeof(BITMAPINFOHEADER);
-    pvi->bmiHeader.biWidth      = 80 * iIndex;
-    pvi->bmiHeader.biHeight     = 60 * iIndex;
-    pvi->bmiHeader.biPlanes     = 1;
-    pvi->bmiHeader.biSizeImage  = GetBitmapSize(&pvi->bmiHeader);
-    pvi->bmiHeader.biClrImportant = 0;
+	pvi->BitsPerSampleGranularity = 8; // huh?
+	pvi->ChannelsGranularity = 1;
+	pvi->guid = MEDIATYPE_Audio; // theoretically they set this for us
+	pvi->MaximumBitsPerSample = pwfex->wBitsPerSample;
+	pvi->MaximumChannels = pwfex->nChannels;
+	pvi->MaximumSampleFrequency = pwfex->nSamplesPerSec;
+	pvi->MinimumBitsPerSample = pwfex->wBitsPerSample;
+	pvi->MinimumChannels= pwfex->nChannels;
+	pvi->MinimumSampleFrequency = pwfex->nSamplesPerSec;
+	pvi->SampleFrequencyGranularity = 11025; // from http://msdn.microsoft.com/en-us/library/dd317597(VS.85).aspx
 
-    SetRectEmpty(&(pvi->rcSource)); // we want the whole image area rendered.
-    SetRectEmpty(&(pvi->rcTarget)); // no particular destination rectangle
-
-    (*pmt)->majortype = MEDIATYPE_Video;
-    (*pmt)->subtype = MEDIASUBTYPE_RGB24;
-    (*pmt)->formattype = FORMAT_VideoInfo;
-    (*pmt)->bTemporalCompression = FALSE;
-    (*pmt)->bFixedSizeSamples= FALSE;
-    (*pmt)->lSampleSize = pvi->bmiHeader.biSizeImage;
-    (*pmt)->cbFormat = sizeof(VIDEOINFOHEADER);
-    
-    DECLARE_PTR(VIDEO_STREAM_CONFIG_CAPS, pvscc, pSCC);
-    
-    pvscc->guid = FORMAT_VideoInfo;
-    pvscc->VideoStandard = AnalogVideo_None;
-    pvscc->InputSize.cx = 640;
-    pvscc->InputSize.cy = 480;
-    pvscc->MinCroppingSize.cx = 80;
-    pvscc->MinCroppingSize.cy = 60;
-    pvscc->MaxCroppingSize.cx = 640;
-    pvscc->MaxCroppingSize.cy = 480;
-    pvscc->CropGranularityX = 80;
-    pvscc->CropGranularityY = 60;
-    pvscc->CropAlignX = 0;
-    pvscc->CropAlignY = 0;
-
-    pvscc->MinOutputSize.cx = 80;
-    pvscc->MinOutputSize.cy = 60;
-    pvscc->MaxOutputSize.cx = 640;
-    pvscc->MaxOutputSize.cy = 480;
-    pvscc->OutputGranularityX = 0;
-    pvscc->OutputGranularityY = 0;
-    pvscc->StretchTapsX = 0;
-    pvscc->StretchTapsY = 0;
-    pvscc->ShrinkTapsX = 0;
-    pvscc->ShrinkTapsY = 0;
-    pvscc->MinFrameInterval = 200000;   //50 fps
-    pvscc->MaxFrameInterval = 50000000; // 0.2 fps
-    pvscc->MinBitsPerSecond = (80 * 60 * 3 * 8) / 5;
-    pvscc->MaxBitsPerSecond = 640 * 480 * 3 * 8 * 50;
-
-    return S_OK;
+	return S_OK;
 }
-
 //////////////////////////////////////////////////////////////////////////
 // IKsPropertySet
 //////////////////////////////////////////////////////////////////////////

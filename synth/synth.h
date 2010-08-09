@@ -238,9 +238,6 @@ public:
     // resets the stream time to zero.
     HRESULT Active(void);
 
-	// how it was missing this, I know now
-	HRESULT STDMETHODCALLTYPE GetStreamCaps(int iIndex, AM_MEDIA_TYPE **pmt, BYTE *pSCC);
-
 private:
 
     void DerivePCMFormatFromADPCMFormatStructure(const WAVEFORMATEX& wfexADPCM, WAVEFORMATEX* pwfexPCM);

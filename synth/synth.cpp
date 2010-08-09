@@ -7,6 +7,10 @@
 // Copyright (c) Microsoft Corporation.  All rights reserved.
 //------------------------------------------------------------------------------
 
+
+// NB I don't know if directsource *can* actually work with VLC
+// I doub it
+//I.e. this particular sub-project fella prolly can't work as a VLC source
 #include <windows.h>
 #include <streams.h>
 #include <malloc.h>
@@ -323,47 +327,6 @@ HRESULT CSynthStream::GetMediaType(CMediaType *pmt)
 
 #define DECLARE_PTR(type, ptr, expr) type* ptr = (type*)(expr);
 
-/** Note well: I don't think this is actually useful here
-  or made available to us to override...maybe?
-**/
-HRESULT STDMETHODCALLTYPE CSynthStream::GetStreamCaps(int iIndex, AM_MEDIA_TYPE **pmt, BYTE *pSCC)
-{
-
-    *pmt = CreateMediaType(&m_mt);
-    DECLARE_PTR(AUDIO_STREAM_CONFIG_CAPS, pvi, (*pmt)->pbFormat);
-	
-    WAVEFORMATEX* pwfex = (WAVEFORMATEX *) _alloca(sizeof(WAVEFORMATEX));
-
-	WAVEFORMATEX unused;
-	LoopbackCapture(unused, NULL, -1, pwfex);
-
-	/*
-	typedef struct AUDIO_STREAM_CONFIG_CAPS {
-    GUID guid;
-    ULONG MinimumChannels;
-    ULONG MaximumChannels;
-    ULONG ChannelsGranularity;
-    ULONG MinimumBitsPerSample;
-    ULONG MaximumBitsPerSample;
-    ULONG BitsPerSampleGranularity;
-    ULONG MinimumSampleFrequency;
-    ULONG MaximumSampleFrequency;
-    ULONG SampleFrequencyGranularity;
-} AUDIO_STREAM_CONFIG_CAPS;
-*/
-	pvi->BitsPerSampleGranularity = 8; // huh?
-	pvi->ChannelsGranularity = 1;
-	pvi->guid = MEDIATYPE_Audio; // theoretically they set this for us
-	pvi->MaximumBitsPerSample = pwfex->wBitsPerSample;
-	pvi->MaximumChannels = pwfex->nChannels;
-	pvi->MaximumSampleFrequency = pwfex->nSamplesPerSec;
-	pvi->MinimumBitsPerSample = pwfex->wBitsPerSample;
-	pvi->MinimumChannels= pwfex->nChannels;
-	pvi->MinimumSampleFrequency = pwfex->nSamplesPerSec;
-	pvi->SampleFrequencyGranularity = 11025; // from http://msdn.microsoft.com/en-us/library/dd317597(VS.85).aspx
-
-	return S_OK;
-}
 
 HRESULT CSynthStream::setAsNormal(CMediaType *pmt) {
 	    WAVEFORMATEX *pwfex;
