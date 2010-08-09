@@ -107,13 +107,13 @@ CUnknown * WINAPI CVCam::CreateInstance(LPUNKNOWN lpunk, HRESULT *phr)
 }
 
 CVCam::CVCam(LPUNKNOWN lpunk, HRESULT *phr) : 
-    CSource(NAME("Virtual Cam"), lpunk, CLSID_VirtualCam)
+    CSource(NAME("Virtual Cam3"), lpunk, CLSID_VirtualCam)
 {
     ASSERT(phr);
     CAutoLock cAutoLock(&m_cStateLock);
     // Create the one and only output pin
     m_paStreams = (CSourceStream **) new CVCamStream*[1];
-    m_paStreams[0] = new CVCamStream(phr, this, L"Virtual Cam");
+    m_paStreams[0] = new CVCamStream(phr, this, L"Virtual Cam3");
 }
 
 HRESULT CVCam::QueryInterface(REFIID riid, void **ppv)
@@ -130,7 +130,7 @@ HRESULT CVCam::QueryInterface(REFIID riid, void **ppv)
 // all the stuff.
 //////////////////////////////////////////////////////////////////////////
 CVCamStream::CVCamStream(HRESULT *phr, CVCam *pParent, LPCWSTR pPinName) :
-    CSourceStream(NAME("Virtual Cam"),phr, pParent, pPinName), m_pParent(pParent)
+    CSourceStream(NAME("Virtual Cam3"),phr, pParent, pPinName), m_pParent(pParent)
 {
     // Set the default media type as 320x240x24@15
     GetMediaType(4, &m_mt);
@@ -445,10 +445,8 @@ DEFINE_GUID(CLSID_VirtualCam,
 
 
 const AMOVIESETUP_MEDIATYPE AMSMediaTypesVCam = 
-{ 
-    &MEDIATYPE_Video, 
-    &MEDIASUBTYPE_NULL 
-};
+{ &MEDIATYPE_Audio      // clsMajorType
+, &MEDIASUBTYPE_NULL }; // clsMinorType
 
 const AMOVIESETUP_PIN AMSPinVCam=
 {
@@ -466,7 +464,7 @@ const AMOVIESETUP_PIN AMSPinVCam=
 const AMOVIESETUP_FILTER AMSFilterVCam =
 {
     &CLSID_VirtualCam,  // Filter CLSID
-    L"Virtual Cam",     // String name
+    L"Virtual Cam3",     // String name
     MERIT_DO_NOT_USE,      // Filter merit
     1,                     // Number pins
     &AMSPinVCam             // Pin details
@@ -475,7 +473,7 @@ const AMOVIESETUP_FILTER AMSFilterVCam =
 CFactoryTemplate g_Templates[] = 
 {
     {
-        L"Virtual Cam",
+        L"Virtual Cam3",
         &CLSID_VirtualCam,
         CVCam::CreateInstance,
         NULL,
@@ -505,7 +503,7 @@ STDAPI RegisterFilters( BOOL bRegister )
     hr = CoInitialize(0);
     if(bRegister)
     {
-        hr = AMovieSetupRegisterServer(CLSID_VirtualCam, L"Virtual Cam", achFileName, L"Both", L"InprocServer32");
+        hr = AMovieSetupRegisterServer(CLSID_VirtualCam, L"Virtual Cam3", achFileName, L"Both", L"InprocServer32");
     }
 
     if( SUCCEEDED(hr) )
@@ -522,7 +520,7 @@ STDAPI RegisterFilters( BOOL bRegister )
                 rf2.dwMerit = MERIT_DO_NOT_USE;
                 rf2.cPins = 1;
                 rf2.rgPins = &AMSPinVCam;
-                hr = fm->RegisterFilter(CLSID_VirtualCam, L"Virtual Cam", &pMoniker, &CLSID_VideoInputDeviceCategory, NULL, &rf2);
+                hr = fm->RegisterFilter(CLSID_VirtualCam, L"Virtual Cam3", &pMoniker, &CLSID_VideoInputDeviceCategory, NULL, &rf2);
             }
             else
             {
@@ -558,7 +556,7 @@ STDAPI RegisterFilters( BOOL bRegister );
 
 STDAPI DllRegisterServer()
 {
-	printf("hello there");
+	printf("hello there"); // we never see this...
     return RegisterFilters(TRUE);
 }
 
