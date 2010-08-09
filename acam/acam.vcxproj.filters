@@ -32,13 +32,13 @@
     <ClCompile Include="stdafx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="loopback-capture.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="loopback-capture-helpers.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vcam_main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

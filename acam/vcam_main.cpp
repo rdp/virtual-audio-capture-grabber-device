@@ -358,6 +358,11 @@ HRESULT CVCamStream::CheckMediaType(const CMediaType *pMediaType)
     return S_OK;
 } // CheckMediaType
 
+
+const int WaveBufferSize = 16*1024;     // Size of each allocated buffer
+// seems arbitrary
+// maybe downstream needed it?
+
 //
 // DecideBufferSize
 //

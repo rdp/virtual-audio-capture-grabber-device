@@ -88,7 +88,7 @@
   <ItemGroup>
     <ClCompile Include="loopback-capture-helpers.cpp" />
     <ClCompile Include="loopback-capture.cpp" />
-    <ClCompile Include="main.cpp">
+    <ClCompile Include="vcam_main.cpp">
       <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</CompileAsManaged>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
       </PrecompiledHeader>
