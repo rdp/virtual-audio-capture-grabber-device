@@ -48,6 +48,7 @@ HRESULT LoopbackCapture(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNotNullThenJustS
 
     // get the default device format (incoming...)
     WAVEFORMATEX *pwfx; // incoming wave...
+	// apparently propogated only by GetMixFormat...
     hr = pAudioClient->GetMixFormat(&pwfx);
     if (FAILED(hr)) {
         printf("IAudioClient::GetMixFormat failed: hr = 0x%08x\n", hr);
@@ -79,6 +80,11 @@ HRESULT LoopbackCapture(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNotNullThenJustS
                         pwfx->wBitsPerSample = 16;
                         pwfx->nBlockAlign = pwfx->nChannels * pwfx->wBitsPerSample / 8;
                         pwfx->nAvgBytesPerSec = pwfx->nBlockAlign * pwfx->nSamplesPerSec;
+						if(ifNotNullThenJustSetTypeOnly) {
+							PWAVEFORMATEXTENSIBLE pEx2 = reinterpret_cast<PWAVEFORMATEXTENSIBLE>(ifNotNullThenJustSetTypeOnly);
+							pEx2->SubFormat = pEx->SubFormat;
+							pEx2->Samples.wValidBitsPerSample = pEx->Samples.wValidBitsPerSample;
+						}
                     } else {
                         printf("Don't know how to coerce mix format to int-16\n");
                         CoTaskMemFree(pwfx);
@@ -102,7 +108,7 @@ HRESULT LoopbackCapture(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNotNullThenJustS
 		// copy them all out as the possible format...hmm...
 
 
-		                pwfx->wFormatTag = WAVE_FORMAT_PCM;
+                pwfx->wFormatTag = WAVE_FORMAT_PCM;
                 pwfx->wBitsPerSample = 16;
                 pwfx->nBlockAlign = pwfx->nChannels * pwfx->wBitsPerSample / 8;
                 pwfx->nAvgBytesPerSec = pwfx->nBlockAlign * pwfx->nSamplesPerSec;
@@ -121,7 +127,9 @@ HRESULT LoopbackCapture(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNotNullThenJustS
 		//fclose(fp);
 		// cleanup
 		// I might be leaking here...
-    m_pMMDevice->Release();
+		CoTaskMemFree(pwfx);
+        pAudioClient->Release();
+        //m_pMMDevice->Release();
 		return hr;
 	}
 

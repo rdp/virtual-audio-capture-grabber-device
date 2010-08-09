@@ -113,18 +113,20 @@ private:
 CUnknown * WINAPI CVCam::CreateInstance(LPUNKNOWN lpunk, HRESULT *phr)
 {
     ASSERT(phr);
+	//_crtDbgFlag = 5; // enable heap checking [slow]
     CUnknown *punk = new CVCam(lpunk, phr);
-    return punk;
+
+	return punk;
 }
 
 CVCam::CVCam(LPUNKNOWN lpunk, HRESULT *phr) : 
-    CSource(NAME("Virtual Cam3"), lpunk, CLSID_VirtualCam)
+    CSource(NAME("Virtual Cam4"), lpunk, CLSID_VirtualCam)
 {
     ASSERT(phr);
     //CAutoLock cAutoLock(&m_cStateLock);
     // Create the one and only output pin
     m_paStreams = (CSourceStream **) new CVCamStream*[1];
-    m_paStreams[0] = new CVCamStream(phr, this, L"Virtual Cam3");
+    m_paStreams[0] = new CVCamStream(phr, this, L"Virtual Cam4");
 }
 
 HRESULT CVCam::QueryInterface(REFIID riid, void **ppv)
@@ -141,7 +143,7 @@ HRESULT CVCam::QueryInterface(REFIID riid, void **ppv)
 // all the stuff.
 //////////////////////////////////////////////////////////////////////////
 CVCamStream::CVCamStream(HRESULT *phr, CVCam *pParent, LPCWSTR pPinName) :
-    CSourceStream(NAME("Virtual Cam3"),phr, pParent, pPinName), m_pParent(pParent)
+    CSourceStream(NAME("Virtual Cam4"),phr, pParent, pPinName), m_pParent(pParent)
 {
 
     // Set the media type...
@@ -222,7 +224,7 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
 		bool use_loopback = true;
 
 		if(use_loopback){
-		//LoopbackCapture(pData, pms->GetSize(), NULL);
+		  LoopbackCapture(pData, pms->GetSize(), NULL);
 		} else {
 		  for(int i = 0; i < pms->GetSize(); i++) {
 			  pData[i] = rand() % 256;
@@ -263,7 +265,6 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
     }
    
     hr = pms->SetDiscontinuity(!m_fFirstSampleDelivered);
-	//hr = pms->SetDiscontinuity(TRUE);	
     if (FAILED(hr)) {
         return hr;
     }
@@ -480,19 +481,34 @@ HRESULT STDMETHODCALLTYPE CVCamStream::GetNumberOfCapabilities(int *piCount, int
     return S_OK;
 }
 
-HRESULT STDMETHODCALLTYPE CVCamStream::GetStreamCaps(int iIndex, AM_MEDIA_TYPE **pmt, BYTE *pSCC)
+HRESULT STDMETHODCALLTYPE CVCamStream::GetStreamCaps(int iIndex, AM_MEDIA_TYPE **ppMediaType, BYTE *pSCC)
 {
 	if(iIndex != 0)
 		return E_FAIL; // huh?
 
-    *pmt = CreateMediaType(&m_mt);
-    DECLARE_PTR(AUDIO_STREAM_CONFIG_CAPS, pvi, (*pmt)->pbFormat);
+    *ppMediaType = CreateMediaType(&m_mt);
+
+
 	
-    WAVEFORMATEX* pwfex = (WAVEFORMATEX *) _alloca(sizeof(WAVEFORMATEX));
+    DECLARE_PTR(AUDIO_STREAM_CONFIG_CAPS, pvi, (*ppMediaType)->pbFormat);
+	
+    WAVEFORMATEX* pwfex = (WAVEFORMATEX *) _alloca(sizeof(PWAVEFORMATEXTENSIBLE)); // sizeof(WAVEFORMATEX)
 
 	LoopbackCapture(NULL, -1, pwfex);
 
-	pvi->BitsPerSampleGranularity = 8; // huh?
+	(*ppMediaType)->majortype = MEDIATYPE_Audio;
+
+(*ppMediaType)->subtype = MEDIASUBTYPE_PCM;
+
+(*ppMediaType)->formattype = FORMAT_WaveFormatEx; // this is right...
+
+(*ppMediaType)->bTemporalCompression = FALSE;
+
+(*ppMediaType)->bFixedSizeSamples = TRUE; // *** Shouldn't this be TRUE? The video one wasn't though...
+
+(*ppMediaType)->cbFormat = sizeof(PWAVEFORMATEXTENSIBLE);
+
+	pvi->BitsPerSampleGranularity = 16; // huh?
 	pvi->ChannelsGranularity = 1;
 	pvi->guid = MEDIATYPE_Audio; // theoretically they set this for us
 	pvi->MaximumBitsPerSample = pwfex->wBitsPerSample;
@@ -502,6 +518,22 @@ HRESULT STDMETHODCALLTYPE CVCamStream::GetStreamCaps(int iIndex, AM_MEDIA_TYPE *
 	pvi->MinimumChannels= pwfex->nChannels;
 	pvi->MinimumSampleFrequency = pwfex->nSamplesPerSec;
 	pvi->SampleFrequencyGranularity = 11025; // from http://msdn.microsoft.com/en-us/library/dd317597(VS.85).aspx
+
+
+
+
+    int nBitsPerSample = pwfex->wBitsPerSample;
+    int nSamplesPerSec = pwfex->nSamplesPerSec;
+    int nChannels = pwfex->nChannels;
+
+	// Get 1 second worth of buffers
+
+    int cBuffers = (nChannels * nSamplesPerSec * nBitsPerSample) / 
+                            (WaveBufferSize * BITS_PER_BYTE);
+
+    // Get 1/2 second worth of buffers
+    (*ppMediaType)->lSampleSize = cBuffers / 2;// LODO dry up
+
 
 	return S_OK;
 }
@@ -574,10 +606,10 @@ STDAPI AMovieSetupRegisterServer( CLSID   clsServer, LPCWSTR szDescription, LPCW
 STDAPI AMovieSetupUnregisterServer( CLSID clsServer );
 
 
-
 // {8E14549A-DB61-4309-AFA1-3578E927E933}
+// {8E14549B-DB61-4309-AFA1-3578E927E933} now...
 DEFINE_GUID(CLSID_VirtualCam,
-            0x8e14549a, 0xdb61, 0x4309, 0xaf, 0xa1, 0x35, 0x78, 0xe9, 0x27, 0xe9, 0x33);
+            0x8e14549b, 0xdb61, 0x4309, 0xaf, 0xa1, 0x35, 0x78, 0xe9, 0x27, 0xe9, 0x33);
 
 
 const AMOVIESETUP_MEDIATYPE AMSMediaTypesVCam = 
@@ -600,7 +632,7 @@ const AMOVIESETUP_PIN AMSPinVCam=
 const AMOVIESETUP_FILTER AMSFilterVCam =
 {
     &CLSID_VirtualCam,  // Filter CLSID
-    L"Virtual Cam3",     // String name
+    L"Virtual Cam4",     // String name
     MERIT_DO_NOT_USE,      // Filter merit
     1,                     // Number pins
     &AMSPinVCam             // Pin details
@@ -609,7 +641,7 @@ const AMOVIESETUP_FILTER AMSFilterVCam =
 CFactoryTemplate g_Templates[] = 
 {
     {
-        L"Virtual Cam3",
+        L"Virtual Cam4",
         &CLSID_VirtualCam,
         CVCam::CreateInstance,
         NULL,
@@ -639,7 +671,7 @@ STDAPI RegisterFilters( BOOL bRegister )
     hr = CoInitialize(0);
     if(bRegister)
     {
-        hr = AMovieSetupRegisterServer(CLSID_VirtualCam, L"Virtual Cam3", achFileName, L"Both", L"InprocServer32");
+        hr = AMovieSetupRegisterServer(CLSID_VirtualCam, L"Virtual Cam4", achFileName, L"Both", L"InprocServer32");
     }
 
     if( SUCCEEDED(hr) )
@@ -656,7 +688,7 @@ STDAPI RegisterFilters( BOOL bRegister )
                 rf2.dwMerit = MERIT_DO_NOT_USE;
                 rf2.cPins = 1;
                 rf2.rgPins = &AMSPinVCam;
-                hr = fm->RegisterFilter(CLSID_VirtualCam, L"Virtual Cam3", &pMoniker, &CLSID_AudioInputDeviceCategory, NULL, &rf2);
+                hr = fm->RegisterFilter(CLSID_VirtualCam, L"Virtual Cam4", &pMoniker, &CLSID_AudioInputDeviceCategory, NULL, &rf2);
             }
             else
             {
