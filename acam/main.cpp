@@ -86,6 +86,10 @@ private:
     HBITMAP m_hLogoBmp;
     CCritSec m_cSharedState;
     IReferenceClock *m_pClock;
+    bool m_fFirstSampleDelivered;
+
+    CRefTime     m_rtSampleTime;    // The time to be stamped on each sample
+    LONGLONG m_llSampleMediaTimeStart;
 
 };
 
@@ -134,6 +138,7 @@ CVCamStream::CVCamStream(HRESULT *phr, CVCam *pParent, LPCWSTR pPinName) :
 {
     // Set the default media type as 320x240x24@15
     GetMediaType(4, &m_mt);
+    m_fFirstSampleDelivered = FALSE;
 }
 
 CVCamStream::~CVCamStream()
@@ -155,28 +160,114 @@ HRESULT CVCamStream::QueryInterface(REFIID riid, void **ppv)
 }
 
 
+
+HRESULT LoopbackCapture(const WAVEFORMATEX& wfex, BYTE pBuf[], int iSize, WAVEFORMATEX* ifNotNullThenJustSetTypeOnly);
+const DWORD BITS_PER_BYTE = 8;
+
 //////////////////////////////////////////////////////////////////////////
 //  This is the routine where we create the data being output by the Virtual
 //  Camera device.
 //////////////////////////////////////////////////////////////////////////
 
-HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
+//
+// FillBuffer
+//
+// Stuffs the buffer with data
+// "they" call this
+// LODO push versus pull?
+// then "they" call Deliver...so I guess we just fill it with something?
+// they *must* call this only every so often...
+// you probably should fill the entire buffer...hmm...
+HRESULT CVCamStream::FillBuffer(IMediaSample *pms) 
 {
-    REFERENCE_TIME rtNow;
-    
-    REFERENCE_TIME avgFrameTime = ((VIDEOINFOHEADER*)m_mt.pbFormat)->AvgTimePerFrame;
-
-    rtNow = m_rtLastTime;
-    m_rtLastTime += avgFrameTime;
-    pms->SetTime(&rtNow, &m_rtLastTime);
-    pms->SetSyncPoint(TRUE);
+    CheckPointer(pms,E_POINTER);
 
     BYTE *pData;
-    long lDataLen;
-    pms->GetPointer(&pData);
-    lDataLen = pms->GetSize();
-    for(int i = 0; i < lDataLen; ++i)
-        pData[i] = rand();
+
+    HRESULT hr = pms->GetPointer(&pData);
+    if (FAILED(hr)) {
+        return hr;
+    }
+
+    // This function must hold the state lock because it calls
+    // FillPCMAudioBuffer().
+    CAutoLock lStateLock(m_pParent->pStateLock());
+    
+    // This lock must be held because this function uses
+    // m_dwTempPCMBufferSize, m_hPCMToMSADPCMConversionStream,
+    // m_rtSampleTime, m_fFirstSampleDelivered and
+    // m_llSampleMediaTimeStart.
+    CAutoLock lShared(&m_cSharedState);
+
+    WAVEFORMATEX* pwfexCurrent = (WAVEFORMATEX*)m_mt.Format();
+
+    if (WAVE_FORMAT_PCM == pwfexCurrent->wFormatTag) 
+    {
+        // old way
+		// m_Synth->FillPCMAudioBuffer();
+
+		// new way
+		LoopbackCapture(*pwfexCurrent, pData, pms->GetSize(), NULL);
+
+        hr = pms->SetActualDataLength(pms->GetSize());
+        if (FAILED(hr))
+            return hr;
+
+    }
+    else 
+    {
+		// who cares about ADPCM...
+		return E_FAIL;
+    }
+
+    // Set the sample's start and end time stamps...
+    CRefTime rtStart = m_rtSampleTime;
+
+    m_rtSampleTime = rtStart + (REFERENCE_TIME)(UNITS * pms->GetActualDataLength()) / 
+                     (REFERENCE_TIME)pwfexCurrent->nAvgBytesPerSec;
+
+    hr = pms->SetTime((REFERENCE_TIME*)&rtStart, (REFERENCE_TIME*)&m_rtSampleTime);
+
+    if (FAILED(hr)) {
+        return hr;
+    }
+
+    // Set the sample's properties.
+    hr = pms->SetPreroll(FALSE);
+    if (FAILED(hr)) {
+        return hr;
+    }
+
+    hr = pms->SetMediaType(NULL);
+    if (FAILED(hr)) {
+        return hr;
+    }
+   
+    hr = pms->SetDiscontinuity(!m_fFirstSampleDelivered);	
+    if (FAILED(hr)) {
+        return hr;
+    }
+    
+    //lodo hr = pms->SetSyncPoint(!m_fFirstSampleDelivered);
+	hr = pms->SetSyncPoint(TRUE);
+    if (FAILED(hr)) {
+        return hr;
+    }
+
+    LONGLONG llMediaTimeStart = m_llSampleMediaTimeStart;
+    
+    DWORD dwNumAudioSamplesInPacket = (pms->GetActualDataLength() * BITS_PER_BYTE) /
+                                      (pwfexCurrent->nChannels * pwfexCurrent->wBitsPerSample);
+
+    LONGLONG llMediaTimeStop = m_llSampleMediaTimeStart + dwNumAudioSamplesInPacket;
+
+    hr = pms->SetMediaTime(&llMediaTimeStart, &llMediaTimeStop);
+    if (FAILED(hr)) {
+        return hr;
+    }
+
+    m_llSampleMediaTimeStart = llMediaTimeStop;
+    m_fFirstSampleDelivered = TRUE;
 
     return NOERROR;
 } // FillBuffer
