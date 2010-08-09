@@ -57,7 +57,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>strmbasd.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>strmbasd.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;Avrt.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>acam.def</ModuleDefinitionFile>
     </Link>
   </ItemDefinitionGroup>
@@ -87,6 +87,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Dll.cpp" />
+    <ClCompile Include="loopback-capture-helpers.cpp" />
+    <ClCompile Include="loopback-capture.cpp" />
     <ClCompile Include="main.cpp">
       <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</CompileAsManaged>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
