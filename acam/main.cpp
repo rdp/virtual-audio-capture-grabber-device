@@ -92,6 +92,8 @@ private:
     CRefTime     m_rtSampleTime;    // The time to be stamped on each sample
     LONGLONG m_llSampleMediaTimeStart;
 
+	HRESULT setAsNormal(CMediaType *pmt);
+
 };
 
 
@@ -137,8 +139,9 @@ HRESULT CVCam::QueryInterface(REFIID riid, void **ppv)
 CVCamStream::CVCamStream(HRESULT *phr, CVCam *pParent, LPCWSTR pPinName) :
     CSourceStream(NAME("Virtual Cam3"),phr, pParent, pPinName), m_pParent(pParent)
 {
+
     // Set the default media type as 320x240x24@15
-    GetMediaType(4, &m_mt);
+    GetMediaType(0, &m_mt);
     m_fFirstSampleDelivered = FALSE;
     m_llSampleMediaTimeStart = 0;
 
@@ -294,47 +297,55 @@ HRESULT CVCamStream::SetMediaType(const CMediaType *pmt)
     return hr;
 }
 
-// See Directshow help topic for IAMStreamConfig for details on this method
-HRESULT CVCamStream::GetMediaType(int iPosition, CMediaType *pmt)
+#define DECLARE_PTR(type, ptr, expr) type* ptr = (type*)(expr);
+
+
+HRESULT CVCamStream::setAsNormal(CMediaType *pmt) {
+	    WAVEFORMATEX *pwfex;
+        pwfex = (WAVEFORMATEX *) pmt->AllocFormatBuffer(sizeof(WAVEFORMATEX));
+        if(NULL == pwfex)
+        {
+            return E_OUTOFMEMORY;
+        }
+
+		// we'll set it as PCM or what not, within this call...
+
+		// now tell them "this is what we will give you..."
+		WAVEFORMATEX unused;
+		LoopbackCapture(unused, NULL, -1, pwfex);
+        
+		// old sin wave way...
+		//m_Synth->GetPCMFormatStructure(pwfex);
+
+    return CreateAudioMediaType(pwfex, pmt, FALSE); // not ours...
+
+}
+
+
+
+// GetMediaType
+// I believe "they" call this...
+// we only have one type at a time...
+// so we just return our one type...
+// which we already told them what it was.
+HRESULT CVCamStream::GetMediaType(int iPosition, CMediaType *pmt) 
 {
-    if(iPosition < 0) return E_INVALIDARG;
-    if(iPosition > 8) return VFW_S_NO_MORE_ITEMS;
+	// no more positioning...
+	if(iPosition != 0)
+		return E_FAIL; // huh?
 
-    if(iPosition == 0) 
-    {
-        *pmt = m_mt;
-        return S_OK;
-    }
+    CheckPointer(pmt,E_POINTER);
 
-    DECLARE_PTR(VIDEOINFOHEADER, pvi, pmt->AllocFormatBuffer(sizeof(VIDEOINFOHEADER))); //set it up...
-    ZeroMemory(pvi, sizeof(VIDEOINFOHEADER));
+    // The caller must hold the state lock because this function
+    // calls get_OutputFormat() and GetPCMFormatStructure().
+    // The function assumes that the state of the m_Synth
+    // object does not change between the two calls.  The
+    // m_Synth object's state will not change if the 
+    // state lock is held.
+    ASSERT(CritCheckIn(m_pParent->pStateLock()));
 
-    pvi->bmiHeader.biCompression = BI_RGB;
-    pvi->bmiHeader.biBitCount    = 24;
-    pvi->bmiHeader.biSize       = sizeof(BITMAPINFOHEADER);
-    pvi->bmiHeader.biWidth      = 80 * iPosition;
-    pvi->bmiHeader.biHeight     = 60 * iPosition;
-    pvi->bmiHeader.biPlanes     = 1;
-    pvi->bmiHeader.biSizeImage  = GetBitmapSize(&pvi->bmiHeader);
-    pvi->bmiHeader.biClrImportant = 0;
-
-    pvi->AvgTimePerFrame = 1000000;
-
-    SetRectEmpty(&(pvi->rcSource)); // we want the whole image area rendered.
-    SetRectEmpty(&(pvi->rcTarget)); // no particular destination rectangle
-
-    pmt->SetType(&MEDIATYPE_Video);
-    pmt->SetFormatType(&FORMAT_VideoInfo);
-    pmt->SetTemporalCompression(FALSE);
-
-    // Work out the GUID for the subtype from the header info.
-    const GUID SubTypeGUID = GetBitmapSubtype(&pvi->bmiHeader);
-    pmt->SetSubtype(&SubTypeGUID);
-    pmt->SetSampleSize(pvi->bmiHeader.biSizeImage);
-    
-    return NOERROR;
-
-} // GetMediaType
+	return setAsNormal(pmt);	
+}
 
 // This method is called to see if a given output format is supported
 HRESULT CVCamStream::CheckMediaType(const CMediaType *pMediaType)
@@ -342,6 +353,8 @@ HRESULT CVCamStream::CheckMediaType(const CMediaType *pMediaType)
     VIDEOINFOHEADER *pvi = (VIDEOINFOHEADER *)(pMediaType->Format());
     if(*pMediaType != m_mt) 
         return E_INVALIDARG;
+	return E_FAIL;
+
     return S_OK;
 } // CheckMediaType
 
