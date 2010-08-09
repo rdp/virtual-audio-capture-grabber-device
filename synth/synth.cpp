@@ -452,11 +452,6 @@ HRESULT CSynthStream::BreakConnect(void)
 }
 
 
-const int WaveBufferSize = 16*1024;     // Size of each allocated buffer
-// arbitrary? what the heck? maybe downstream needed something larger than what we were giving it or something?
-// maybe doesn't matter, as long as it's "big enough"?
-
-
 //
 // DecideBufferSize
 //
