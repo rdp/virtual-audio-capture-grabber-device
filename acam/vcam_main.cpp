@@ -140,7 +140,7 @@ CVCamStream::CVCamStream(HRESULT *phr, CVCam *pParent, LPCWSTR pPinName) :
     CSourceStream(NAME("Virtual Cam3"),phr, pParent, pPinName), m_pParent(pParent)
 {
 
-    // Set the default media type as 320x240x24@15
+    // Set the media type...
     GetMediaType(0, &m_mt);
     m_fFirstSampleDelivered = FALSE;
     m_llSampleMediaTimeStart = 0;
@@ -254,9 +254,8 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
         return hr;
     }
     
-    //lodo hr = pms->SetSyncPoint(!m_fFirstSampleDelivered);
-	hr = pms->SetSyncPoint(TRUE);
-    if (FAILED(hr)) {
+    hr = pms->SetSyncPoint(!m_fFirstSampleDelivered);
+	if (FAILED(hr)) {
         return hr;
     }
 
@@ -292,8 +291,8 @@ STDMETHODIMP CVCamStream::Notify(IBaseFilter * pSender, Quality q)
 //////////////////////////////////////////////////////////////////////////
 HRESULT CVCamStream::SetMediaType(const CMediaType *pmt)
 {
-    DECLARE_PTR(VIDEOINFOHEADER, pvi, pmt->Format());
-    HRESULT hr = CSourceStream::SetMediaType(pmt);
+    // I think we can ignore these...DECLARE_PTR(VIDEOINFOHEADER, pvi, pmt->Format());
+    HRESULT hr = CSourceStream::SetMediaType(pmt); // TODO what does this do, and why do I set it as null later?
     return hr;
 }
 
@@ -350,10 +349,9 @@ HRESULT CVCamStream::GetMediaType(int iPosition, CMediaType *pmt)
 // This method is called to see if a given output format is supported
 HRESULT CVCamStream::CheckMediaType(const CMediaType *pMediaType)
 {
-    VIDEOINFOHEADER *pvi = (VIDEOINFOHEADER *)(pMediaType->Format());
+    // huh? VIDEOINFOHEADER *pvi = (VIDEOINFOHEADER *)(pMediaType->Format());
     if(*pMediaType != m_mt) 
         return E_INVALIDARG;
-	return E_FAIL;
 
     return S_OK;
 } // CheckMediaType
@@ -363,7 +361,6 @@ const int WaveBufferSize = 16*1024;     // Size of each allocated buffer
 // seems arbitrary
 // maybe downstream needed it?
 
-//
 // DecideBufferSize
 //
 // This will always be called after the format has been sucessfully
@@ -376,7 +373,7 @@ HRESULT CVCamStream::DecideBufferSize(IMemAllocator *pAlloc,
     // before calling this function.  This function must hold 
     // the shared state lock because it uses m_hPCMToMSADPCMConversionStream
     // m_dwTempPCMBufferSize.
-    ASSERT(CritCheckIn(&m_cSharedState));
+    // fails currently. odd...lodo ... ASSERT(CritCheckIn(&m_cSharedState));
 
     CheckPointer(pAlloc,E_POINTER);
     CheckPointer(pProperties,E_POINTER);
@@ -441,8 +438,10 @@ HRESULT CVCamStream::OnThreadCreate()
 
 HRESULT STDMETHODCALLTYPE CVCamStream::SetFormat(AM_MEDIA_TYPE *pmt)
 {
-    DECLARE_PTR(VIDEOINFOHEADER, pvi, m_mt.pbFormat);
+	// you "must" use this type forever now...
+	// do we need anything audio-y here?
     m_mt = *pmt;
+
     IPin* pin; 
     ConnectedTo(&pin);
     if(pin)
@@ -461,13 +460,15 @@ HRESULT STDMETHODCALLTYPE CVCamStream::GetFormat(AM_MEDIA_TYPE **ppmt)
 
 HRESULT STDMETHODCALLTYPE CVCamStream::GetNumberOfCapabilities(int *piCount, int *piSize)
 {
-    *piCount = 8; // why is this 8? huh?
-    *piSize = sizeof(VIDEO_STREAM_CONFIG_CAPS);
+    *piCount = 1; // only allow one type...
+    *piSize = sizeof(AUDIO_STREAM_CONFIG_CAPS);
     return S_OK;
 }
 
 HRESULT STDMETHODCALLTYPE CVCamStream::GetStreamCaps(int iIndex, AM_MEDIA_TYPE **pmt, BYTE *pSCC)
 {
+	if(iIndex != 0)
+		return E_FAIL; // huh?
 
     *pmt = CreateMediaType(&m_mt);
     DECLARE_PTR(AUDIO_STREAM_CONFIG_CAPS, pvi, (*pmt)->pbFormat);
@@ -641,11 +642,11 @@ STDAPI RegisterFilters( BOOL bRegister )
                 rf2.dwMerit = MERIT_DO_NOT_USE;
                 rf2.cPins = 1;
                 rf2.rgPins = &AMSPinVCam;
-                hr = fm->RegisterFilter(CLSID_VirtualCam, L"Virtual Cam3", &pMoniker, &CLSID_VideoInputDeviceCategory, NULL, &rf2);
+                hr = fm->RegisterFilter(CLSID_VirtualCam, L"Virtual Cam3", &pMoniker, &CLSID_AudioInputDeviceCategory, NULL, &rf2);
             }
             else
             {
-                hr = fm->UnregisterFilter(&CLSID_VideoInputDeviceCategory, 0, CLSID_VirtualCam);
+                hr = fm->UnregisterFilter(&CLSID_AudioInputDeviceCategory, 0, CLSID_VirtualCam);
             }
         }
 

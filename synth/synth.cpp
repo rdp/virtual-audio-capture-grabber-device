@@ -266,6 +266,7 @@ HRESULT CSynthStream::FillBuffer(IMediaSample *pms)
         return hr;
     }
 
+	//...CDynamicSourceStream::SetMediaType(
     hr = pms->SetMediaType(NULL);
     if (FAILED(hr)) {
         return hr;
