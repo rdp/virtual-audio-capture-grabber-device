@@ -543,3 +543,34 @@ STDAPI RegisterFilters( BOOL bRegister )
     CoUninitialize();
     return hr;
 }
+
+// DLL.cpp
+
+//////////////////////////////////////////////////////////////////////////
+//  This file contains routines to register / Unregister the 
+//  Directshow filter 'Virtual Cam'
+//  We do not use the inbuilt BaseClasses routines as we need to register as
+//  a capture source
+//////////////////////////////////////////////////////////////////////////
+#include <stdio.h>
+
+STDAPI RegisterFilters( BOOL bRegister );
+
+STDAPI DllRegisterServer()
+{
+	printf("hello there");
+    return RegisterFilters(TRUE);
+}
+
+STDAPI DllUnregisterServer()
+{
+    return RegisterFilters(FALSE);
+}
+
+STDAPI DllEntryPoint(HINSTANCE, ULONG, LPVOID);
+
+extern "C" BOOL APIENTRY DllMain(HANDLE hModule, DWORD  dwReason, LPVOID lpReserved)
+{
+	return DllEntryPoint((HINSTANCE)(hModule), dwReason, lpReserved);
+}
+
