@@ -2,6 +2,10 @@
 #include "stdafx.h"
 #include <olectl.h>
 
+#define _CRTDBG_MAP_ALLOC
+#include <stdlib.h>
+#include <crtdbg.h>
+
 //////////////////////////////////////////////////////////////////////////
 //  This file contains routines to register / Unregister the 
 //  Directshow filter 'Virtual Cam'
@@ -167,7 +171,7 @@ HRESULT CVCamStream::QueryInterface(REFIID riid, void **ppv)
 
 
 
-HRESULT LoopbackCapture(const WAVEFORMATEX& wfex, BYTE pBuf[], int iSize, WAVEFORMATEX* ifNotNullThenJustSetTypeOnly);
+HRESULT LoopbackCapture(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNotNullThenJustSetTypeOnly);
 const DWORD BITS_PER_BYTE = 8;
 
 //////////////////////////////////////////////////////////////////////////
@@ -197,23 +201,23 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
 
     // This function must hold the state lock because it calls
     // FillPCMAudioBuffer().
-    CAutoLock lStateLock(m_pParent->pStateLock());
+    //CAutoLock lStateLock(m_pParent->pStateLock());
     
     // This lock must be held because this function uses
     // m_dwTempPCMBufferSize, m_hPCMToMSADPCMConversionStream,
     // m_rtSampleTime, m_fFirstSampleDelivered and
     // m_llSampleMediaTimeStart.
-    CAutoLock lShared(&m_cSharedState);
+    // CAutoLock lShared(&m_cSharedState);
 
     WAVEFORMATEX* pwfexCurrent = (WAVEFORMATEX*)m_mt.Format();
 
-    if (WAVE_FORMAT_PCM == pwfexCurrent->wFormatTag) 
+    if (WAVE_FORMAT_PCM == pwfexCurrent->wFormatTag)
     {
         // old way
 		// m_Synth->FillPCMAudioBuffer();
 
 		// new way
-		LoopbackCapture(*pwfexCurrent, pData, pms->GetSize(), NULL);
+		LoopbackCapture(pData, pms->GetSize(), NULL);
 
         hr = pms->SetActualDataLength(pms->GetSize());
         if (FAILED(hr))
@@ -249,7 +253,8 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
         return hr;
     }
    
-    hr = pms->SetDiscontinuity(!m_fFirstSampleDelivered);	
+    //hr = pms->SetDiscontinuity(!m_fFirstSampleDelivered);	
+	hr = pms->SetDiscontinuity(TRUE);	
     if (FAILED(hr)) {
         return hr;
     }
@@ -310,8 +315,7 @@ HRESULT CVCamStream::setAsNormal(CMediaType *pmt) {
 		// we'll set it as PCM or what not, within this call...
 
 		// now tell them "this is what we will give you..."
-		WAVEFORMATEX unused;
-		LoopbackCapture(unused, NULL, -1, pwfex);
+		LoopbackCapture(NULL, -1, pwfex);
         
 		// old sin wave way...
 		//m_Synth->GetPCMFormatStructure(pwfex);
@@ -475,8 +479,7 @@ HRESULT STDMETHODCALLTYPE CVCamStream::GetStreamCaps(int iIndex, AM_MEDIA_TYPE *
 	
     WAVEFORMATEX* pwfex = (WAVEFORMATEX *) _alloca(sizeof(WAVEFORMATEX));
 
-	WAVEFORMATEX unused;
-	LoopbackCapture(unused, NULL, -1, pwfex);
+	LoopbackCapture(NULL, -1, pwfex);
 
 	pvi->BitsPerSampleGranularity = 8; // huh?
 	pvi->ChannelsGranularity = 1;

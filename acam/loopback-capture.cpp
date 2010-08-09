@@ -12,7 +12,7 @@ HRESULT open_file(LPCWSTR szFileName, HMMIO *phFile);
 HRESULT get_default_device(IMMDevice **ppMMDevice);
 
 // size is size of the BYTE buffer...but...I guess...we just have to fill it all the way with data...I guess...
-HRESULT LoopbackCapture(const WAVEFORMATEX& wfex, BYTE pBuf[], int iSize, WAVEFORMATEX* ifNotNullThenJustSetTypeOnly)
+HRESULT LoopbackCapture(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNotNullThenJustSetTypeOnly)
  {
 	bool bInt16 = true; // makes it actually work, for some reason...
 
@@ -121,7 +121,7 @@ HRESULT LoopbackCapture(const WAVEFORMATEX& wfex, BYTE pBuf[], int iSize, WAVEFO
 		//fclose(fp);
 		// cleanup
 		// I might be leaking here...
-        m_pMMDevice->Release();
+    m_pMMDevice->Release();
 		return hr;
 	}
 
@@ -189,7 +189,7 @@ HRESULT LoopbackCapture(const WAVEFORMATEX& wfex, BYTE pBuf[], int iSize, WAVEFO
 
 
     // loop forever until bDone is set by the keyboard
-    for (UINT32 nBitsWrote = 0; nBitsWrote < iSize; ) {
+    for (INT32 nBitsWrote = 0; nBitsWrote < iSize; ) {
 
         // TODO sleep until there is data available [?] or can it poll me... [lodo]
         UINT32 nNextPacketSize;
@@ -259,11 +259,8 @@ HRESULT LoopbackCapture(const WAVEFORMATEX& wfex, BYTE pBuf[], int iSize, WAVEFO
 
         LONG lBytesToWrite = nNumFramesToRead * nBlockAlign;
 #pragma prefast(suppress: __WARNING_INCORRECT_ANNOTATION, "IAudioCaptureClient::GetBuffer SAL annotation implies a 1-byte buffer")
-        // TODO WRITE TO OUTGOING [?]
-		for(int i = 0; i < lBytesToWrite && nBitsWrote < iSize;i++) {
-
+		for(UINT i = 0; i < lBytesToWrite && nBitsWrote < iSize;i++) {
 			pBuf[nBitsWrote++] = pData[i]; // lodo use a straight call...
-
 		}
         
         hr = pAudioCaptureClient->ReleaseBuffer(nNumFramesToRead);
