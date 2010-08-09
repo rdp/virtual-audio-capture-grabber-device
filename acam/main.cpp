@@ -139,6 +139,8 @@ CVCamStream::CVCamStream(HRESULT *phr, CVCam *pParent, LPCWSTR pPinName) :
     // Set the default media type as 320x240x24@15
     GetMediaType(4, &m_mt);
     m_fFirstSampleDelivered = FALSE;
+    m_llSampleMediaTimeStart = 0;
+
 }
 
 CVCamStream::~CVCamStream()
