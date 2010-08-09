@@ -316,7 +316,9 @@ HRESULT CVCamStream::SetMediaType(const CMediaType *pmt)
 
 HRESULT CVCamStream::setAsNormal(CMediaType *pmt) {
 	    WAVEFORMATEX *pwfex;
-        pwfex = (WAVEFORMATEX *) pmt->AllocFormatBuffer(sizeof(WAVEFORMATEX));
+        pwfex = (WAVEFORMATEX *) pmt->AllocFormatBuffer(sizeof(WAVEFORMATEXTENSIBLE));
+	    ZeroMemory(pwfex , sizeof(WAVEFORMATEXTENSIBLE));
+
         if(NULL == pwfex)
         {
             return E_OUTOFMEMORY;
@@ -485,14 +487,15 @@ HRESULT STDMETHODCALLTYPE CVCamStream::GetStreamCaps(int iIndex, AM_MEDIA_TYPE *
 {
 	if(iIndex != 0)
 		return E_FAIL; // huh?
-
+	//m_mt should be propagated...
     *ppMediaType = CreateMediaType(&m_mt);
 
 
 	
     DECLARE_PTR(AUDIO_STREAM_CONFIG_CAPS, pvi, (*ppMediaType)->pbFormat);
 	
-    WAVEFORMATEX* pwfex = (WAVEFORMATEX *) _alloca(sizeof(PWAVEFORMATEXTENSIBLE)); // sizeof(WAVEFORMATEX)
+    WAVEFORMATEX* pwfex = (WAVEFORMATEX *) _alloca(sizeof(WAVEFORMATEXTENSIBLE)); // sizeof(WAVEFORMATEX)
+    ZeroMemory(pwfex, sizeof(WAVEFORMATEXTENSIBLE));
 
 	LoopbackCapture(NULL, -1, pwfex);
 
@@ -506,7 +509,7 @@ HRESULT STDMETHODCALLTYPE CVCamStream::GetStreamCaps(int iIndex, AM_MEDIA_TYPE *
 
 (*ppMediaType)->bFixedSizeSamples = TRUE; // *** Shouldn't this be TRUE? The video one wasn't though...
 
-(*ppMediaType)->cbFormat = sizeof(PWAVEFORMATEXTENSIBLE);
+(*ppMediaType)->cbFormat = sizeof(WAVEFORMATEXTENSIBLE);
 
 	pvi->BitsPerSampleGranularity = 16; // huh?
 	pvi->ChannelsGranularity = 1;
@@ -533,6 +536,7 @@ HRESULT STDMETHODCALLTYPE CVCamStream::GetStreamCaps(int iIndex, AM_MEDIA_TYPE *
 
     // Get 1/2 second worth of buffers
     (*ppMediaType)->lSampleSize = cBuffers / 2;// LODO dry up
+	  (*ppMediaType)->pUnk                 = NULL;
 
 
 	return S_OK;
