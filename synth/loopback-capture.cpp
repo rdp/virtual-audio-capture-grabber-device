@@ -115,10 +115,10 @@ HRESULT LoopbackCapture(const WAVEFORMATEX& wfex, BYTE pBuf[], int iSize, WAVEFO
         pwfex->nBlockAlign = pwfx->nBlockAlign;
         pwfex->nAvgBytesPerSec = pwfx->nAvgBytesPerSec;
         pwfex->cbSize = pwfx->cbSize;
-		FILE *fp = fopen("/abc", "w");
-		fprintf(fp, "hello world %d %d %d %d %d %d %d", pwfex->wFormatTag, pwfex->nChannels, 
-			pwfex->nSamplesPerSec, pwfex->wBitsPerSample, pwfex->nBlockAlign, pwfex->nAvgBytesPerSec, pwfex->cbSize );
-		fclose(fp);
+		//FILE *fp = fopen("/normal2", "w"); // fails on me? maybe juts a VLC thing...
+		//fprintf(fp, "hello world %d %d %d %d %d %d %d", pwfex->wFormatTag, pwfex->nChannels, 
+		//	pwfex->nSamplesPerSec, pwfex->wBitsPerSample, pwfex->nBlockAlign, pwfex->nAvgBytesPerSec, pwfex->cbSize );
+		//fclose(fp);
 		// cleanup
 		// I might be leaking here...
         m_pMMDevice->Release();
