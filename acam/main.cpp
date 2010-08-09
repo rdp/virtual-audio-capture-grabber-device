@@ -358,23 +358,68 @@ HRESULT CVCamStream::CheckMediaType(const CMediaType *pMediaType)
     return S_OK;
 } // CheckMediaType
 
-// This method is called after the pins are connected to allocate buffers to stream data
-HRESULT CVCamStream::DecideBufferSize(IMemAllocator *pAlloc, ALLOCATOR_PROPERTIES *pProperties)
+//
+// DecideBufferSize
+//
+// This will always be called after the format has been sucessfully
+// negotiated. So we have a look at m_mt to see what format we agreed to.
+// Then we can ask for buffers of the correct size to contain them.
+HRESULT CVCamStream::DecideBufferSize(IMemAllocator *pAlloc,
+                                       ALLOCATOR_PROPERTIES *pProperties)
 {
-    CAutoLock cAutoLock(m_pFilter->pStateLock());
-    HRESULT hr = NOERROR;
+    // The caller should always hold the shared state lock 
+    // before calling this function.  This function must hold 
+    // the shared state lock because it uses m_hPCMToMSADPCMConversionStream
+    // m_dwTempPCMBufferSize.
+    ASSERT(CritCheckIn(&m_cSharedState));
 
-    VIDEOINFOHEADER *pvi = (VIDEOINFOHEADER *) m_mt.Format();
-    pProperties->cBuffers = 1;
-    pProperties->cbBuffer = pvi->bmiHeader.biSizeImage;
+    CheckPointer(pAlloc,E_POINTER);
+    CheckPointer(pProperties,E_POINTER);
+
+    WAVEFORMATEX *pwfexCurrent = (WAVEFORMATEX*)m_mt.Format();
+
+    if(WAVE_FORMAT_PCM == pwfexCurrent->wFormatTag)
+    {
+        pProperties->cbBuffer = WaveBufferSize; // guess 16K is standard for PCM? what?
+    }
+    else
+    {
+		// no ADMCP!
+        return E_FAIL;        
+    }
+
+    int nBitsPerSample = pwfexCurrent->wBitsPerSample;
+    int nSamplesPerSec = pwfexCurrent->nSamplesPerSec;
+    int nChannels = pwfexCurrent->nChannels;
+
+	// Get 1 second worth of buffers
+
+    pProperties->cBuffers = (nChannels * nSamplesPerSec * nBitsPerSample) / 
+                            (pProperties->cbBuffer * BITS_PER_BYTE);
+
+    // Get 1/2 second worth of buffers
+    pProperties->cBuffers /= 2;
+    if(pProperties->cBuffers < 1)
+        pProperties->cBuffers = 1 ;
+
+    // Ask the allocator to reserve us the memory...
 
     ALLOCATOR_PROPERTIES Actual;
-    hr = pAlloc->SetProperties(pProperties,&Actual);
+    HRESULT hr = pAlloc->SetProperties(pProperties,&Actual);
+    if(FAILED(hr))
+    {
+        return hr;
+    }
 
-    if(FAILED(hr)) return hr;
-    if(Actual.cbBuffer < pProperties->cbBuffer) return E_FAIL;
+    // Is this allocator unsuitable
+
+    if(Actual.cbBuffer < pProperties->cbBuffer)
+    {
+        return E_FAIL;
+    }
 
     return NOERROR;
+
 } // DecideBufferSize
 
 // Called when graph is run

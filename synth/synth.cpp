@@ -371,7 +371,8 @@ HRESULT CSynthStream::setAsNormal(CMediaType *pmt) {
 
 }
 
-
+// other fella doesn't even have this one...
+// maybe it could if it wanted to...
 HRESULT CSynthStream::CompleteConnect(IPin *pReceivePin)
 {
     // This lock must be held because this function uses
@@ -448,6 +449,11 @@ HRESULT CSynthStream::BreakConnect(void)
 
     return S_OK;
 }
+
+
+const int WaveBufferSize = 16*1024;     // Size of each allocated buffer
+// arbitrary? what the heck? maybe downstream needed something larger than what we were giving it or something?
+// maybe doesn't matter, as long as it's "big enough"?
 
 
 //
