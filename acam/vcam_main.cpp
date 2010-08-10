@@ -13,6 +13,7 @@
 #include <streams.h>
 #include <initguid.h>
 #include <dllsetup.h>
+#include <stdio.h>
 
 #pragma once
 
@@ -140,9 +141,11 @@ CVCamStream::CVCamStream(HRESULT *phr, CVCam *pParent, LPCWSTR pPinName) :
 
 }
 
+void loopbackRelease();
+
 CVCamStream::~CVCamStream()
 {
-	// hmm...guess we don't need to do anything here
+	loopbackRelease();	
 } 
 
 HRESULT CVCamStream::QueryInterface(REFIID riid, void **ppv)
@@ -408,11 +411,11 @@ HRESULT CVCamStream::OnThreadCreate()
     m_llSampleMediaTimeStart = 0;
     GetMediaType(0, &m_mt);
 
-    /*HRESULT hr = LoopbackCaptureSetup();
+    HRESULT hr = LoopbackCaptureSetup();
     if (FAILED(hr)) {
             printf("IAudioCaptureClient::setup failed");
             return hr;
-    }*/
+    }
 
     return NOERROR;
 } // OnThreadCreate

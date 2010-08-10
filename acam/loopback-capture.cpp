@@ -14,13 +14,14 @@ HRESULT get_default_device(IMMDevice **ppMMDevice);
 IAudioCaptureClient *pAudioCaptureClient;
 IAudioClient *pAudioClient;
 HANDLE hTask;
-bool bDone = false;
 bool bFirstPacket = true;
 IMMDevice *m_pMMDevice;
 UINT32 nBlockAlign;
+UINT32 pnFrames;
 
 HRESULT LoopbackCaptureSetup()
 {
+	pnFrames = 0;
 	bool bInt16 = true; // makes it actually work, for some reason...
 	
     HRESULT hr;
@@ -195,7 +196,6 @@ HRESULT LoopbackCaptureSetup()
         return hr;
     }
     
-    bDone = false;
     bFirstPacket = true;
 	return hr;
 
@@ -206,15 +206,8 @@ HRESULT LoopbackCaptureSetup()
 HRESULT LoopbackCapture(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNotNullThenJustSetTypeOnly)
  {
 	HRESULT hr;
-	hr = LoopbackCaptureSetup();
-        if (FAILED(hr)) {
-            printf("IAudioCaptureClient::setup failed");
-            return hr;
-        }
-	
-	UINT32 pnFrames = 0;
 
-
+	bFirstPacket = true;
     // grab a chunk...
     for (INT32 nBitsWrote = 0; nBitsWrote < iSize; ) {
 
@@ -264,13 +257,15 @@ HRESULT LoopbackCapture(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNotNullThenJustS
 
         if (bFirstPacket && AUDCLNT_BUFFERFLAGS_DATA_DISCONTINUITY == dwFlags) {
             printf("Probably spurious glitch reported on first packet\n");
-        } else if (0 != dwFlags) {
-            printf("IAudioCaptureClient::GetBuffer set flags to 0x%08x on pass %u after %u frames\n", dwFlags, nBitsWrote, pnFrames);
-            pAudioClient->Stop();
-            AvRevertMmThreadCharacteristics(hTask);
-            pAudioCaptureClient->Release();
-            pAudioClient->Release();            
-            return E_UNEXPECTED;
+        } else if (AUDCLNT_BUFFERFLAGS_DATA_DISCONTINUITY != dwFlags) {
+			if(dwFlags != 0) {
+              printf("IAudioCaptureClient::GetBuffer set flags to 0x%08x on pass %u after %u frames\n", dwFlags, nBitsWrote, pnFrames);
+              pAudioClient->Stop();
+              AvRevertMmThreadCharacteristics(hTask);
+              pAudioCaptureClient->Release();
+              pAudioClient->Release();            
+              return E_UNEXPECTED;
+			}
         }
 
         if (0 == nNumFramesToRead) {
@@ -280,13 +275,13 @@ HRESULT LoopbackCapture(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNotNullThenJustS
             pAudioCaptureClient->Release();
             pAudioClient->Release();            
             return E_UNEXPECTED;            
-        } else {
-			pnFrames += nNumFramesToRead; // increment total count...
-		}
+        }
+
+		pnFrames += nNumFramesToRead; // increment total count...		
 
         LONG lBytesToWrite = nNumFramesToRead * nBlockAlign;
 #pragma prefast(suppress: __WARNING_INCORRECT_ANNOTATION, "IAudioCaptureClient::GetBuffer SAL annotation implies a 1-byte buffer")
-		for(UINT i = 0; i < lBytesToWrite && nBitsWrote < iSize;i++) {
+		for(UINT i = 0; i < lBytesToWrite && nBitsWrote < iSize; i++) {
 			pBuf[nBitsWrote++] = pData[i]; // lodo use a straight call...
 		}
         
@@ -303,11 +298,15 @@ HRESULT LoopbackCapture(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNotNullThenJustS
         bFirstPacket = false;
     } // capture loop...
 
-    pAudioClient->Stop();
+    
+    return hr;
+}
+
+void loopbackRelease() {
+	pAudioClient->Stop();
     AvRevertMmThreadCharacteristics(hTask);
     pAudioCaptureClient->Release();
     pAudioClient->Release();
     m_pMMDevice->Release();
-    return hr;
 }
 
