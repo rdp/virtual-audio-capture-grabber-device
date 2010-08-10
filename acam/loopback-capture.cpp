@@ -11,22 +11,25 @@ HRESULT open_file(LPCWSTR szFileName, HMMIO *phFile);
 
 HRESULT get_default_device(IMMDevice **ppMMDevice);
 
-// size is size of the BYTE buffer...but...I guess...we just have to fill it all the way with data...I guess...
-HRESULT LoopbackCapture(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNotNullThenJustSetTypeOnly)
- {
+IAudioCaptureClient *pAudioCaptureClient;
+IAudioClient *pAudioClient;
+HANDLE hTask;
+bool bDone = false;
+bool bFirstPacket = true;
+IMMDevice *m_pMMDevice;
+UINT32 nBlockAlign;
+
+HRESULT LoopbackCaptureSetup()
+{
 	bool bInt16 = true; // makes it actually work, for some reason...
-
-	UINT32 pnFrames = 0;
-
+	
     HRESULT hr;
-    IMMDevice *m_pMMDevice;
     hr = get_default_device(&m_pMMDevice); // so it can re-place our pointer...
     if (FAILED(hr)) {
         return hr;
     }
 
     // activate an (the default, for us) IAudioClient
-    IAudioClient *pAudioClient;
     hr = m_pMMDevice->Activate(
         __uuidof(IAudioClient),
         CLSCTX_ALL, NULL,
@@ -80,11 +83,12 @@ HRESULT LoopbackCapture(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNotNullThenJustS
                         pwfx->wBitsPerSample = 16;
                         pwfx->nBlockAlign = pwfx->nChannels * pwfx->wBitsPerSample / 8;
                         pwfx->nAvgBytesPerSec = pwfx->nBlockAlign * pwfx->nSamplesPerSec;
+						/* scawah lodo...
 						if(ifNotNullThenJustSetTypeOnly) {
 							PWAVEFORMATEXTENSIBLE pEx2 = reinterpret_cast<PWAVEFORMATEXTENSIBLE>(ifNotNullThenJustSetTypeOnly);
 							pEx2->SubFormat = pEx->SubFormat;
 							pEx2->Samples.wValidBitsPerSample = pEx->Samples.wValidBitsPerSample;
-						}
+						} */
                     } else {
                         printf("Don't know how to coerce mix format to int-16\n");
                         CoTaskMemFree(pwfx);
@@ -101,7 +105,7 @@ HRESULT LoopbackCapture(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNotNullThenJustS
                 return E_UNEXPECTED;
         }
     }
-
+	/* scawah part
 	if(ifNotNullThenJustSetTypeOnly) {
 		// pwfx is set at this point...
 		WAVEFORMATEX* pwfex = ifNotNullThenJustSetTypeOnly;
@@ -131,14 +135,14 @@ HRESULT LoopbackCapture(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNotNullThenJustS
         pAudioClient->Release();
         //m_pMMDevice->Release();
 		return hr;
-	}
+	}*/
 
     MMCKINFO ckRIFF = {0};
     MMCKINFO ckData = {0};
 
     // create a periodic waitable timer
 	
-    UINT32 nBlockAlign = pwfx->nBlockAlign;
+    nBlockAlign = pwfx->nBlockAlign;
     
     // call IAudioClient::Initialize
     // note that AUDCLNT_STREAMFLAGS_LOOPBACK and AUDCLNT_STREAMFLAGS_EVENTCALLBACK
@@ -158,7 +162,6 @@ HRESULT LoopbackCapture(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNotNullThenJustS
     CoTaskMemFree(pwfx);
 
     // activate an IAudioCaptureClient
-    IAudioCaptureClient *pAudioCaptureClient;
     hr = pAudioClient->GetService(
         __uuidof(IAudioCaptureClient),
         (void**)&pAudioCaptureClient
@@ -172,7 +175,7 @@ HRESULT LoopbackCapture(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNotNullThenJustS
     
     // register with MMCSS
     DWORD nTaskIndex = 0;
-    HANDLE hTask = AvSetMmThreadCharacteristics(L"Capture", &nTaskIndex);
+    hTask = AvSetMmThreadCharacteristics(L"Capture", &nTaskIndex);
     if (NULL == hTask) {
         DWORD dwErr = GetLastError();
         printf("AvSetMmThreadCharacteristics failed: last error = %u\n", dwErr);
@@ -192,11 +195,27 @@ HRESULT LoopbackCapture(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNotNullThenJustS
         return hr;
     }
     
-    bool bDone = false;
-    bool bFirstPacket = true;
+    bDone = false;
+    bFirstPacket = true;
+	return hr;
+
+}
 
 
-    // loop forever until bDone is set by the keyboard
+// size is size of the BYTE buffer...but...I guess...we just have to fill it all the way with data...I guess...
+HRESULT LoopbackCapture(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNotNullThenJustSetTypeOnly)
+ {
+	HRESULT hr;
+	hr = LoopbackCaptureSetup();
+        if (FAILED(hr)) {
+            printf("IAudioCaptureClient::setup failed");
+            return hr;
+        }
+	
+	UINT32 pnFrames = 0;
+
+
+    // grab a chunk...
     for (INT32 nBitsWrote = 0; nBitsWrote < iSize; ) {
 
         // TODO sleep until there is data available [?] or can it poll me... [lodo]

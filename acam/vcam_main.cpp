@@ -374,7 +374,7 @@ HRESULT CVCamStream::DecideBufferSize(IMemAllocator *pAlloc,
     pProperties->cBuffers = (nChannels * nSamplesPerSec * nBitsPerSample) / 
                             (pProperties->cbBuffer * BITS_PER_BYTE);
 
-    pProperties->cBuffers /= 2;
+    pProperties->cBuffers /= 16;
 	// check for underflow...
     if(pProperties->cBuffers < 1)
         pProperties->cBuffers = 1;
@@ -399,15 +399,23 @@ HRESULT CVCamStream::DecideBufferSize(IMemAllocator *pAlloc,
 
 } // DecideBufferSize
 
+HRESULT LoopbackCaptureSetup();
+
 // Called when graph is run
 HRESULT CVCamStream::OnThreadCreate()
 {
     m_fFirstSampleDelivered = FALSE;
     m_llSampleMediaTimeStart = 0;
     GetMediaType(0, &m_mt);
+
+    /*HRESULT hr = LoopbackCaptureSetup();
+    if (FAILED(hr)) {
+            printf("IAudioCaptureClient::setup failed");
+            return hr;
+    }*/
+
     return NOERROR;
 } // OnThreadCreate
-
 
 //////////////////////////////////////////////////////////////////////////
 //  IAMStreamConfig
@@ -453,8 +461,6 @@ HRESULT STDMETHODCALLTYPE CVCamStream::GetStreamCaps(int iIndex, AM_MEDIA_TYPE *
 	if(pSCC == NULL)
 		return E_POINTER;
 
-	//WAVEFORMATEX* pAudioFormat = (WAVEFORMATEX*) CoTaskMemAlloc(sizeof(WAVEFORMATEX));
-
     *ppMediaType = CreateMediaType(&m_mt);
 	if (*ppMediaType == NULL) return E_OUTOFMEMORY;
 
@@ -475,7 +481,7 @@ HRESULT STDMETHODCALLTYPE CVCamStream::GetStreamCaps(int iIndex, AM_MEDIA_TYPE *
     pm->formattype = FORMAT_WaveFormatEx;
     pm->bTemporalCompression = FALSE;
     pm->bFixedSizeSamples = TRUE;
-    pm->lSampleSize = pAudioFormat->nAvgBytesPerSec/2; // 0.5s
+    pm->lSampleSize = pAudioFormat->nBlockAlign;//appears reasonable http://github.com/tap/JamomaDSP/blob/2c80c487c6e560d959dd85e7d2bcca3a19ce9b26/src/os/win/DX/BaseClasses/mtype.cpp
     pm->cbFormat = sizeof(WAVEFORMATEX);
 	pm->pUnk = NULL;
 
