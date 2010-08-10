@@ -244,7 +244,7 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
 
     m_llSampleMediaTimeStart = llMediaTimeStop;
     m_fFirstSampleDelivered = TRUE;
-
+	Sleep(2); // VLC goes crazy if we give it too much data too fast...sleep 2ms...
     return NOERROR;
 } // FillBuffer
 
@@ -270,9 +270,10 @@ HRESULT CVCamStream::SetMediaType(const CMediaType *pmt)
 #define DECLARE_PTR(type, ptr, expr) type* ptr = (type*)(expr);
 
 HRESULT setupPwfex(WAVEFORMATEX *pwfex, CMediaType *pmt) {
+	    // NB this needs to "match" getScreenCaps
 	    // a "normal" audio stream...
-		pwfex->cbSize=sizeof(WAVEFORMATEX);
 		pwfex->wFormatTag = WAVE_FORMAT_PCM;
+		pwfex->cbSize=0; // apparently should be zero if using WAVE_FORMAT_PCM http://msdn.microsoft.com/en-us/library/ff538799(VS.85).aspx
 		pwfex->nChannels = 2;
 		pwfex->nSamplesPerSec = 44100;
 		pwfex->wBitsPerSample = 16;
@@ -459,7 +460,7 @@ HRESULT STDMETHODCALLTYPE CVCamStream::GetStreamCaps(int iIndex, AM_MEDIA_TYPE *
 
     DECLARE_PTR(WAVEFORMATEX, pAudioFormat, (*ppMediaType)->pbFormat);
 
-	pAudioFormat->cbSize				= sizeof(WAVEFORMATEX);
+	pAudioFormat->cbSize				= 0;
 	pAudioFormat->wFormatTag			= WAVE_FORMAT_PCM;		// This is the wave format (needed for more than 2 channels)
 	pAudioFormat->nSamplesPerSec		= 44100;	// This is in hertz
 	pAudioFormat->nChannels				= 2;		// 1 for mono, 2 for stereo, and 4 because the camera puts out dual stereo
