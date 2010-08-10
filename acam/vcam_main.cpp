@@ -2,10 +2,6 @@
 #include "stdafx.h"
 #include <olectl.h>
 
-#define _CRTDBG_MAP_ALLOC
-#include <stdlib.h>
-#include <crtdbg.h>
-
 //////////////////////////////////////////////////////////////////////////
 //  This file contains routines to register / Unregister the 
 //  Directshow filter 'Virtual Cam'
@@ -17,7 +13,6 @@
 #include <streams.h>
 #include <initguid.h>
 #include <dllsetup.h>
-#include <malloc.h> // _alloca
 
 #pragma once
 
@@ -102,11 +97,6 @@ private:
 
 
 
-
-// TODO: reference additional headers your program requires here
-
-
-
 //////////////////////////////////////////////////////////////////////////
 //  CVCam is the source filter which masquerades as a capture device
 //////////////////////////////////////////////////////////////////////////
@@ -123,8 +113,6 @@ CVCam::CVCam(LPUNKNOWN lpunk, HRESULT *phr) :
     CSource(NAME("Virtual Cam4"), lpunk, CLSID_VirtualCam)
 {
     ASSERT(phr);
-    //CAutoLock cAutoLock(&m_cStateLock);
-    // Create the one and only output pin
     m_paStreams = (CSourceStream **) new CVCamStream*[1];
     m_paStreams[0] = new CVCamStream(phr, this, L"Virtual Cam4");
 }
@@ -155,7 +143,7 @@ CVCamStream::CVCamStream(HRESULT *phr, CVCam *pParent, LPCWSTR pPinName) :
 
 CVCamStream::~CVCamStream()
 {
-	// hmm...
+	// hmm...guess we don't need to do anything here
 } 
 
 HRESULT CVCamStream::QueryInterface(REFIID riid, void **ppv)
@@ -172,9 +160,6 @@ HRESULT CVCamStream::QueryInterface(REFIID riid, void **ppv)
     return S_OK;
 }
 
-
-
-HRESULT LoopbackCapture(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNotNullThenJustSetTypeOnly);
 const DWORD BITS_PER_BYTE = 8;
 
 //////////////////////////////////////////////////////////////////////////
@@ -202,48 +187,16 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
         return hr;
     }
 
-    // This function must hold the state lock because it calls
-    // FillPCMAudioBuffer().
-    //CAutoLock lStateLock(m_pParent->pStateLock());
-    
-    // This lock must be held because this function uses
-    // m_dwTempPCMBufferSize, m_hPCMToMSADPCMConversionStream,
-    // m_rtSampleTime, m_fFirstSampleDelivered and
-    // m_llSampleMediaTimeStart.
-    // CAutoLock lShared(&m_cSharedState);
-
-    WAVEFORMATEX* pwfexCurrent = (WAVEFORMATEX*)m_mt.Format();
-
-    if (WAVE_FORMAT_PCM == pwfexCurrent->wFormatTag)
-    {
-        // old way
-		// m_Synth->FillPCMAudioBuffer();
-
-		// new way
-		// using rand here doesn't help...
-		bool use_loopback = true;
-
-		if(use_loopback){
-		  LoopbackCapture(pData, pms->GetSize(), NULL);
-		} else {
-		  for(int i = 0; i < pms->GetSize(); i++) {
-			  pData[i] = rand() % 256;
-		  }
-		}
-        hr = pms->SetActualDataLength(pms->GetSize());
-        if (FAILED(hr))
-            return hr;
-
+	for(int i = 0; i < pms->GetSize(); i++) {
+		  pData[i] = rand() % 256; // fill with random...
     }
-    else 
-    {
-		// who cares about ADPCM...
-		return E_FAIL;
-    }
+
+	WAVEFORMATEX* pwfexCurrent = (WAVEFORMATEX*)m_mt.Format();
 
     // Set the sample's start and end time stamps...
     CRefTime rtStart = m_rtSampleTime;
 
+	// add a few seconds to the clock...
     m_rtSampleTime = rtStart + (REFERENCE_TIME)(UNITS * pms->GetActualDataLength()) / 
                      (REFERENCE_TIME)pwfexCurrent->nAvgBytesPerSec;
 
@@ -265,6 +218,7 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
     }
    
     hr = pms->SetDiscontinuity(!m_fFirstSampleDelivered);
+
     if (FAILED(hr)) {
         return hr;
     }
@@ -280,6 +234,8 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
                                       (pwfexCurrent->nChannels * pwfexCurrent->wBitsPerSample);
 
     LONGLONG llMediaTimeStop = m_llSampleMediaTimeStart + dwNumAudioSamplesInPacket;
+
+	// what is the difference between SetMediaTime and SetTime ?
 
     hr = pms->SetMediaTime(&llMediaTimeStart, &llMediaTimeStop);
     if (FAILED(hr)) {
@@ -306,36 +262,38 @@ STDMETHODIMP CVCamStream::Notify(IBaseFilter * pSender, Quality q)
 //////////////////////////////////////////////////////////////////////////
 HRESULT CVCamStream::SetMediaType(const CMediaType *pmt)
 {
-    // I think we can ignore these...DECLARE_PTR(VIDEOINFOHEADER, pvi, pmt->Format());
-    HRESULT hr = CSourceStream::SetMediaType(pmt); // TODO what does this do, and why do I set it as null later?
+	// call the base class' SetMediaType...
+    HRESULT hr = CSourceStream::SetMediaType(pmt);
     return hr;
 }
 
 #define DECLARE_PTR(type, ptr, expr) type* ptr = (type*)(expr);
 
+HRESULT setupPwfex(WAVEFORMATEX *pwfex, CMediaType *pmt) {
+	    // a "normal" audio stream...
+		pwfex->cbSize=sizeof(WAVEFORMATEX);
+		pwfex->wFormatTag = WAVE_FORMAT_PCM;
+		pwfex->nChannels = 2;
+		pwfex->nSamplesPerSec = 44100;
+		pwfex->wBitsPerSample = 16;
+		pwfex->nAvgBytesPerSec = pwfex->nSamplesPerSec * pwfex->nChannels * pwfex->wBitsPerSample / BITS_PER_BYTE; // it can't calculate this itself? huh?
+		pwfex->nBlockAlign = (WORD)((pwfex->wBitsPerSample * pwfex->nChannels) / BITS_PER_BYTE); // it can't calculate this itself?
+
+		// copy this info into the pmt
+        return CreateAudioMediaType(pwfex, pmt, FALSE); // not ours...
+}
 
 HRESULT CVCamStream::setAsNormal(CMediaType *pmt) {
 	    WAVEFORMATEX *pwfex;
-        pwfex = (WAVEFORMATEX *) pmt->AllocFormatBuffer(sizeof(WAVEFORMATEXTENSIBLE));
-	    ZeroMemory(pwfex , sizeof(WAVEFORMATEXTENSIBLE));
-
+        pwfex = (WAVEFORMATEX *) pmt->AllocFormatBuffer(sizeof(WAVEFORMATEX));
+	    ZeroMemory(pwfex, sizeof(WAVEFORMATEX));
         if(NULL == pwfex)
         {
             return E_OUTOFMEMORY;
         }
-
-		// we'll set it as PCM or what not, within this call...
-
-		// now tell them "this is what we will give you..."
-		LoopbackCapture(NULL, -1, pwfex);
-        
-		// old sin wave way...
-		//m_Synth->GetPCMFormatStructure(pwfex);
-
-    return CreateAudioMediaType(pwfex, pmt, FALSE); // not ours...
+		return setupPwfex(pwfex, pmt);
 
 }
-
 
 
 // GetMediaType
@@ -345,29 +303,43 @@ HRESULT CVCamStream::setAsNormal(CMediaType *pmt) {
 // which we already told them what it was.
 HRESULT CVCamStream::GetMediaType(int iPosition, CMediaType *pmt) 
 {
-	// no more positioning...
-	if(iPosition != 0)
-		return E_FAIL; // huh?
+    if (iPosition < 0) {
+        return E_INVALIDARG;
+    }
 
-    CheckPointer(pmt,E_POINTER);
+	if (iPosition > 0) {
+        return VFW_S_NO_MORE_ITEMS;
+	}
 
-    // The caller must hold the state lock because this function
-    // calls get_OutputFormat() and GetPCMFormatStructure().
-    // The function assumes that the state of the m_Synth
-    // object does not change between the two calls.  The
-    // m_Synth object's state will not change if the 
-    // state lock is held.
-    // fails currently lodo ...ASSERT(CritCheckIn(m_pParent->pStateLock()));
+    // If iPosition equals zero then we always return the currently configured MediaType 
+	// except we only have one, so no use in having it as a default :)
+    /*if (iPosition == 0) {
+        *pmt = m_mt;
+        return S_OK;
+    }*/
 
-	return setAsNormal(pmt);	
+    WAVEFORMATEX *pwfex = (WAVEFORMATEX *) pmt->AllocFormatBuffer(sizeof(WAVEFORMATEX));
+	
+	pmt->SetType(&MEDIATYPE_Audio);
+	pmt->SetSubtype(&MEDIASUBTYPE_PCM);
+    pmt->SetFormatType(&FORMAT_WaveFormatEx);
+    pmt->SetTemporalCompression(FALSE);
+	setupPwfex(pwfex, pmt);	
+	pmt->SetSampleSize(pwfex->nAvgBytesPerSec/2); // .5s worth...
+
+	return S_OK;
 }
 
 // This method is called to see if a given output format is supported
 HRESULT CVCamStream::CheckMediaType(const CMediaType *pMediaType)
 {
-    // huh? VIDEOINFOHEADER *pvi = (VIDEOINFOHEADER *)(pMediaType->Format());
-    if(*pMediaType != m_mt) 
+	int cbFormat = pMediaType->cbFormat;
+	int a = memcmp(pMediaType->pbFormat, m_mt.pbFormat, cbFormat);
+	//BYTE pb1[18] = (BYTE [18]) pMediaType->pbFormat;
+	//BYTE pb2[18] = (BYTE [18]) m_mt->pbFormat;
+    if(*pMediaType != m_mt) {
         return E_INVALIDARG;
+	}
 
     return S_OK;
 } // CheckMediaType
@@ -385,40 +357,26 @@ const int WaveBufferSize = 16*1024;     // Size of each allocated buffer
 HRESULT CVCamStream::DecideBufferSize(IMemAllocator *pAlloc,
                                        ALLOCATOR_PROPERTIES *pProperties)
 {
-    // The caller should always hold the shared state lock 
-    // before calling this function.  This function must hold 
-    // the shared state lock because it uses m_hPCMToMSADPCMConversionStream
-    // m_dwTempPCMBufferSize.
-    // fails currently. odd...lodo ... ASSERT(CritCheckIn(&m_cSharedState));
-
     CheckPointer(pAlloc,E_POINTER);
     CheckPointer(pProperties,E_POINTER);
 
     WAVEFORMATEX *pwfexCurrent = (WAVEFORMATEX*)m_mt.Format();
 
-    if(WAVE_FORMAT_PCM == pwfexCurrent->wFormatTag)
-    {
-        pProperties->cbBuffer = WaveBufferSize; // guess 16K is standard for PCM? what?
-    }
-    else
-    {
-		// no ADMCP!
-        return E_FAIL;        
-    }
+    pProperties->cbBuffer = WaveBufferSize; // guess 16K 
 
     int nBitsPerSample = pwfexCurrent->wBitsPerSample;
     int nSamplesPerSec = pwfexCurrent->nSamplesPerSec;
     int nChannels = pwfexCurrent->nChannels;
 
-	// Get 1 second worth of buffers
+	// Get 1/2 second worth of buffers
 
     pProperties->cBuffers = (nChannels * nSamplesPerSec * nBitsPerSample) / 
                             (pProperties->cbBuffer * BITS_PER_BYTE);
 
-    // Get 1/2 second worth of buffers
     pProperties->cBuffers /= 2;
+	// check for underflow...
     if(pProperties->cBuffers < 1)
-        pProperties->cBuffers = 1 ;
+        pProperties->cBuffers = 1;
 
     // Ask the allocator to reserve us the memory...
 
@@ -456,8 +414,9 @@ HRESULT CVCamStream::OnThreadCreate()
 
 HRESULT STDMETHODCALLTYPE CVCamStream::SetFormat(AM_MEDIA_TYPE *pmt)
 {
-	// you "must" use this type forever now...
-	// do we need anything audio-y here?
+	// you "must" use this type now...
+	// they call this...
+
     m_mt = *pmt;
 
     IPin* pin; 
@@ -478,66 +437,61 @@ HRESULT STDMETHODCALLTYPE CVCamStream::GetFormat(AM_MEDIA_TYPE **ppmt)
 
 HRESULT STDMETHODCALLTYPE CVCamStream::GetNumberOfCapabilities(int *piCount, int *piSize)
 {
-    *piCount = 1; // only allow one type...
+    *piCount = 1; // only allow one type currently...
     *piSize = sizeof(AUDIO_STREAM_CONFIG_CAPS);
     return S_OK;
 }
 
 HRESULT STDMETHODCALLTYPE CVCamStream::GetStreamCaps(int iIndex, AM_MEDIA_TYPE **ppMediaType, BYTE *pSCC)
-{
-	if(iIndex != 0)
-		return E_FAIL; // huh?
-	//m_mt should be propagated...
+{	 
+	
+	if(iIndex < 0)
+		return E_INVALIDARG;
+	if(iIndex > 0)
+		return S_FALSE;
+	if(pSCC == NULL)
+		return E_POINTER;
+
+	//WAVEFORMATEX* pAudioFormat = (WAVEFORMATEX*) CoTaskMemAlloc(sizeof(WAVEFORMATEX));
+
     *ppMediaType = CreateMediaType(&m_mt);
+	if (*ppMediaType == NULL) return E_OUTOFMEMORY;
 
+    DECLARE_PTR(WAVEFORMATEX, pAudioFormat, (*ppMediaType)->pbFormat);
 
+	pAudioFormat->cbSize				= sizeof(WAVEFORMATEX);
+	pAudioFormat->wFormatTag			= WAVE_FORMAT_PCM;		// This is the wave format (needed for more than 2 channels)
+	pAudioFormat->nSamplesPerSec		= 44100;	// This is in hertz
+	pAudioFormat->nChannels				= 2;		// 1 for mono, 2 for stereo, and 4 because the camera puts out dual stereo
+	pAudioFormat->wBitsPerSample		= 16;	// 16-bit sound
+	pAudioFormat->nBlockAlign			= 2*16/8;
+	pAudioFormat->nAvgBytesPerSec		= 44100*pAudioFormat->nBlockAlign;
 	
-    DECLARE_PTR(AUDIO_STREAM_CONFIG_CAPS, pvi, (*ppMediaType)->pbFormat);
-	
-    WAVEFORMATEX* pwfex = (WAVEFORMATEX *) _alloca(sizeof(WAVEFORMATEXTENSIBLE)); // sizeof(WAVEFORMATEX)
-    ZeroMemory(pwfex, sizeof(WAVEFORMATEXTENSIBLE));
+	AM_MEDIA_TYPE * pm = *ppMediaType;
 
-	LoopbackCapture(NULL, -1, pwfex);
+    pm->majortype = MEDIATYPE_Audio;
+    pm->subtype = MEDIASUBTYPE_PCM;
+    pm->formattype = FORMAT_WaveFormatEx;
+    pm->bTemporalCompression = FALSE;
+    pm->bFixedSizeSamples = TRUE;
+    pm->lSampleSize = pAudioFormat->nAvgBytesPerSec/2; // 0.5s
+    pm->cbFormat = sizeof(WAVEFORMATEX);
+	pm->pUnk = NULL;
 
-	(*ppMediaType)->majortype = MEDIATYPE_Audio;
+	AUDIO_STREAM_CONFIG_CAPS* pASCC = (AUDIO_STREAM_CONFIG_CAPS*) pSCC;
+	ZeroMemory(pSCC, sizeof(AUDIO_STREAM_CONFIG_CAPS)); 
 
-(*ppMediaType)->subtype = MEDIASUBTYPE_PCM;
-
-(*ppMediaType)->formattype = FORMAT_WaveFormatEx; // this is right...
-
-(*ppMediaType)->bTemporalCompression = FALSE;
-
-(*ppMediaType)->bFixedSizeSamples = TRUE; // *** Shouldn't this be TRUE? The video one wasn't though...
-
-(*ppMediaType)->cbFormat = sizeof(WAVEFORMATEXTENSIBLE);
-
-	pvi->BitsPerSampleGranularity = 16; // huh?
-	pvi->ChannelsGranularity = 1;
-	pvi->guid = MEDIATYPE_Audio; // theoretically they set this for us
-	pvi->MaximumBitsPerSample = pwfex->wBitsPerSample;
-	pvi->MaximumChannels = pwfex->nChannels;
-	pvi->MaximumSampleFrequency = pwfex->nSamplesPerSec;
-	pvi->MinimumBitsPerSample = pwfex->wBitsPerSample;
-	pvi->MinimumChannels= pwfex->nChannels;
-	pvi->MinimumSampleFrequency = pwfex->nSamplesPerSec;
-	pvi->SampleFrequencyGranularity = 11025; // from http://msdn.microsoft.com/en-us/library/dd317597(VS.85).aspx
-
-
-
-
-    int nBitsPerSample = pwfex->wBitsPerSample;
-    int nSamplesPerSec = pwfex->nSamplesPerSec;
-    int nChannels = pwfex->nChannels;
-
-	// Get 1 second worth of buffers
-
-    int cBuffers = (nChannels * nSamplesPerSec * nBitsPerSample) / 
-                            (WaveBufferSize * BITS_PER_BYTE);
-
-    // Get 1/2 second worth of buffers
-    (*ppMediaType)->lSampleSize = cBuffers / 2;// LODO dry up
-	  (*ppMediaType)->pUnk                 = NULL;
-
+	// Set the audio capabilities
+	pASCC->guid = MEDIATYPE_Audio;
+	pASCC->ChannelsGranularity = 1;
+	pASCC->MaximumChannels = 2;
+	pASCC->MinimumChannels = 2;
+	pASCC->MaximumSampleFrequency = 44100;
+	pASCC->BitsPerSampleGranularity = 16;
+	pASCC->MaximumBitsPerSample = 16;
+	pASCC->MinimumBitsPerSample = 16;
+	pASCC->MinimumSampleFrequency = 44100;
+	pASCC->SampleFrequencyGranularity = 11025;
 
 	return S_OK;
 }
