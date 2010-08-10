@@ -103,18 +103,17 @@ private:
 CUnknown * WINAPI CVCam::CreateInstance(LPUNKNOWN lpunk, HRESULT *phr)
 {
     ASSERT(phr);
-	//_crtDbgFlag = 5; // enable heap checking [slow]
     CUnknown *punk = new CVCam(lpunk, phr);
 
 	return punk;
 }
 
 CVCam::CVCam(LPUNKNOWN lpunk, HRESULT *phr) : 
-    CSource(NAME("Virtual Cam4"), lpunk, CLSID_VirtualCam)
+    CSource(NAME("Virtual cam5"), lpunk, CLSID_VirtualCam)
 {
     ASSERT(phr);
     m_paStreams = (CSourceStream **) new CVCamStream*[1];
-    m_paStreams[0] = new CVCamStream(phr, this, L"Virtual Cam4");
+    m_paStreams[0] = new CVCamStream(phr, this, L"Virtual cam5");
 }
 
 HRESULT CVCam::QueryInterface(REFIID riid, void **ppv)
@@ -131,13 +130,13 @@ HRESULT CVCam::QueryInterface(REFIID riid, void **ppv)
 // all the stuff.
 //////////////////////////////////////////////////////////////////////////
 CVCamStream::CVCamStream(HRESULT *phr, CVCam *pParent, LPCWSTR pPinName) :
-    CSourceStream(NAME("Virtual Cam4"),phr, pParent, pPinName), m_pParent(pParent)
+    CSourceStream(NAME("Virtual cam5"),phr, pParent, pPinName), m_pParent(pParent)
 {
 
     // Set the media type...
     m_fFirstSampleDelivered = FALSE;
     m_llSampleMediaTimeStart = 0;
-    GetMediaType(0, &m_mt);
+	GetMediaType(0, &m_mt);
 
 }
 
@@ -167,6 +166,9 @@ const DWORD BITS_PER_BYTE = 8;
 //  Camera device.
 //////////////////////////////////////////////////////////////////////////
 
+HRESULT LoopbackCapture(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNotNullThenJustSetTypeOnly);
+
+
 //
 // FillBuffer
 //
@@ -187,9 +189,7 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
         return hr;
     }
 
-	for(int i = 0; i < pms->GetSize(); i++) {
-		  pData[i] = rand() % 256; // fill with random...
-    }
+	LoopbackCapture(pData,  pms->GetSize(), NULL);
 
 	WAVEFORMATEX* pwfexCurrent = (WAVEFORMATEX*)m_mt.Format();
 
@@ -591,7 +591,7 @@ const AMOVIESETUP_PIN AMSPinVCam=
 const AMOVIESETUP_FILTER AMSFilterVCam =
 {
     &CLSID_VirtualCam,  // Filter CLSID
-    L"Virtual Cam4",     // String name
+    L"Virtual cam5",     // String name
     MERIT_DO_NOT_USE,      // Filter merit
     1,                     // Number pins
     &AMSPinVCam             // Pin details
@@ -600,7 +600,7 @@ const AMOVIESETUP_FILTER AMSFilterVCam =
 CFactoryTemplate g_Templates[] = 
 {
     {
-        L"Virtual Cam4",
+        L"Virtual cam5",
         &CLSID_VirtualCam,
         CVCam::CreateInstance,
         NULL,
@@ -630,7 +630,7 @@ STDAPI RegisterFilters( BOOL bRegister )
     hr = CoInitialize(0);
     if(bRegister)
     {
-        hr = AMovieSetupRegisterServer(CLSID_VirtualCam, L"Virtual Cam4", achFileName, L"Both", L"InprocServer32");
+        hr = AMovieSetupRegisterServer(CLSID_VirtualCam, L"Virtual cam5", achFileName, L"Both", L"InprocServer32");
     }
 
     if( SUCCEEDED(hr) )
@@ -647,7 +647,7 @@ STDAPI RegisterFilters( BOOL bRegister )
                 rf2.dwMerit = MERIT_DO_NOT_USE;
                 rf2.cPins = 1;
                 rf2.rgPins = &AMSPinVCam;
-                hr = fm->RegisterFilter(CLSID_VirtualCam, L"Virtual Cam4", &pMoniker, &CLSID_AudioInputDeviceCategory, NULL, &rf2);
+                hr = fm->RegisterFilter(CLSID_VirtualCam, L"Virtual cam5", &pMoniker, &CLSID_AudioInputDeviceCategory, NULL, &rf2);
             }
             else
             {
