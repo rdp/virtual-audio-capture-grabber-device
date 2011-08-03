@@ -214,6 +214,10 @@ HRESULT LoopbackCaptureSetup()
 
 
 
+void propagateBufferForever() {
+
+}
+
 HRESULT propagateBufferOnce(long iSize) {
 	HRESULT hr = S_OK;
 
@@ -333,7 +337,7 @@ HRESULT propagateBufferOnce(long iSize) {
 
 }
 
-CCritSec csMyLock;  // Critical section is not locked yet.
+CCritSec csMyLock;  // Critical section starts not locked.
 
 // iSize is max size of the BYTE buffer...so maybe...we should just drop it if we have past that size? hmm...
 HRESULT LoopbackCaptureTakeFromBuffer(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNotNullThenJustSetTypeOnly, LONG* totalBytesWrote)
@@ -345,6 +349,7 @@ HRESULT LoopbackCaptureTakeFromBuffer(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNo
 		if(pBufLocalCurrentEndLocation > 0) {
   	      memcpy(pBuf, pBufLocal, pBufLocalCurrentEndLocation);
           *totalBytesWrote = pBufLocalCurrentEndLocation;
+		  pBufLocalCurrentEndLocation = 0;
           return hr;
 		}
 	  }
