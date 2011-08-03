@@ -207,9 +207,9 @@ HRESULT CVCamStream::DecideBufferSize(IMemAllocator *pAlloc,
     pProperties->cBuffers = (nChannels * nSamplesPerSec * nBitsPerSample) / 
                             (pProperties->cbBuffer * BITS_PER_BYTE);
 
-	// Get 1/16 second worth of buffers, rounded to WaveBufferSize
+	// Get 1/?? second worth of buffers, rounded to WaveBufferSize
 
-    pProperties->cBuffers /= 16;
+    pProperties->cBuffers /= SECOND_FRACTIONS_TO_GRAB;
 
 	// double check for underflow...
     if(pProperties->cBuffers < 1)
@@ -217,10 +217,8 @@ HRESULT CVCamStream::DecideBufferSize(IMemAllocator *pAlloc,
     
 
 	// try with 1024B of buffer, just for fun.
-	/*
-	pProperties->cbBuffer = ;
-	pProperties->cBuffers = 1;
-	*/
+	//pProperties->cbBuffer = 1024;
+	//pProperties->cBuffers = 1;
 
 
     // Ask the allocator to reserve us the memory...

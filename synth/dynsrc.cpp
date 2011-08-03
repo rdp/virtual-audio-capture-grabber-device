@@ -8,6 +8,8 @@
 //------------------------------------------------------------------------------
 
 
+// I think this is not what I'm looking for, move along now...
+
 // Locking Strategy.
 //
 // Hold the filter critical section (m_pFilter->pStateLock()) to serialise

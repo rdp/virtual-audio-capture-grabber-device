@@ -16,6 +16,7 @@
 #include <dllsetup.h>
 #include <stdio.h>
 #include <Windows.h>
+#include "common.h"
 
 HRESULT LoopbackCapture(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNotNullThenJustSetTypeOnly);
 
