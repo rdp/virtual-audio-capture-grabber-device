@@ -1,5 +1,6 @@
 #include "stdafx.h"
 
+#include <streams.h>
 #include <windows.h>
 #include <mmsystem.h>
 #include <mmdeviceapi.h>
@@ -9,7 +10,6 @@
 #include "common.h"
 #include "assert.h"
 #include <memory.h>
-
 
 //HRESULT open_file(LPCWSTR szFileName, HMMIO *phFile);
 
@@ -22,7 +22,6 @@ bool bFirstPacket = true;
 IMMDevice *m_pMMDevice;
 UINT32 nBlockAlign;
 UINT32 pnFrames;
-
 
 BYTE pBufLocal[1024*1024]; // 1MB is quite awhile I think...
 long pBufLocalSize = 1024*1024;//TODO
@@ -224,7 +223,7 @@ HRESULT propagateBufferOnce(long iSize) {
     // grab a chunk...
 	int gotAnyAtAll = FALSE;
 	DWORD start_time = timeGetTime();
-	INT32 nBytesWrote = 0;
+	INT32 nBytesWrote = 0; // LODO remove this nBytesWrote
     while (true) {
         UINT32 nNextPacketSize;
         hr = pAudioCaptureClient->GetNextPacketSize(&nNextPacketSize); // get next packet, if one is ready...
@@ -334,14 +333,24 @@ HRESULT propagateBufferOnce(long iSize) {
 
 }
 
+CCritSec csMyLock;  // Critical section is not locked yet.
 
 // iSize is max size of the BYTE buffer...so maybe...we should just drop it if we have past that size? hmm...
 HRESULT LoopbackCaptureTakeFromBuffer(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNotNullThenJustSetTypeOnly, LONG* totalBytesWrote)
  {
-	HRESULT hr = propagateBufferOnce(iSize);
-	memcpy(pBuf, pBufLocal, pBufLocalCurrentEndLocation);
-    *totalBytesWrote = pBufLocalCurrentEndLocation;
-    return hr;
+	while(true) {
+	  {
+        CAutoLock cObjectLock(&csMyLock);  // Lock the critical section, releases scope after method is over with...
+	    HRESULT hr = propagateBufferOnce(iSize);
+		if(pBufLocalCurrentEndLocation > 0) {
+  	      memcpy(pBuf, pBufLocal, pBufLocalCurrentEndLocation);
+          *totalBytesWrote = pBufLocalCurrentEndLocation;
+          return hr;
+		}
+	  }
+	  // sleep outside the lock ...
+      Sleep(1); // LODO ??
+	}
 }
 
 void loopbackRelease() {
