@@ -574,10 +574,10 @@ STDAPI AMovieSetupRegisterServer( CLSID   clsServer, LPCWSTR szDescription, LPCW
 STDAPI AMovieSetupUnregisterServer( CLSID clsServer );
 
 
-// {8E14549A-DB61-4309-AFA1-3578E927E933}
-// {8E14549B-DB61-4309-AFA1-3578E927E933} now...
+// was {8E14549A-DB61-4309-AFA1-3578E927E933}
+// {8E14549B-DB61-4309-AFA1-3578E927E935} now...
 DEFINE_GUID(CLSID_VirtualCam,
-            0x8e14549b, 0xdb61, 0x4309, 0xaf, 0xa1, 0x35, 0x78, 0xe9, 0x27, 0xe9, 0x33);
+            0x8e14549b, 0xdb61, 0x4309, 0xaf, 0xa1, 0x35, 0x78, 0xe9, 0x27, 0xe9, 0x35);
 
 
 const AMOVIESETUP_MEDIATYPE AMSMediaTypesVCam = 
@@ -600,7 +600,7 @@ const AMOVIESETUP_PIN AMSPinVCam=
 const AMOVIESETUP_FILTER AMSFilterVCam =
 {
     &CLSID_VirtualCam,  // Filter CLSID
-    L"Virtual cam5",     // String name
+    L"Virtual cam6",     // String name
     MERIT_DO_NOT_USE,      // Filter merit
     1,                     // Number pins
     &AMSPinVCam             // Pin details
@@ -609,7 +609,7 @@ const AMOVIESETUP_FILTER AMSFilterVCam =
 CFactoryTemplate g_Templates[] = 
 {
     {
-        L"Virtual cam5",
+        L"Virtual cam6",
         &CLSID_VirtualCam,
         CVCam::CreateInstance,
         NULL,
@@ -639,7 +639,7 @@ STDAPI RegisterFilters( BOOL bRegister )
     hr = CoInitialize(0);
     if(bRegister)
     {
-        hr = AMovieSetupRegisterServer(CLSID_VirtualCam, L"Virtual cam5", achFileName, L"Both", L"InprocServer32");
+        hr = AMovieSetupRegisterServer(CLSID_VirtualCam, L"Virtual cam6", achFileName, L"Both", L"InprocServer32");
     }
 
     if( SUCCEEDED(hr) )
@@ -656,7 +656,7 @@ STDAPI RegisterFilters( BOOL bRegister )
                 rf2.dwMerit = MERIT_DO_NOT_USE;
                 rf2.cPins = 1;
                 rf2.rgPins = &AMSPinVCam;
-                hr = fm->RegisterFilter(CLSID_VirtualCam, L"Virtual cam5", &pMoniker, &CLSID_AudioInputDeviceCategory, NULL, &rf2);
+                hr = fm->RegisterFilter(CLSID_VirtualCam, L"Virtual cam6", &pMoniker, &CLSID_AudioInputDeviceCategory, NULL, &rf2);
             }
             else
             {
