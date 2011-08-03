@@ -23,6 +23,11 @@ IMMDevice *m_pMMDevice;
 UINT32 nBlockAlign;
 UINT32 pnFrames;
 
+
+BYTE pBufLocal[1024*1024]; // 1MB is quite awhile I think...
+long pBufLocalSize = 1024*1024;//TODO
+long pBufLocalCurrentEndLocation = 0;
+
 // we only call this once...
 HRESULT LoopbackCaptureSetup()
 {
@@ -200,22 +205,29 @@ HRESULT LoopbackCaptureSetup()
     }
     
     bFirstPacket = true;
+
+
+
+
 	return hr;
 
-}
+} // end LoopbackCaptureSetup
 
 
-// size is size of the BYTE buffer...but...I guess...we just have to fill it all the way with data...I guess...
-HRESULT LoopbackCapture(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNotNullThenJustSetTypeOnly, LONG* totalBytesWrote)
- {
+
+HRESULT propagateBufferOnce(long iSize) {
 	HRESULT hr = S_OK;
+
+	// this should also...umm...detect the timeout stuff and fake fill?
+	// TODO timing...
 
     // grab a chunk...
 	int gotAnyAtAll = FALSE;
 	DWORD start_time = timeGetTime();
-    for (INT32 nBytesWrote = 0; nBytesWrote < iSize; ) {
+	INT32 nBytesWrote = 0;
+    while (true) {
         UINT32 nNextPacketSize;
-        hr = pAudioCaptureClient->GetNextPacketSize(&nNextPacketSize);
+        hr = pAudioCaptureClient->GetNextPacketSize(&nNextPacketSize); // get next packet, if one is ready...
         if (FAILED(hr)) {
             printf("IAudioCaptureClient::GetNextPacketSize failed on pass %u after %u frames: hr = 0x%08x\n", nBytesWrote, pnFrames, hr);
             pAudioClient->Stop();
@@ -226,19 +238,18 @@ HRESULT LoopbackCapture(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNotNullThenJustS
         }
 
         if (0 == nNextPacketSize) {
-            // no data yet, we're either waiting between incoming chunks, or...no sound is being played on the computer...
+            // no data yet, we're either waiting between incoming chunks, or...no sound is being played on the computer currently <sigh>...
 			DWORD millis_to_fill = (DWORD) (1.0/SECOND_FRACTIONS_TO_GRAB*1000); // truncate is ok :)
 			assert(millis_to_fill > 1);
 			DWORD current_time = timeGetTime();
 			if((current_time - start_time > millis_to_fill)) {
 				if(!gotAnyAtAll) {
-				  // after a full gammut of apparent silence, punt!
-				  // LODO what if it's half way through...
-	        	  //memset(pBuf, 0, iSize); // not needed I don't think...
-    			  *totalBytesWrote = iSize;
+				  // after a full slice of apparent silence, punt and return fake silence! [to not confuse our downstream friends]
+	        	  // memset(pBuf, 0, iSize); // not needed I don't think...
+    			  pBufLocalCurrentEndLocation = iSize; // LODO do these match/line up well?
 	  			  return S_OK;
 				} else {
-					int a = 3;
+					assert(false); // want to know if this ever happens...
 				}
 			} else {
 			  Sleep(1);
@@ -301,10 +312,11 @@ HRESULT LoopbackCapture(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNotNullThenJustS
 		pnFrames += nNumFramesToRead; // increment total count...		
 
         LONG lBytesToWrite = nNumFramesToRead * nBlockAlign; // nBlockAlign is "audio block size" or frame size.
-		UINT i;
+		UINT i; // avoid some overflow...
 		for(i = 0; i < lBytesToWrite && nBytesWrote < iSize; i++) {
-			pBuf[nBytesWrote++] = pData[i]; // lodo use a straight call... [?] if memcpy is faster...
+			pBufLocal[nBytesWrote++] = pData[i]; // lodo use a straight call... [?] if memcpy is faster... [?]
 		}
+		pBufLocalCurrentEndLocation = i;
         
         hr = pAudioCaptureClient->ReleaseBuffer(nNumFramesToRead);
         if (FAILED(hr)) {
@@ -317,10 +329,18 @@ HRESULT LoopbackCapture(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNotNullThenJustS
         }
         
         bFirstPacket = false;
-		*totalBytesWrote = i;
-		return hr; // TODO no loop [?]
-    } // capture loop...
-    
+		return hr;
+    } // capture anything loop...
+
+}
+
+
+// iSize is max size of the BYTE buffer...so maybe...we should just drop it if we have past that size? hmm...
+HRESULT LoopbackCaptureTakeFromBuffer(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNotNullThenJustSetTypeOnly, LONG* totalBytesWrote)
+ {
+	HRESULT hr = propagateBufferOnce(iSize);
+	memcpy(pBuf, pBufLocal, pBufLocalCurrentEndLocation);
+    *totalBytesWrote = pBufLocalCurrentEndLocation;
     return hr;
 }
 
