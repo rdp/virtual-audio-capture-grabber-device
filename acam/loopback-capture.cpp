@@ -38,6 +38,29 @@ void setExpectedMaxBufferSize(long toThis) {
 }
 HANDLE m_hThread;
 
+
+void logToFile(char *log_this) {
+    FILE *f;
+	f = fopen("g:\\yo2", "a"); // TODO ...
+	if(!log_this) {
+		int a = 3;
+	}
+	fprintf(f, log_this);
+	fclose(f);
+}
+
+void ShowOutput(const char *str, ...)
+{
+
+  char buf[2048];
+  va_list ptr;
+  va_start(ptr,str);
+  vsprintf_s(buf,str,ptr);
+  OutputDebugStringA(buf);
+  logToFile(buf);
+}
+
+
 static DWORD WINAPI propagateBufferForever(LPVOID pv);
 
 // we only call this once...
@@ -50,6 +73,7 @@ HRESULT LoopbackCaptureSetup()
     hr = get_default_device(&m_pMMDevice); // so it can re-place our pointer...
     if (FAILED(hr)) {
         return hr;
+
     }
 
     // activate an (the default, for us) IAudioClient
@@ -59,7 +83,7 @@ HRESULT LoopbackCaptureSetup()
         (void**)&pAudioClient
     );
     if (FAILED(hr)) {
-        printf("IMMDevice::Activate(IAudioClient) failed: hr = 0x%08x", hr);
+        ShowOutput("IMMDevice::Activate(IAudioClient) failed: hr = 0x%08x", hr);
         return hr;
     }
     
@@ -67,7 +91,7 @@ HRESULT LoopbackCaptureSetup()
     REFERENCE_TIME hnsDefaultDevicePeriod;
     hr = pAudioClient->GetDevicePeriod(&hnsDefaultDevicePeriod, NULL);
     if (FAILED(hr)) {
-        printf("IAudioClient::GetDevicePeriod failed: hr = 0x%08x\n", hr);
+        ShowOutput("IAudioClient::GetDevicePeriod failed: hr = 0x%08x\n", hr);
         pAudioClient->Release();
         return hr;
     }
@@ -77,7 +101,7 @@ HRESULT LoopbackCaptureSetup()
 	// apparently propogated only by GetMixFormat...
     hr = pAudioClient->GetMixFormat(&pwfx);
     if (FAILED(hr)) {
-        printf("IAudioClient::GetMixFormat failed: hr = 0x%08x\n", hr);
+        ShowOutput("IAudioClient::GetMixFormat failed: hr = 0x%08x\n", hr);
         CoTaskMemFree(pwfx);
         pAudioClient->Release();
         return hr;
@@ -113,7 +137,7 @@ HRESULT LoopbackCaptureSetup()
 							pEx2->Samples.wValidBitsPerSample = pEx->Samples.wValidBitsPerSample;
 						} */
                     } else {
-                        printf("Don't know how to coerce mix format to int-16\n");
+                        ShowOutput("Don't know how to coerce mix format to int-16\n");
                         CoTaskMemFree(pwfx);
                         pAudioClient->Release();
                         return E_UNEXPECTED;
@@ -122,7 +146,7 @@ HRESULT LoopbackCaptureSetup()
                 break;
 
             default:
-                printf("Don't know how to coerce WAVEFORMATEX with wFormatTag = 0x%08x to int-16\n", pwfx->wFormatTag);
+                ShowOutput("Don't know how to coerce WAVEFORMATEX with wFormatTag = 0x%08x to int-16\n", pwfx->wFormatTag);
                 CoTaskMemFree(pwfx);
                 pAudioClient->Release();
                 return E_UNEXPECTED;
@@ -149,7 +173,7 @@ HRESULT LoopbackCaptureSetup()
         pwfex->nAvgBytesPerSec = pwfx->nAvgBytesPerSec;
         pwfex->cbSize = pwfx->cbSize;
 		//FILE *fp = fopen("/normal2", "w"); // fails on me? maybe juts a VLC thing...
-		//fprintf(fp, "hello world %d %d %d %d %d %d %d", pwfex->wFormatTag, pwfex->nChannels, 
+		//fShowOutput(fp, "hello world %d %d %d %d %d %d %d", pwfex->wFormatTag, pwfex->nChannels, 
 		//	pwfex->nSamplesPerSec, pwfex->wBitsPerSample, pwfex->nBlockAlign, pwfex->nAvgBytesPerSec, pwfex->cbSize );
 		//fclose(fp);
 		// cleanup
@@ -176,7 +200,7 @@ HRESULT LoopbackCaptureSetup()
         0, 0, pwfx, 0
     );
     if (FAILED(hr)) {
-        printf("IAudioClient::Initialize failed: hr = 0x%08x\n", hr);
+        ShowOutput("IAudioClient::Initialize failed: hr = 0x%08x\n", hr);
         pAudioClient->Release();
         return hr;
     }
@@ -188,7 +212,7 @@ HRESULT LoopbackCaptureSetup()
         (void**)&pAudioCaptureClient // CARE INSTANTIATION
     );
     if (FAILED(hr)) {
-        printf("IAudioClient::GetService(IAudioCaptureClient) failed: hr 0x%08x\n", hr);
+        ShowOutput("IAudioClient::GetService(IAudioCaptureClient) failed: hr 0x%08x\n", hr);
         //CloseHandle(hWakeUp);
         pAudioClient->Release();
         return hr;
@@ -199,7 +223,7 @@ HRESULT LoopbackCaptureSetup()
     hTask = AvSetMmThreadCharacteristics(L"Capture", &nTaskIndex);
     if (NULL == hTask) {
         DWORD dwErr = GetLastError();
-        printf("AvSetMmThreadCharacteristics failed: last error = %u\n", dwErr);
+        ShowOutput("AvSetMmThreadCharacteristics failed: last error = %u\n", dwErr);
         pAudioCaptureClient->Release();
         //CloseHandle(hWakeUp);
         pAudioClient->Release();
@@ -209,7 +233,7 @@ HRESULT LoopbackCaptureSetup()
     // call IAudioClient::Start
     hr = pAudioClient->Start();
     if (FAILED(hr)) {
-        printf("IAudioClient::Start failed: hr = 0x%08x\n", hr);
+        ShowOutput("IAudioClient::Start failed: hr = 0x%08x\n", hr);
         AvRevertMmThreadCharacteristics(hTask);
         pAudioCaptureClient->Release();
         pAudioClient->Release();
@@ -282,7 +306,7 @@ HRESULT propagateBufferOnce() {
         UINT32 nNextPacketSize;
         hr = pAudioCaptureClient->GetNextPacketSize(&nNextPacketSize); // get next packet, if one is ready...
         if (FAILED(hr)) {
-            printf("IAudioCaptureClient::GetNextPacketSize failed on pass %u after %u frames: hr = 0x%08x\n", nBytesWrote, pnFrames, hr);
+            ShowOutput("IAudioCaptureClient::GetNextPacketSize failed on pass %u after %u frames: hr = 0x%08x\n", nBytesWrote, pnFrames, hr);
             pAudioClient->Stop();
             AvRevertMmThreadCharacteristics(hTask);
             pAudioCaptureClient->Release();
@@ -334,21 +358,21 @@ HRESULT propagateBufferOnce() {
         
         
         if (FAILED(hr)) {
-            printf("IAudioCaptureClient::GetBuffer failed on pass %u after %u frames: hr = 0x%08x\n", nBytesWrote, pnFrames, hr);
+            ShowOutput("IAudioCaptureClient::GetBuffer failed on pass %u after %u frames: hr = 0x%08x\n", nBytesWrote, pnFrames, hr);
             pAudioClient->Stop();
             AvRevertMmThreadCharacteristics(hTask);
             pAudioCaptureClient->Release();
             pAudioClient->Release();            
             return hr;            
         }
-
+		OutputDebugString(L"yo ho");
         if (bFirstPacket && AUDCLNT_BUFFERFLAGS_DATA_DISCONTINUITY == dwFlags) {
-            printf("Probably spurious glitch reported on first packet\n");
+            ShowOutput("Probably spurious glitch reported on first packet\n");
         } else if (AUDCLNT_BUFFERFLAGS_DATA_DISCONTINUITY != dwFlags) {
 			if(dwFlags != 0) {
 		      // expected if audio turns on and off...
 				// LODO make this a non sync point ...
-              printf("IAudioCaptureClient::GetBuffer set flags to 0x%08x on pass %u after %u frames\n", dwFlags, nBytesWrote, pnFrames);
+				ShowOutput("IAudioCaptureClient::discontinuity GetBuffer set flags to 0x%08x on pass %u after %u frames\n", dwFlags, nBytesWrote, pnFrames);
               /*pAudioClient->Stop();
               AvRevertMmThreadCharacteristics(hTask);
               pAudioCaptureClient->Release(); // WE GET HERE			  
@@ -358,7 +382,7 @@ HRESULT propagateBufferOnce() {
         }
 
         if (0 == nNumFramesToRead) {
-            printf("IAudioCaptureClient::GetBuffer said to read 0 frames on pass %u after %u frames\n", nBytesWrote, pnFrames);
+            ShowOutput("IAudioCaptureClient::GetBuffer said to read 0 frames on pass %u after %u frames\n", nBytesWrote, pnFrames);
             pAudioClient->Stop();
             AvRevertMmThreadCharacteristics(hTask);
             pAudioCaptureClient->Release();
@@ -379,7 +403,7 @@ HRESULT propagateBufferOnce() {
         
         hr = pAudioCaptureClient->ReleaseBuffer(nNumFramesToRead);
         if (FAILED(hr)) {
-            printf("IAudioCaptureClient::ReleaseBuffer failed on pass %u after %u frames: hr = 0x%08x\n", nBytesWrote, pnFrames, hr);
+            ShowOutput("IAudioCaptureClient::ReleaseBuffer failed on pass %u after %u frames: hr = 0x%08x\n", nBytesWrote, pnFrames, hr);
             pAudioClient->Stop();
             AvRevertMmThreadCharacteristics(hTask);
             pAudioCaptureClient->Release();
@@ -393,6 +417,7 @@ HRESULT propagateBufferOnce() {
 
 }
 
+#define MIN(a, b) (((a) < (b)) ? (a) : (b)) // awful
 
 // iSize is max size of the BYTE buffer...so maybe...we should just drop it if we have past that size? hmm...
 HRESULT LoopbackCaptureTakeFromBuffer(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNotNullThenJustSetTypeOnly, LONG* totalBytesWrote)
@@ -401,8 +426,8 @@ HRESULT LoopbackCaptureTakeFromBuffer(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNo
        {
         CAutoLock cObjectLock(&csMyLock);  // Lock the critical section, releases scope after method is over with...
 		if(pBufLocalCurrentEndLocation > 0) {
-		  assert(pBufLocalCurrentEndLocation <= expectedMaxBufferSize);
-  	      memcpy(pBuf, pBufLocal, pBufLocalCurrentEndLocation);
+		  // fails lodo ok? assert(pBufLocalCurrentEndLocation <= expectedMaxBufferSize);
+		  memcpy(pBuf, pBufLocal, MIN(pBufLocalCurrentEndLocation, expectedMaxBufferSize));
           *totalBytesWrote = pBufLocalCurrentEndLocation;
 		  pBufLocalCurrentEndLocation = 0;
           return S_OK;
@@ -413,11 +438,14 @@ HRESULT LoopbackCaptureTakeFromBuffer(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNo
 	}
 }
 
+
+
 void loopbackRelease() {
 	shouldStop = 1;
+	// wait for thread to end...
 	WaitForSingleObject(m_hThread, INFINITE);
     CloseHandle(m_hThread);
-    m_hThread = NULL;	
+    m_hThread = NULL;
 	pAudioClient->Stop();
     AvRevertMmThreadCharacteristics(hTask);
     pAudioCaptureClient->Release();
