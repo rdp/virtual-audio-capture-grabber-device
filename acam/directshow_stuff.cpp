@@ -53,19 +53,18 @@ HRESULT CVCam::QueryInterface(REFIID riid, void **ppv)
 CVCamStream::CVCamStream(HRESULT *phr, CVCam *pParent, LPCWSTR pPinName) :
     CSourceStream(NAME("Virtual cam5"),phr, pParent, pPinName), m_pParent(pParent)
 {
-
     // Set the media type...
-    m_fFirstSampleDelivered = FALSE;
+    m_fFirstSampleDelivered = FALSE; // ??
     m_llSampleMediaTimeStart = 0;
 	GetMediaType(0, &m_mt);
 
 }
 
-void loopbackRelease();
+void loopBackRelease();
 
 CVCamStream::~CVCamStream()
 {
-	loopbackRelease();	
+	//loopBackRelease();
 } 
 
 HRESULT CVCamStream::QueryInterface(REFIID riid, void **ppv)
@@ -245,6 +244,14 @@ HRESULT CVCamStream::DecideBufferSize(IMemAllocator *pAlloc,
 } // DecideBufferSize
 
 HRESULT LoopbackCaptureSetup();
+
+
+HRESULT CVCamStream::OnThreadDestroy()
+{
+	loopBackRelease();
+	return S_OK;
+}
+
 
 // Called when graph is run
 HRESULT CVCamStream::OnThreadCreate()

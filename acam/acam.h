@@ -87,16 +87,17 @@ public:
     //////////////////////////////////////////////////////////////////////////
     //  CSourceStream
     //////////////////////////////////////////////////////////////////////////
-    CVCamStream(HRESULT *phr, CVCam *pParent, LPCWSTR pPinName);
-    ~CVCamStream();
-
     HRESULT FillBuffer(IMediaSample *pms);
     HRESULT DecideBufferSize(IMemAllocator *pIMemAlloc, ALLOCATOR_PROPERTIES *pProperties);
     HRESULT CheckMediaType(const CMediaType *pMediaType);
     HRESULT GetMediaType(int iPosition, CMediaType *pmt);
     HRESULT SetMediaType(const CMediaType *pmt);
     HRESULT OnThreadCreate(void);
-    
+    HRESULT OnThreadDestroy(void); // ondisconnect :)
+
+    CVCamStream(HRESULT *phr, CVCam *pParent, LPCWSTR pPinName);
+    ~CVCamStream();
+
 private:
     CVCam *m_pParent;
     // unused now? REFERENCE_TIME m_rtLastTime;

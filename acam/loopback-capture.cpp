@@ -36,8 +36,8 @@ long expectedMaxBufferSize;
 void setExpectedMaxBufferSize(long toThis) {
 	expectedMaxBufferSize = toThis;
 }
-HANDLE m_hThread;
 
+HANDLE m_hThread;
 
 void logToFile(char *log_this) {
     FILE *f;
@@ -57,6 +57,7 @@ void ShowOutput(const char *str, ...)
   va_start(ptr,str);
   vsprintf_s(buf,str,ptr);
   OutputDebugStringA(buf);
+  OutputDebugString(L"yo ho2");
   logToFile(buf);
 }
 
@@ -66,6 +67,7 @@ static DWORD WINAPI propagateBufferForever(LPVOID pv);
 // we only call this once...
 HRESULT LoopbackCaptureSetup()
 {
+	shouldStop = false; // allow graphs to restart, if they so desire...
 	pnFrames = 0;
 	bool bInt16 = true; // makes it actually work, for some reason...LODO
 	
@@ -365,7 +367,7 @@ HRESULT propagateBufferOnce() {
             pAudioClient->Release();            
             return hr;            
         }
-		OutputDebugString(L"yo ho");
+		OutputDebugString(L"yo ho"); // this appears...
         if (bFirstPacket && AUDCLNT_BUFFERFLAGS_DATA_DISCONTINUITY == dwFlags) {
             ShowOutput("Probably spurious glitch reported on first packet\n");
         } else if (AUDCLNT_BUFFERFLAGS_DATA_DISCONTINUITY != dwFlags) {
@@ -422,7 +424,7 @@ HRESULT propagateBufferOnce() {
 // iSize is max size of the BYTE buffer...so maybe...we should just drop it if we have past that size? hmm...
 HRESULT LoopbackCaptureTakeFromBuffer(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNotNullThenJustSetTypeOnly, LONG* totalBytesWrote)
  {
-	while(true) {
+	while(!shouldStop) { // allow this one to exit, too, oddly.
        {
         CAutoLock cObjectLock(&csMyLock);  // Lock the critical section, releases scope after method is over with...
 		if(pBufLocalCurrentEndLocation > 0) {
@@ -436,12 +438,12 @@ HRESULT LoopbackCaptureTakeFromBuffer(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNo
 	  // sleep outside the lock ...
       Sleep(1); // LODO ??
 	}
+	return E_FAIL; // unexpected...hmm...
 }
 
 
-
-void loopbackRelease() {
-	shouldStop = 1;
+void loopBackRelease() {
+	shouldStop = 1; // TODO allow thi
 	// wait for thread to end...
 	WaitForSingleObject(m_hThread, INFINITE);
     CloseHandle(m_hThread);
