@@ -18,7 +18,7 @@
 #include <Windows.h>
 #include "common.h"
 
-HRESULT LoopbackCapture(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNotNullThenJustSetTypeOnly);
+HRESULT LoopbackCapture(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNotNullThenJustSetTypeOnly, LONG* sizeWrote);
 
 #define BITS_PER_BYTE 8
 

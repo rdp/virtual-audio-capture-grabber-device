@@ -206,14 +206,13 @@ HRESULT LoopbackCaptureSetup()
 
 
 // size is size of the BYTE buffer...but...I guess...we just have to fill it all the way with data...I guess...
-HRESULT LoopbackCapture(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNotNullThenJustSetTypeOnly)
+HRESULT LoopbackCapture(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNotNullThenJustSetTypeOnly, LONG* totalBytesWrote)
  {
-	HRESULT hr;
+	HRESULT hr = S_OK;
 
-	bFirstPacket = true;
     // grab a chunk...
 	int gotAnyAtAll = FALSE;
-	DWORD start_time = timeGetTime(); 
+	DWORD start_time = timeGetTime();
     for (INT32 nBytesWrote = 0; nBytesWrote < iSize; ) {
         UINT32 nNextPacketSize;
         hr = pAudioCaptureClient->GetNextPacketSize(&nNextPacketSize);
@@ -228,14 +227,19 @@ HRESULT LoopbackCapture(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNotNullThenJustS
 
         if (0 == nNextPacketSize) {
             // no data yet, we're either waiting between incoming chunks, or...no sound is being played on the computer...
-			DWORD millis_to_fill = (DWORD) 1.0/SECOND_FRACTIONS_TO_GRAB*1000; // truncate is ok :)
+			DWORD millis_to_fill = (DWORD) (1.0/SECOND_FRACTIONS_TO_GRAB*1000); // truncate is ok :)
 			assert(millis_to_fill > 1);
 			DWORD current_time = timeGetTime();
-			if(!gotAnyAtAll && (current_time - start_time > millis_to_fill)) {
-				// after 0.1s of apparent silence, punt!
-				// LODO what if it's half way through...
-	        	memset(pBuf, 0, iSize); // LODO needed?
-				return S_OK;
+			if((current_time - start_time > millis_to_fill)) {
+				if(!gotAnyAtAll) {
+				  // after a full gammut of apparent silence, punt!
+				  // LODO what if it's half way through...
+	        	  //memset(pBuf, 0, iSize); // not needed I don't think...
+    			  *totalBytesWrote = iSize;
+	  			  return S_OK;
+				} else {
+					int a = 3;
+				}
 			} else {
 			  Sleep(1);
 			  continue;
@@ -297,7 +301,8 @@ HRESULT LoopbackCapture(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNotNullThenJustS
 		pnFrames += nNumFramesToRead; // increment total count...		
 
         LONG lBytesToWrite = nNumFramesToRead * nBlockAlign; // nBlockAlign is "audio block size" or frame size.
-		for(UINT i = 0; i < lBytesToWrite && nBytesWrote < iSize; i++) {
+		UINT i;
+		for(i = 0; i < lBytesToWrite && nBytesWrote < iSize; i++) {
 			pBuf[nBytesWrote++] = pData[i]; // lodo use a straight call... [?] if memcpy is faster...
 		}
         
@@ -312,8 +317,9 @@ HRESULT LoopbackCapture(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNotNullThenJustS
         }
         
         bFirstPacket = false;
+		*totalBytesWrote = i;
+		return hr; // TODO no loop [?]
     } // capture loop...
-
     
     return hr;
 }
