@@ -1,18 +1,1 @@
-wireshark the error report
-use some validation tool
-remove certain calls, see where it disappears.
-google "vlc directshow heap corruption" or what not
-check why I have this extra parameter: HRESULT LoopbackCapture(const WAVEFORMATEX& wfex
-make sure I have taken out all the "8" stuff
-google "vlc corruption when streaming" (?)
-
-add breakpoints *every method*, see what gets hit (?)
-try a release build?
-
-backtrack all changes, attempt to build any audio one that *doesn't die*
-
-research the locks (?)
-
 try tweaking the timestamps (?)...
-
-amm I overrunning any array anywhere, maybe accidentally, maybe by 1?
