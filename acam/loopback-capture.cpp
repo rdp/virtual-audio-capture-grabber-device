@@ -7,7 +7,8 @@
 #include <stdio.h>
 #include <avrt.h>
 #include "common.h"
-#include <Dshow.h>
+#include "assert.h"
+#include <memory.h>
 
 
 //HRESULT open_file(LPCWSTR szFileName, HMMIO *phFile);
@@ -202,7 +203,7 @@ HRESULT LoopbackCaptureSetup()
 	return hr;
 
 }
-#include <memory.h>
+
 
 // size is size of the BYTE buffer...but...I guess...we just have to fill it all the way with data...I guess...
 HRESULT LoopbackCapture(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNotNullThenJustSetTypeOnly)
@@ -227,16 +228,18 @@ HRESULT LoopbackCapture(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNotNullThenJustS
 
         if (0 == nNextPacketSize) {
             // no data yet, we're either waiting between incoming chunks, or...no sound is being played on the computer...
-			DWORD millis_to_fill = 1.0/SECOND_FRACTIONS_TO_GRAB*1000;
+			DWORD millis_to_fill = (DWORD) 1.0/SECOND_FRACTIONS_TO_GRAB*1000; // truncate is ok :)
+			assert(millis_to_fill > 1);
 			DWORD current_time = timeGetTime();
 			if(!gotAnyAtAll && (current_time - start_time > millis_to_fill)) {
 				// after 0.1s of apparent silence, punt!
 				// LODO what if it's half way through...
 	        	memset(pBuf, 0, iSize); // LODO needed?
 				return S_OK;
+			} else {
+			  Sleep(1);
+			  continue;
 			}
-			Sleep(1);
-            continue;
         } else {
 			gotAnyAtAll = TRUE;
 		}
