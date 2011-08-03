@@ -354,9 +354,7 @@ HRESULT LoopbackCaptureTakeFromBuffer(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNo
         CAutoLock cObjectLock(&csMyLock);  // Lock the critical section, releases scope after method is over with...
 	    HRESULT hr = propagateBufferOnce(iSize);
 		if(pBufLocalCurrentEndLocation > 0) {
-			if(pBufLocalCurrentEndLocation > expectedMaxBufferSize) {
-			  assert(pBufLocalCurrentEndLocation < expectedMaxBufferSize);
-			}
+		  assert(pBufLocalCurrentEndLocation <= expectedMaxBufferSize);
   	      memcpy(pBuf, pBufLocal, pBufLocalCurrentEndLocation);
           *totalBytesWrote = pBufLocalCurrentEndLocation;
 		  pBufLocalCurrentEndLocation = 0;
