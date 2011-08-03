@@ -23,6 +23,8 @@ IMMDevice *m_pMMDevice;
 UINT32 nBlockAlign;
 UINT32 pnFrames;
 
+CCritSec csMyLock;  // Critical section starts not locked...
+
 BYTE pBufLocal[1024*1024]; // 1MB is quite awhile I think... TODO check overflow...
 long pBufLocalSize = 1024*1024;// TODO needed?
 long pBufLocalCurrentEndLocation = 0;
@@ -211,20 +213,20 @@ HRESULT LoopbackCaptureSetup()
     
     bFirstPacket = true;
 
-
-
-
 	return hr;
 
 } // end LoopbackCaptureSetup
 
 
+HRESULT propagateBufferOnce();
 
 void propagateBufferForever() {
-
+  while(true) {
+    HRESULT hr = propagateBufferOnce();
+  }
 }
 
-HRESULT propagateBufferOnce(long iSize) {
+HRESULT propagateBufferOnce() {
 	HRESULT hr = S_OK;
 
 	// this should also...umm...detect the timeout stuff and fake fill?
@@ -255,8 +257,11 @@ HRESULT propagateBufferOnce(long iSize) {
 			if((current_time - start_time > millis_to_fill)) {
 				if(!gotAnyAtAll) {
 				  // after a full slice of apparent silence, punt and return fake silence! [to not confuse our downstream friends]
-	        	  // memset(pBuf, 0, iSize); // not needed I don't think...
-    			  pBufLocalCurrentEndLocation = expectedMaxBufferSize; // LODO does this work at all?
+   			     {
+                   CAutoLock cObjectLock(&csMyLock);  // Lock the critical section, releases scope after method is over with...
+				   memset(pBufLocal, 0, expectedMaxBufferSize); // guess that's silent
+    			   pBufLocalCurrentEndLocation = expectedMaxBufferSize; // LODO does this work at all?
+				 }
 	  			  return S_OK;
 				} else {
 				  assert(false); // want to know if this ever happens...
@@ -323,10 +328,13 @@ HRESULT propagateBufferOnce(long iSize) {
 
         LONG lBytesToWrite = nNumFramesToRead * nBlockAlign; // nBlockAlign is "audio block size" or frame size.
 		UINT i; // avoid some overflow...
-		for(i = 0; i < lBytesToWrite && nBytesWrote < iSize; i++) {
+		{
+          CAutoLock cObjectLock(&csMyLock);  // Lock the critical section, releases scope after method is over with...
+		  for(i = 0; i < lBytesToWrite && nBytesWrote < pBufLocalSize; i++) {
 			pBufLocal[nBytesWrote++] = pData[i]; // lodo use a straight call... [?] if memcpy is faster... [?]
+		  }
+		  pBufLocalCurrentEndLocation = i;
 		}
-		pBufLocalCurrentEndLocation = i;
         
         hr = pAudioCaptureClient->ReleaseBuffer(nNumFramesToRead);
         if (FAILED(hr)) {
@@ -340,26 +348,25 @@ HRESULT propagateBufferOnce(long iSize) {
         
         bFirstPacket = false;
 		return hr;
-    } // capture anything loop...
+    } // capture something, anything! loop...
 
 }
 
-CCritSec csMyLock;  // Critical section starts not locked.
 
 // iSize is max size of the BYTE buffer...so maybe...we should just drop it if we have past that size? hmm...
 HRESULT LoopbackCaptureTakeFromBuffer(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNotNullThenJustSetTypeOnly, LONG* totalBytesWrote)
  {
 	while(true) {
-	  {
+	   propagateBufferOnce();
+       {
         CAutoLock cObjectLock(&csMyLock);  // Lock the critical section, releases scope after method is over with...
-	    HRESULT hr = propagateBufferOnce(iSize);
 		if(pBufLocalCurrentEndLocation > 0) {
 		  assert(pBufLocalCurrentEndLocation <= expectedMaxBufferSize);
   	      memcpy(pBuf, pBufLocal, pBufLocalCurrentEndLocation);
           *totalBytesWrote = pBufLocalCurrentEndLocation;
 		  pBufLocalCurrentEndLocation = 0;
-          return hr;
-		}
+          return S_OK;
+		} // else fall through to sleep
 	  }
 	  // sleep outside the lock ...
       Sleep(1); // LODO ??
