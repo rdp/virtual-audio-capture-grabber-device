@@ -90,6 +90,7 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="directshow_fillbuffer.cpp" />
     <ClCompile Include="directshow_stuff.cpp" />
     <ClCompile Include="loopback-capture-helpers.cpp" />
     <ClCompile Include="loopback-capture.cpp" />

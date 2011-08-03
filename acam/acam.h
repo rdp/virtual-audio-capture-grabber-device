@@ -15,6 +15,12 @@
 #include <initguid.h>
 #include <dllsetup.h>
 #include <stdio.h>
+#include <Windows.h>
+
+HRESULT LoopbackCapture(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNotNullThenJustSetTypeOnly);
+
+#define BITS_PER_BYTE 8
+
 
 // This class is exported from the acam.dll
 class ACAM_API Cacam {

@@ -8,6 +8,8 @@
 #include <avrt.h>
 #include <stdio.h>
 
+// unused [?]
+
 HRESULT open_file(LPCWSTR szFileName, HMMIO *phFile) {
     MMIOINFO mi = {0};
 
@@ -27,6 +29,8 @@ HRESULT open_file(LPCWSTR szFileName, HMMIO *phFile) {
     return S_OK;
 }
 
+
+// I guess this is default umm...audio output device?
 
 HRESULT get_default_device(IMMDevice **ppMMDevice) {
     HRESULT hr = S_OK;

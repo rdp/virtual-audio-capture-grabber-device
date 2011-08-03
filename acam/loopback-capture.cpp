@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <avrt.h>
 
-HRESULT open_file(LPCWSTR szFileName, HMMIO *phFile);
+//HRESULT open_file(LPCWSTR szFileName, HMMIO *phFile);
 
 HRESULT get_default_device(IMMDevice **ppMMDevice);
 
@@ -19,10 +19,11 @@ IMMDevice *m_pMMDevice;
 UINT32 nBlockAlign;
 UINT32 pnFrames;
 
+// we only call this once...
 HRESULT LoopbackCaptureSetup()
 {
 	pnFrames = 0;
-	bool bInt16 = true; // makes it actually work, for some reason...
+	bool bInt16 = true; // makes it actually work, for some reason...LODO
 	
     HRESULT hr;
     hr = get_default_device(&m_pMMDevice); // so it can re-place our pointer...
@@ -165,7 +166,7 @@ HRESULT LoopbackCaptureSetup()
     // activate an IAudioCaptureClient
     hr = pAudioClient->GetService(
         __uuidof(IAudioCaptureClient),
-        (void**)&pAudioCaptureClient
+        (void**)&pAudioCaptureClient // CARE INSTANTIATION
     );
     if (FAILED(hr)) {
         printf("IAudioClient::GetService(IAudioCaptureClient) failed: hr 0x%08x\n", hr);
@@ -201,7 +202,6 @@ HRESULT LoopbackCaptureSetup()
 
 }
 
-
 // size is size of the BYTE buffer...but...I guess...we just have to fill it all the way with data...I guess...
 HRESULT LoopbackCapture(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNotNullThenJustSetTypeOnly)
  {
@@ -210,8 +210,6 @@ HRESULT LoopbackCapture(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNotNullThenJustS
 	bFirstPacket = true;
     // grab a chunk...
     for (INT32 nBitsWrote = 0; nBitsWrote < iSize; ) {
-
-        // TODO sleep until there is data available [?] or can it poll me... [lodo]
         UINT32 nNextPacketSize;
         hr = pAudioCaptureClient->GetNextPacketSize(&nNextPacketSize);
         if (FAILED(hr)) {
@@ -224,8 +222,8 @@ HRESULT LoopbackCapture(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNotNullThenJustS
         }
 
         if (0 == nNextPacketSize) {
-            // no data yet
-			Sleep(0);// LODO (?)
+            // no data yet, we're either waiting between incoming chunks, or...no sound is being played on the computer...
+			Sleep(1);
             continue;
         }
 
@@ -262,7 +260,7 @@ HRESULT LoopbackCapture(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNotNullThenJustS
               printf("IAudioCaptureClient::GetBuffer set flags to 0x%08x on pass %u after %u frames\n", dwFlags, nBitsWrote, pnFrames);
               pAudioClient->Stop();
               AvRevertMmThreadCharacteristics(hTask);
-              pAudioCaptureClient->Release();
+              pAudioCaptureClient->Release(); // WE GET HERE			  
               pAudioClient->Release();            
               return E_UNEXPECTED;
 			}
@@ -282,7 +280,7 @@ HRESULT LoopbackCapture(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNotNullThenJustS
         LONG lBytesToWrite = nNumFramesToRead * nBlockAlign;
 #pragma prefast(suppress: __WARNING_INCORRECT_ANNOTATION, "IAudioCaptureClient::GetBuffer SAL annotation implies a 1-byte buffer")
 		for(UINT i = 0; i < lBytesToWrite && nBitsWrote < iSize; i++) {
-			pBuf[nBitsWrote++] = pData[i]; // lodo use a straight call...
+			pBuf[nBitsWrote++] = pData[i]; // lodo use a straight call... [?] if memcpy is faster...
 		}
         
         hr = pAudioCaptureClient->ReleaseBuffer(nNumFramesToRead);

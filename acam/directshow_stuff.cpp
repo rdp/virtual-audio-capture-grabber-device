@@ -18,8 +18,6 @@
 
 #define DECLARE_PTR(type, ptr, expr) type* ptr = (type*)(expr);
 
-
-
 //////////////////////////////////////////////////////////////////////////
 //  CVCam is the source filter which masquerades as a capture device
 //////////////////////////////////////////////////////////////////////////
@@ -83,96 +81,6 @@ HRESULT CVCamStream::QueryInterface(REFIID riid, void **ppv)
     AddRef();
     return S_OK;
 }
-
-const DWORD BITS_PER_BYTE = 8;
-
-//////////////////////////////////////////////////////////////////////////
-//  This is the routine where we create the data being output by the Virtual
-//  Camera device.
-//////////////////////////////////////////////////////////////////////////
-
-HRESULT LoopbackCapture(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNotNullThenJustSetTypeOnly);
-
-
-//
-// FillBuffer
-//
-// Stuffs the buffer with data
-// "they" call this
-// LODO push versus pull?
-// then "they" call Deliver...so I guess we just fill it with something?
-// they *must* call this only every so often...
-// you probably should fill the entire buffer...hmm...
-HRESULT CVCamStream::FillBuffer(IMediaSample *pms) 
-{
-    CheckPointer(pms,E_POINTER);
-
-    BYTE *pData;
-
-    HRESULT hr = pms->GetPointer(&pData);
-    if (FAILED(hr)) {
-        return hr;
-    }
-
-	LoopbackCapture(pData,  pms->GetSize(), NULL);
-
-	WAVEFORMATEX* pwfexCurrent = (WAVEFORMATEX*)m_mt.Format();
-
-    // Set the sample's start and end time stamps...
-    CRefTime rtStart = m_rtSampleTime;
-
-	// add a few seconds to the clock...
-    m_rtSampleTime = rtStart + (REFERENCE_TIME)(UNITS * pms->GetActualDataLength()) / 
-                     (REFERENCE_TIME)pwfexCurrent->nAvgBytesPerSec;
-
-    hr = pms->SetTime((REFERENCE_TIME*)&rtStart, (REFERENCE_TIME*)&m_rtSampleTime);
-
-    if (FAILED(hr)) {
-        return hr;
-    }
-
-    // Set the sample's properties.
-    hr = pms->SetPreroll(FALSE);
-    if (FAILED(hr)) {
-        return hr;
-    }
-
-    hr = pms->SetMediaType(NULL);
-    if (FAILED(hr)) {
-        return hr;
-    }
-   
-    hr = pms->SetDiscontinuity(!m_fFirstSampleDelivered);
-
-    if (FAILED(hr)) {
-        return hr;
-    }
-    
-    hr = pms->SetSyncPoint(!m_fFirstSampleDelivered);
-	if (FAILED(hr)) {
-        return hr;
-    }
-
-    LONGLONG llMediaTimeStart = m_llSampleMediaTimeStart;
-    
-    DWORD dwNumAudioSamplesInPacket = (pms->GetActualDataLength() * BITS_PER_BYTE) /
-                                      (pwfexCurrent->nChannels * pwfexCurrent->wBitsPerSample);
-
-    LONGLONG llMediaTimeStop = m_llSampleMediaTimeStart + dwNumAudioSamplesInPacket;
-
-	// what is the difference between SetMediaTime and SetTime ?
-
-    hr = pms->SetMediaTime(&llMediaTimeStart, &llMediaTimeStop);
-    if (FAILED(hr)) {
-        return hr;
-    }
-
-    m_llSampleMediaTimeStart = llMediaTimeStop;
-    m_fFirstSampleDelivered = TRUE;
-	Sleep(2); // VLC goes crazy if we give it too much data too fast...sleep 2ms...
-    return NOERROR;
-} // FillBuffer
-
 
 //
 // Notify
@@ -271,9 +179,11 @@ HRESULT CVCamStream::CheckMediaType(const CMediaType *pMediaType)
 } // CheckMediaType
 
 
-const int WaveBufferSize = 16*1024;     // Size of each allocated buffer
+
+// Size of each allocated buffer
 // seems arbitrary
-// maybe downstream needed it?
+// maybe downstream needed a certain size?
+const int WaveBufferChunkSize = 16*1024;     
 
 // DecideBufferSize
 //
@@ -288,21 +198,30 @@ HRESULT CVCamStream::DecideBufferSize(IMemAllocator *pAlloc,
 
     WAVEFORMATEX *pwfexCurrent = (WAVEFORMATEX*)m_mt.Format();
 
-    pProperties->cbBuffer = WaveBufferSize; // guess 16K 
-
     int nBitsPerSample = pwfexCurrent->wBitsPerSample;
     int nSamplesPerSec = pwfexCurrent->nSamplesPerSec;
     int nChannels = pwfexCurrent->nChannels;
-
-	// Get 1/2 second worth of buffers
+	
+    pProperties->cbBuffer = WaveBufferChunkSize;
 
     pProperties->cBuffers = (nChannels * nSamplesPerSec * nBitsPerSample) / 
                             (pProperties->cbBuffer * BITS_PER_BYTE);
 
+	// Get 1/16 second worth of buffers, rounded to WaveBufferSize
+
     pProperties->cBuffers /= 16;
-	// check for underflow...
+
+	// double check for underflow...
     if(pProperties->cBuffers < 1)
         pProperties->cBuffers = 1;
+    
+
+	// try with 1024B of buffer, just for fun.
+	/*
+	pProperties->cbBuffer = ;
+	pProperties->cBuffers = 1;
+	*/
+
 
     // Ask the allocator to reserve us the memory...
 
