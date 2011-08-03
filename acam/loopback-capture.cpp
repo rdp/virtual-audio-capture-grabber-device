@@ -25,6 +25,8 @@ UINT32 pnFrames;
 
 CCritSec csMyLock;  // Critical section starts not locked...
 
+int shouldStop = 0;
+
 BYTE pBufLocal[1024*1024]; // 1MB is quite awhile I think... TODO check overflow...
 long pBufLocalSize = 1024*1024;// TODO needed?
 long pBufLocalCurrentEndLocation = 0;
@@ -34,6 +36,9 @@ long expectedMaxBufferSize;
 void setExpectedMaxBufferSize(long toThis) {
 	expectedMaxBufferSize = toThis;
 }
+HANDLE m_hThread;
+
+static DWORD WINAPI propagateBufferForever(LPVOID pv);
 
 // we only call this once...
 HRESULT LoopbackCaptureSetup()
@@ -213,17 +218,54 @@ HRESULT LoopbackCaptureSetup()
     
     bFirstPacket = true;
 
+	// start the grabbing thread...hmm...
+	DWORD dwThreadID;
+    m_hThread = CreateThread(NULL,
+                            0,
+                            propagateBufferForever,
+                            0,
+                            0,
+                            &dwThreadID);
+    if(!m_hThread)
+    {
+        DWORD dwErr = GetLastError();
+        return HRESULT_FROM_WIN32(dwErr);
+    }
+
 	return hr;
 
 } // end LoopbackCaptureSetup
 
 
-HRESULT propagateBufferOnce();
 
-void propagateBufferForever() {
-  while(true) {
+// LODO cleanups..
+/*
+// stop the thread and close the handle
+HRESULT
+CAsyncIo::CloseThread(void)
+{
+    // signal the thread-exit object
+    m_evStop.Set();
+
+    if(m_hThread)
+    {
+        WaitForSingleObject(m_hThread, INFINITE);
+        CloseHandle(m_hThread);
+        m_hThread = NULL;
+    }
+
+    return S_OK;
+}*/
+
+HRESULT propagateBufferOnce();
+static DWORD WINAPI propagateBufferForever(LPVOID pv) {
+  while(!shouldStop) {
     HRESULT hr = propagateBufferOnce();
+	if(FAILED(hr)) {
+	 return hr; // TODO can exit...
+	}
   }
+  return S_OK;
 }
 
 HRESULT propagateBufferOnce() {
@@ -331,9 +373,8 @@ HRESULT propagateBufferOnce() {
 		{
           CAutoLock cObjectLock(&csMyLock);  // Lock the critical section, releases scope after method is over with...
 		  for(i = 0; i < lBytesToWrite && nBytesWrote < pBufLocalSize; i++) {
-			pBufLocal[nBytesWrote++] = pData[i]; // lodo use a straight call... [?] if memcpy is faster... [?]
+			pBufLocal[pBufLocalCurrentEndLocation++] = pData[i]; // lodo use a straight call... [?] if memcpy is faster... [?]
 		  }
-		  pBufLocalCurrentEndLocation = i;
 		}
         
         hr = pAudioCaptureClient->ReleaseBuffer(nNumFramesToRead);
@@ -357,7 +398,6 @@ HRESULT propagateBufferOnce() {
 HRESULT LoopbackCaptureTakeFromBuffer(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNotNullThenJustSetTypeOnly, LONG* totalBytesWrote)
  {
 	while(true) {
-	   propagateBufferOnce();
        {
         CAutoLock cObjectLock(&csMyLock);  // Lock the critical section, releases scope after method is over with...
 		if(pBufLocalCurrentEndLocation > 0) {
@@ -374,6 +414,10 @@ HRESULT LoopbackCaptureTakeFromBuffer(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNo
 }
 
 void loopbackRelease() {
+	shouldStop = 1;
+	WaitForSingleObject(m_hThread, INFINITE);
+    CloseHandle(m_hThread);
+    m_hThread = NULL;	
 	pAudioClient->Stop();
     AvRevertMmThreadCharacteristics(hTask);
     pAudioCaptureClient->Release();
