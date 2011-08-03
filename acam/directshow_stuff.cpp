@@ -185,6 +185,8 @@ HRESULT CVCamStream::CheckMediaType(const CMediaType *pMediaType)
 // maybe downstream needed a certain size?
 const int WaveBufferChunkSize = 16*1024;     
 
+void setExpectedMaxBufferSize(long toThis);
+
 // DecideBufferSize
 //
 // This will always be called after the format has been sucessfully
@@ -220,6 +222,7 @@ HRESULT CVCamStream::DecideBufferSize(IMemAllocator *pAlloc,
 	//pProperties->cbBuffer = 1024;
 	//pProperties->cBuffers = 1;
 
+	setExpectedMaxBufferSize(pProperties->cbBuffer * pProperties->cBuffers);
 
     // Ask the allocator to reserve us the memory...
 
@@ -252,12 +255,12 @@ HRESULT CVCamStream::OnThreadCreate()
 
     HRESULT hr = LoopbackCaptureSetup();
     if (FAILED(hr)) {
-            printf("IAudioCaptureClient::setup failed");
-            return hr;
+       printf("IAudioCaptureClient::setup failed");
+       return hr;
     }
 
     return NOERROR;
-} // OnThreadCreate
+}
 
 //////////////////////////////////////////////////////////////////////////
 //  IAMStreamConfig
@@ -265,8 +268,7 @@ HRESULT CVCamStream::OnThreadCreate()
 
 HRESULT STDMETHODCALLTYPE CVCamStream::SetFormat(AM_MEDIA_TYPE *pmt)
 {
-	// you "must" use this type now...
-	// they call this...
+	// this is them saying you "must" use this type now...
 
     m_mt = *pmt;
 
@@ -314,7 +316,7 @@ HRESULT STDMETHODCALLTYPE CVCamStream::GetStreamCaps(int iIndex, AM_MEDIA_TYPE *
 	pAudioFormat->nChannels				= 2;		// 1 for mono, 2 for stereo, and 4 because the camera puts out dual stereo
 	pAudioFormat->wBitsPerSample		= 16;	// 16-bit sound
 	pAudioFormat->nBlockAlign			= 2*16/8;
-	pAudioFormat->nAvgBytesPerSec		= 44100*pAudioFormat->nBlockAlign;
+	pAudioFormat->nAvgBytesPerSec		= 44100*pAudioFormat->nBlockAlign; // TODO match our current audio settings [?]
 	
 	AM_MEDIA_TYPE * pm = *ppMediaType;
 
@@ -323,7 +325,7 @@ HRESULT STDMETHODCALLTYPE CVCamStream::GetStreamCaps(int iIndex, AM_MEDIA_TYPE *
     pm->formattype = FORMAT_WaveFormatEx;
     pm->bTemporalCompression = FALSE;
     pm->bFixedSizeSamples = TRUE;
-    pm->lSampleSize = pAudioFormat->nBlockAlign;//appears reasonable http://github.com/tap/JamomaDSP/blob/2c80c487c6e560d959dd85e7d2bcca3a19ce9b26/src/os/win/DX/BaseClasses/mtype.cpp
+    pm->lSampleSize = pAudioFormat->nBlockAlign; // appears reasonable http://github.com/tap/JamomaDSP/blob/2c80c487c6e560d959dd85e7d2bcca3a19ce9b26/src/os/win/DX/BaseClasses/mtype.cpp
     pm->cbFormat = sizeof(WAVEFORMATEX);
 	pm->pUnk = NULL;
 

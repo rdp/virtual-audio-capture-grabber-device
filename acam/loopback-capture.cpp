@@ -23,9 +23,15 @@ IMMDevice *m_pMMDevice;
 UINT32 nBlockAlign;
 UINT32 pnFrames;
 
-BYTE pBufLocal[1024*1024]; // 1MB is quite awhile I think...
-long pBufLocalSize = 1024*1024;//TODO
+BYTE pBufLocal[1024*1024]; // 1MB is quite awhile I think... TODO check overflow...
+long pBufLocalSize = 1024*1024;// TODO needed?
 long pBufLocalCurrentEndLocation = 0;
+
+long expectedMaxBufferSize;
+
+void setExpectedMaxBufferSize(long toThis) {
+	expectedMaxBufferSize = toThis;
+}
 
 // we only call this once...
 HRESULT LoopbackCaptureSetup()
@@ -242,17 +248,18 @@ HRESULT propagateBufferOnce(long iSize) {
 
         if (0 == nNextPacketSize) {
             // no data yet, we're either waiting between incoming chunks, or...no sound is being played on the computer currently <sigh>...
+			// maybe I don't really...need to worry about this in the end, once I can figure out the timing stuffs? <sniff>
 			DWORD millis_to_fill = (DWORD) (1.0/SECOND_FRACTIONS_TO_GRAB*1000); // truncate is ok :)
-			assert(millis_to_fill > 1);
+			assert(millis_to_fill > 1); // actually, we kind of lose precision/timing here, don't we...hmm...LODO with correct timing info...
 			DWORD current_time = timeGetTime();
 			if((current_time - start_time > millis_to_fill)) {
 				if(!gotAnyAtAll) {
 				  // after a full slice of apparent silence, punt and return fake silence! [to not confuse our downstream friends]
 	        	  // memset(pBuf, 0, iSize); // not needed I don't think...
-    			  pBufLocalCurrentEndLocation = iSize; // LODO do these match/line up well?
+    			  pBufLocalCurrentEndLocation = expectedMaxBufferSize; // LODO does this work at all?
 	  			  return S_OK;
 				} else {
-					assert(false); // want to know if this ever happens...
+				  assert(false); // want to know if this ever happens...
 				}
 			} else {
 			  Sleep(1);
@@ -347,6 +354,9 @@ HRESULT LoopbackCaptureTakeFromBuffer(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNo
         CAutoLock cObjectLock(&csMyLock);  // Lock the critical section, releases scope after method is over with...
 	    HRESULT hr = propagateBufferOnce(iSize);
 		if(pBufLocalCurrentEndLocation > 0) {
+			if(pBufLocalCurrentEndLocation > expectedMaxBufferSize) {
+			  assert(pBufLocalCurrentEndLocation < expectedMaxBufferSize);
+			}
   	      memcpy(pBuf, pBufLocal, pBufLocalCurrentEndLocation);
           *totalBytesWrote = pBufLocalCurrentEndLocation;
 		  pBufLocalCurrentEndLocation = 0;
