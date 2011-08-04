@@ -40,36 +40,25 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
 
 
     // Set the sample's start and end time stamps...
-	// disabled for now...
-    REFERENCE_TIME rtStart = now - latestGraphStart; // unused
-	if(now < latestGraphStart) {
-	  int a = 3;
-	}
-	rtStart = m_rtSampleEndTime; // re-use <sigh>. TODO re-sync it if it's too far in the past [?] // compare end  "now"
-    m_rtSampleEndTime = rtStart + (REFERENCE_TIME)(UNITS * pms->GetActualDataLength()) / 
+	assert(now > latestGraphStart);
+    REFERENCE_TIME rtStart = now - latestGraphStart; // same as m_pParent->StreamTime(rtStart2);
+	if(!(rtStart >= m_rtSampleEndTime)) {
+	  //assert(rtStart >= m_rtSampleEndTime);
+	  //rtStart = m_rtSampleEndTime; // ??? doesn't fix it...hmm...
+	} else {
+      m_rtSampleEndTime = rtStart + (REFERENCE_TIME)(UNITS * pms->GetActualDataLength()) / 
                      (REFERENCE_TIME)pwfexCurrent->nAvgBytesPerSec;
-
-    REFERENCE_TIME oldStartTime = now - latestGraphStart;
-
-
-	// by not setting this, we're instructing it to "immediately display"
-	// TODO set it using the time passed in to the [start] method [?] http://msdn.microsoft.com/en-us/library/aa451394.aspx Run method?
-	/*
-	REFERENCE_TIME a;
-	if(previousEnd > rtStart) {
-		a = rtStart;
-		rtStart = previousEnd;
-	}*/
-	if(!(rtStart < m_rtSampleEndTime)) {
-	  assert(rtStart < m_rtSampleEndTime); // sanity check my math...
 	}
 
+	if(!(rtStart <= m_rtSampleEndTime)) {
+	  assert(rtStart <= m_rtSampleEndTime); // sanity check my math...
+	}
 
-   // sniff hr = pms->SetTime((REFERENCE_TIME*)&rtStart, (REFERENCE_TIME*)&m_rtSampleEndTime);
-
+	/*
+    hr = pms->SetTime((REFERENCE_TIME*)&rtStart, (REFERENCE_TIME*)&m_rtSampleEndTime);
     if (FAILED(hr)) {
         return hr;
-    }
+    }*/
 
     // Set the sample's properties.
 

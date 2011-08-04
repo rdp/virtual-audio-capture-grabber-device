@@ -14,3 +14,5 @@ better name than acam.ax
 tell VLC "here's how to fix it"
 
 VLC streaming fails currently...
+
+handle pauses: http://msdn.microsoft.com/en-us/library/dd377472%28v=vs.85%29.aspx

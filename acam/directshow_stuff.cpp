@@ -44,7 +44,7 @@ REFERENCE_TIME latestGraphStart = 0;
 
 STDMETHODIMP CVCam::Run(REFERENCE_TIME tStart) {
 	latestGraphStart = tStart; // get one of these with each 'play' button, but not with pause [?]
-	((CVCamStream*) m_paStreams[0])->m_rtSampleEndTime = latestGraphStart;
+	((CVCamStream*) m_paStreams[0])->m_rtSampleEndTime = 0;
 	return CSource::Run(tStart);
 }
 
@@ -67,7 +67,6 @@ CVCamStream::CVCamStream(HRESULT *phr, CVCam *pParent, LPCWSTR pPinName) :
     // Set the media type...
     m_llSampleMediaTimeStart = 0;
 	GetMediaType(0, &m_mt);
-
 }
 
 void loopBackRelease();
@@ -78,6 +77,8 @@ CVCamStream::~CVCamStream()
 	int a = 3;
 	ShowOutput("destructor");
 } 
+
+// these latency/pushsource stuffs never seem to get called...ever...at least by VLC...
 
 HRESULT STDMETHODCALLTYPE CVCamStream::GetLatency(REFERENCE_TIME *storeItHere) {
 	*storeItHere = 10000/SECOND_FRACTIONS_TO_GRAB;
