@@ -1,1 +1,12 @@
 See http://betterlogic.com/roger/2010/08/open-source-audio-sniffergrabber-for-windows-7vista for description.
+
+To install, as an administrator go to the Release subdir, and run
+C:\...\Release> regsvr32 acam.ax
+
+To uninstall:
+
+C:\...\Release> regsvr32 /u acam.ax
+
+ping me if you want installation made easier.
+
+Then you can use it in VLC or whatever directshow compatible player/recorder you have as an input device.

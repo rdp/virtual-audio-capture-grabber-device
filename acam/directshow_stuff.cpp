@@ -54,7 +54,6 @@ CVCamStream::CVCamStream(HRESULT *phr, CVCam *pParent, LPCWSTR pPinName) :
     CSourceStream(NAME("Virtual cam5"),phr, pParent, pPinName), m_pParent(pParent)
 {
     // Set the media type...
-    m_fFirstSampleDelivered = FALSE; // ??
     m_llSampleMediaTimeStart = 0;
 	GetMediaType(0, &m_mt);
 
@@ -273,7 +272,6 @@ HRESULT CVCamStream::Inactive() // sweet
 // Called when graph is run
 HRESULT CVCamStream::OnThreadCreate()
 {
-    m_fFirstSampleDelivered = FALSE;
     m_llSampleMediaTimeStart = 0;
     GetMediaType(0, &m_mt);
 

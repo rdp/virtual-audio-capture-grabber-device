@@ -42,9 +42,6 @@ HANDLE m_hThread;
 void logToFile(char *log_this) {
     FILE *f;
 	f = fopen("g:\\yo2", "a"); // TODO ...
-	if(!log_this) {
-		int a = 3;
-	}
 	fprintf(f, log_this);
 	fclose(f);
 }
@@ -306,7 +303,8 @@ HRESULT propagateBufferOnce() {
 				  // after a full slice of apparent silence, punt and return fake silence! [to not confuse our downstream friends]
    			     {
                    CAutoLock cObjectLock(&csMyLock);  // Lock the critical section, releases scope after method is over with...
-				   memset(pBufLocal, 0, expectedMaxBufferSize); // guess that's silent
+				   assert(expectedMaxBufferSize < pBufLocalSize); // LODO needed?
+				   memset(pBufLocal, 0, expectedMaxBufferSize); // guess this simulates silence...
     			   pBufLocalCurrentEndLocation = expectedMaxBufferSize; // LODO does this work at all?
 				 }
 	  			  return S_OK;
@@ -314,7 +312,7 @@ HRESULT propagateBufferOnce() {
 				  assert(false); // want to know if this ever happens...
 				}
 			} else {
-			  Sleep(1);
+			  Sleep(1); // doesn't seem to hurt cpu
 			  continue;
 			}
         } else {
@@ -346,21 +344,27 @@ HRESULT propagateBufferOnce() {
             pAudioClient->Release();            
             return hr;            
         }
-		OutputDebugString(L"yo ho1"); // this appears...
+
         if (bFirstPacket && AUDCLNT_BUFFERFLAGS_DATA_DISCONTINUITY == dwFlags) {
             ShowOutput("Probably spurious glitch reported on first packet\n");
+			bFirstPacket = true;
         } else if (AUDCLNT_BUFFERFLAGS_DATA_DISCONTINUITY != dwFlags) {
 			if(dwFlags != 0) {
-		      // expected if audio turns on and off...
-				// LODO make this a non sync point ...
-				ShowOutput("IAudioCaptureClient::discontinuity GetBuffer set flags to 0x%08x on pass %u after %u frames\n", dwFlags, nBytesWrote, pnFrames);
+		      // expected if audio turns on then off...
+			  // LODO make this a non sync point ...
+			  ShowOutput("IAudioCaptureClient::discontinuity GetBuffer set flags to 0x%08x on pass %u after %u frames\n", dwFlags, nBytesWrote, pnFrames);
               /*pAudioClient->Stop();
               AvRevertMmThreadCharacteristics(hTask);
               pAudioCaptureClient->Release(); // WE GET HERE			  
               pAudioClient->Release();            
               return E_UNEXPECTED;*/
+			  bFirstPacket = true;
+			} else {
+			  bFirstPacket = false; // I think this is right LODO ...
 			}
-        }
+        } else {
+		  bFirstPacket = false;
+		}
 
         if (0 == nNumFramesToRead) {
             ShowOutput("IAudioCaptureClient::GetBuffer said to read 0 frames on pass %u after %u frames\n", nBytesWrote, pnFrames);
@@ -373,12 +377,11 @@ HRESULT propagateBufferOnce() {
 
 		pnFrames += nNumFramesToRead; // increment total count...		
 
-        LONG lBytesToWrite = nNumFramesToRead * nBlockAlign; // nBlockAlign is "audio block size" or frame size.
-		UINT i; // avoid some overflow...
+        LONG lBytesToWrite = nNumFramesToRead * nBlockAlign; // nBlockAlign is "audio block size" or frame size, for one audio segment...
 		{
-          CAutoLock cObjectLock(&csMyLock);  // Lock the critical section, releases scope after method is over with...
-		  for(i = 0; i < lBytesToWrite && pBufLocalCurrentEndLocation < pBufLocalSize; i++) {
-			pBufLocal[pBufLocalCurrentEndLocation++] = pData[i]; // lodo use a straight call... [?] if memcpy is faster... [?]
+          CAutoLock cObjectLock(&csMyLock);  // Lock the critical section, releases scope after block is over...
+		  for(UINT i = 0; i < lBytesToWrite && pBufLocalCurrentEndLocation < pBufLocalSize; i++) {
+			pBufLocal[pBufLocalCurrentEndLocation++] = pData[i];
 		  }
 		}
         
@@ -392,7 +395,6 @@ HRESULT propagateBufferOnce() {
             return hr;            
         }
         
-        bFirstPacket = false;
 		return hr;
     } // capture something, anything! loop...
 
@@ -415,7 +417,9 @@ HRESULT LoopbackCaptureTakeFromBuffer(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNo
 		} // else fall through to sleep
 	  }
 	  // sleep outside the lock ...
-      Sleep(2); // LODO ??
+	  // using the sleeps doesn't seem to hurt the cpu
+	  // and it seems to not get any "missed audio" messages...
+      Sleep(2); // doesn't seem to hurt the cpu...sleep longer here than the other since it has to do more work [?]
 	}
 	return E_FAIL; // unexpected...hmm...
 }

@@ -108,7 +108,6 @@ private:
     HBITMAP m_hLogoBmp;
     CCritSec m_cSharedState;
     IReferenceClock *m_pClock;
-    bool m_fFirstSampleDelivered;
 
     CRefTime     m_rtSampleTime;    // The time to be stamped on each sample
     LONGLONG m_llSampleMediaTimeStart;
