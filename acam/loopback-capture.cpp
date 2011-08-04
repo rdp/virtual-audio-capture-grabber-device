@@ -51,7 +51,6 @@ void logToFile(char *log_this) {
 
 void ShowOutput(const char *str, ...)
 {
-
   char buf[2048];
   va_list ptr;
   va_start(ptr,str);
@@ -263,26 +262,6 @@ HRESULT LoopbackCaptureSetup()
 } // end LoopbackCaptureSetup
 
 
-
-// LODO cleanups..
-/*
-// stop the thread and close the handle
-HRESULT
-CAsyncIo::CloseThread(void)
-{
-    // signal the thread-exit object
-    m_evStop.Set();
-
-    if(m_hThread)
-    {
-        WaitForSingleObject(m_hThread, INFINITE);
-        CloseHandle(m_hThread);
-        m_hThread = NULL;
-    }
-
-    return S_OK;
-}*/
-
 HRESULT propagateBufferOnce();
 static DWORD WINAPI propagateBufferForever(LPVOID pv) {
   while(!shouldStop) {
@@ -367,7 +346,7 @@ HRESULT propagateBufferOnce() {
             pAudioClient->Release();            
             return hr;            
         }
-		OutputDebugString(L"yo ho"); // this appears...
+		OutputDebugString(L"yo ho1"); // this appears...
         if (bFirstPacket && AUDCLNT_BUFFERFLAGS_DATA_DISCONTINUITY == dwFlags) {
             ShowOutput("Probably spurious glitch reported on first packet\n");
         } else if (AUDCLNT_BUFFERFLAGS_DATA_DISCONTINUITY != dwFlags) {
@@ -398,7 +377,7 @@ HRESULT propagateBufferOnce() {
 		UINT i; // avoid some overflow...
 		{
           CAutoLock cObjectLock(&csMyLock);  // Lock the critical section, releases scope after method is over with...
-		  for(i = 0; i < lBytesToWrite && nBytesWrote < pBufLocalSize; i++) {
+		  for(i = 0; i < lBytesToWrite && pBufLocalCurrentEndLocation < pBufLocalSize; i++) {
 			pBufLocal[pBufLocalCurrentEndLocation++] = pData[i]; // lodo use a straight call... [?] if memcpy is faster... [?]
 		  }
 		}
@@ -426,7 +405,7 @@ HRESULT LoopbackCaptureTakeFromBuffer(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNo
  {
 	while(!shouldStop) { // allow this one to exit, too, oddly.
        {
-        CAutoLock cObjectLock(&csMyLock);  // Lock the critical section, releases scope after method is over with...
+        CAutoLock cObjectLock(&csMyLock);  // Lock the critical section, releases scope after block is done...
 		if(pBufLocalCurrentEndLocation > 0) {
 		  // fails lodo ok? assert(pBufLocalCurrentEndLocation <= expectedMaxBufferSize);
 		  memcpy(pBuf, pBufLocal, MIN(pBufLocalCurrentEndLocation, expectedMaxBufferSize));
@@ -436,14 +415,14 @@ HRESULT LoopbackCaptureTakeFromBuffer(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNo
 		} // else fall through to sleep
 	  }
 	  // sleep outside the lock ...
-      Sleep(1); // LODO ??
+      Sleep(2); // LODO ??
 	}
 	return E_FAIL; // unexpected...hmm...
 }
 
 
 void loopBackRelease() {
-	shouldStop = 1; // TODO allow thi
+	shouldStop = 1;
 	// wait for thread to end...
 	WaitForSingleObject(m_hThread, INFINITE);
     CloseHandle(m_hThread);

@@ -93,7 +93,11 @@ public:
     HRESULT GetMediaType(int iPosition, CMediaType *pmt);
     HRESULT SetMediaType(const CMediaType *pmt);
     HRESULT OnThreadCreate(void);
+	/*
     HRESULT OnThreadDestroy(void); // ondisconnect :)
+    HRESULT Stop(void); // ondisconnect :)
+    HRESULT Exit(void); // ondisconnect :) */
+    HRESULT Inactive(void); // ondisconnect :)
 
     CVCamStream(HRESULT *phr, CVCam *pParent, LPCWSTR pPinName);
     ~CVCamStream();

@@ -245,11 +245,27 @@ HRESULT CVCamStream::DecideBufferSize(IMemAllocator *pAlloc,
 
 HRESULT LoopbackCaptureSetup();
 
-
+/*
 HRESULT CVCamStream::OnThreadDestroy()
 {
-	loopBackRelease();
 	return S_OK;
+}
+
+HRESULT CVCamStream::Stop()
+{
+	return S_OK;
+}
+
+
+HRESULT CVCamStream::Exit()
+{
+	return S_OK;
+}*/
+
+HRESULT CVCamStream::Inactive() // sweet
+{
+	loopBackRelease();
+	return CSourceStream::Inactive();
 }
 
 
