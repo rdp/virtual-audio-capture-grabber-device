@@ -12,6 +12,11 @@ extern IReferenceClock *globalClock;
 // you probably should fill the entire buffer...I think...hmm...
 HRESULT CVCamStream::FillBuffer(IMediaSample *pms) 
 {
+	
+    // If graph is inactive stop cueing samples
+    //if(!m_pParent->m_bActive || m_pParent->m_bEOF) 
+    //    return S_FALSE;
+
     CheckPointer(pms,E_POINTER);
     BYTE *pData;
     HRESULT hr = pms->GetPointer(&pData);

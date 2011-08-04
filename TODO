@@ -9,10 +9,8 @@ blog posts that make it...um...match google searches that are high for it.
 
 can I make it higher quality audio...?
 
-better name than acam.ax
-
 tell VLC "here's how to fix it"
 
-VLC streaming fails currently...
-
 handle pauses: http://msdn.microsoft.com/en-us/library/dd377472%28v=vs.85%29.aspx
+actually fix timing LOL
+  VLC streaming fails currently...

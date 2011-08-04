@@ -5,14 +5,16 @@ It works for windows 7/Vista, which come without a default one for most soundcar
 
 
 To install, as an administrator go to the Release subdir, and run
-C:\...\Release> regsvr32 acam.ax
+C:\...\Release> regsvr32 audio_sniffer.ax
 
 To uninstall:
 
-C:\...\Release> regsvr32 /u acam.ax
+C:\...\Release> regsvr32 /u audio_sniffer.ax
 
 ping me if you want installation made easier.
 
 Then you can use it in VLC or whatever directshow compatible player/recorder you have as an input device.
 
 rogerdpack@gmail.com
+
+Some source from the windows SDK samples, some from http://blogs.msdn.com/b/matthew_van_eerde/archive/2008/12/16/sample-wasapi-loopback-capture-record-what-you-hear.aspx
