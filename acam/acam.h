@@ -17,6 +17,7 @@
 #include <stdio.h>
 #include <Windows.h>
 #include "common.h"
+#include <assert.h>
 
 HRESULT LoopbackCaptureTakeFromBuffer(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNotNullThenJustSetTypeOnly, LONG* sizeWrote);
 
@@ -93,7 +94,7 @@ public:
     HRESULT GetMediaType(int iPosition, CMediaType *pmt);
     HRESULT SetMediaType(const CMediaType *pmt);
     HRESULT OnThreadCreate(void);
-	/*
+	/* don't seem to get called...
     HRESULT OnThreadDestroy(void); // ondisconnect :)
     HRESULT Stop(void); // ondisconnect :)
     HRESULT Exit(void); // ondisconnect :) */

@@ -1,16 +1,17 @@
 
-take out the G:\ [fix debut output], guess I need to output to a wide char or something like that...
 actually use it.
 advertise it as fully threaded :)
 advertise as a competitor to that other fella :P
-note where they can get help from.
 
-try going "back" in time, also note it in the MSDN.
 make it installerable etc :P
 
 
 blog posts that make it...um...match google searches that are high for it.
 
-can I make it higher quality?
+can I make it higher quality audio...?
 
 better name than acam.ax
+
+tell VLC "here's how to fix it"
+
+Tell idirectshow::stop that it doesn't get called by VLC at all.
