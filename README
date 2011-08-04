@@ -1,5 +1,9 @@
 See http://betterlogic.com/roger/2010/08/open-source-audio-sniffergrabber-for-windows-7vista for description.
 
+Basically, it's an audio capture device for all "wave out sound" that is playing on your speakers (record what you hear).
+It works for windows 7/Vista, which come without a default one for most soundcards, for some reason.
+
+
 To install, as an administrator go to the Release subdir, and run
 C:\...\Release> regsvr32 acam.ax
 
