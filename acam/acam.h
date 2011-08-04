@@ -35,11 +35,10 @@ extern ACAM_API int nacam;
 
 ACAM_API int fnacam(void);
 
+EXTERN_C const GUID CLSID_VirtualCam; // reuse it...
 
-EXTERN_C const GUID CLSID_VirtualCam;
 
-class CVCamStream;
-class CVCam : public CSource
+class CVCam : public CSource // not needed -> public IMediaFilter
 {
 public:
     //////////////////////////////////////////////////////////////////////////
@@ -48,13 +47,23 @@ public:
     static CUnknown * WINAPI CreateInstance(LPUNKNOWN lpunk, HRESULT *phr);
     STDMETHODIMP QueryInterface(REFIID riid, void **ppv);
 
-    IFilterGraph *GetGraph() {return m_pGraph;}
+    IFilterGraph *GetGraph() {return m_pGraph;};
+
+    //////////////////////////////////////////////////////////////////////////
+    //  IMediaFilter [added]
+    //////////////////////////////////////////////////////////////////////////
+    STDMETHODIMP Run(REFERENCE_TIME tStart);
+
+	//protected:
+
+   // IReferenceClock *m_pClock;
+
 
 private:
     CVCam(LPUNKNOWN lpunk, HRESULT *phr);
 };
 
-class CVCamStream : public CSourceStream, public IAMStreamConfig, public IKsPropertySet
+class CVCamStream : public CSourceStream, public IAMStreamConfig, public IKsPropertySet, public IAMPushSource
 {
 public:
 
@@ -78,6 +87,16 @@ public:
     HRESULT STDMETHODCALLTYPE GetNumberOfCapabilities(int *piCount, int *piSize);
     HRESULT STDMETHODCALLTYPE GetStreamCaps(int iIndex, AM_MEDIA_TYPE **pmt, BYTE *pSCC);
 
+
+	// IAMPushSource
+	HRESULT STDMETHODCALLTYPE GetLatency(REFERENCE_TIME *);
+	HRESULT STDMETHODCALLTYPE GetPushSourceFlags(ULONG *);
+	HRESULT STDMETHODCALLTYPE SetPushSourceFlags(ULONG);
+	HRESULT STDMETHODCALLTYPE SetStreamOffset(REFERENCE_TIME) { return E_FAIL; }
+	HRESULT STDMETHODCALLTYPE GetStreamOffset(REFERENCE_TIME *);
+	HRESULT STDMETHODCALLTYPE GetMaxStreamOffset(REFERENCE_TIME *);
+	HRESULT STDMETHODCALLTYPE SetMaxStreamOffset(REFERENCE_TIME);
+
     //////////////////////////////////////////////////////////////////////////
     //  IKsPropertySet
     //////////////////////////////////////////////////////////////////////////
@@ -94,14 +113,15 @@ public:
     HRESULT GetMediaType(int iPosition, CMediaType *pmt);
     HRESULT SetMediaType(const CMediaType *pmt);
     HRESULT OnThreadCreate(void);
+    HRESULT OnThreadDestroy(void);
 	/* don't seem to get called...
-    HRESULT OnThreadDestroy(void); // ondisconnect :)
-    HRESULT Stop(void); // ondisconnect :)
-    HRESULT Exit(void); // ondisconnect :) */
+    HRESULT Stop(void);
+    HRESULT Exit(void);*/
     HRESULT Inactive(void); // ondisconnect :)
 
     CVCamStream(HRESULT *phr, CVCam *pParent, LPCWSTR pPinName);
     ~CVCamStream();
+    CRefTime     m_rtSampleEndTime;    // The time to be stamped on each sample
 
 private:
     CVCam *m_pParent;
@@ -110,7 +130,6 @@ private:
     CCritSec m_cSharedState;
     IReferenceClock *m_pClock;
 
-    CRefTime     m_rtSampleTime;    // The time to be stamped on each sample
     LONGLONG m_llSampleMediaTimeStart;
 
 	HRESULT setAsNormal(CMediaType *pmt);

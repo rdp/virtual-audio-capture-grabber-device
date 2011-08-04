@@ -29,12 +29,23 @@ CUnknown * WINAPI CVCam::CreateInstance(LPUNKNOWN lpunk, HRESULT *phr)
 	return punk;
 }
 
+IReferenceClock *globalClock;
+
 CVCam::CVCam(LPUNKNOWN lpunk, HRESULT *phr) : 
     CSource(NAME("Virtual cam5"), lpunk, CLSID_VirtualCam)
 {
     ASSERT(phr);
+	//m_pClock is null at this point...
     m_paStreams = (CSourceStream **) new CVCamStream*[1];
     m_paStreams[0] = new CVCamStream(phr, this, L"Virtual cam5");
+}
+
+REFERENCE_TIME latestGraphStart = 0;
+
+STDMETHODIMP CVCam::Run(REFERENCE_TIME tStart) {
+	latestGraphStart = tStart; // get one of these with each 'play' button, but not with pause [?]
+	((CVCamStream*) m_paStreams[0])->m_rtSampleEndTime = latestGraphStart;
+	return CSource::Run(tStart);
 }
 
 HRESULT CVCam::QueryInterface(REFIID riid, void **ppv)
@@ -63,8 +74,43 @@ void loopBackRelease();
 
 CVCamStream::~CVCamStream()
 {
-	//loopBackRelease();
+	//loopBackRelease(); no longer...
+	int a = 3;
+	ShowOutput("destructor");
 } 
+
+HRESULT STDMETHODCALLTYPE CVCamStream::GetLatency(REFERENCE_TIME *storeItHere) {
+	*storeItHere = 10000/SECOND_FRACTIONS_TO_GRAB;
+	// 1_000_000ns per s, this is in 100 ns or 10_000/s
+	return S_OK;
+}
+
+HRESULT STDMETHODCALLTYPE CVCamStream::GetPushSourceFlags(ULONG *storeHere) {
+	storeHere = 0; // the default (0) is ok...
+	return S_OK;
+}
+
+HRESULT STDMETHODCALLTYPE CVCamStream::SetPushSourceFlags(ULONG storeHere) {
+	return E_UNEXPECTED; // shouldn't call this...
+}
+
+HRESULT STDMETHODCALLTYPE CVCamStream::GetStreamOffset(REFERENCE_TIME *toHere) {
+	if(latestGraphStart > 0) {
+	  *toHere = latestGraphStart;
+	  return S_OK;
+	} else {
+	  return E_UNEXPECTED;
+	}
+}
+
+HRESULT STDMETHODCALLTYPE CVCamStream::GetMaxStreamOffset(REFERENCE_TIME *toHere) {
+  *toHere = 0; // ??
+  return S_OK;
+}
+
+HRESULT STDMETHODCALLTYPE CVCamStream::SetMaxStreamOffset(REFERENCE_TIME) {
+	return E_UNEXPECTED; // ??
+}
 
 HRESULT CVCamStream::QueryInterface(REFIID riid, void **ppv)
 {   
@@ -244,13 +290,14 @@ HRESULT CVCamStream::DecideBufferSize(IMemAllocator *pAlloc,
 
 HRESULT LoopbackCaptureSetup();
 
-/* 
-less useful, for VLC anyway..
 HRESULT CVCamStream::OnThreadDestroy()
 {
-	return S_OK;
+	ShowOutput("OnThreadDestroy");
+	return S_OK; 
 }
 
+/* 
+less useful, for VLC anyway..
 HRESULT CVCamStream::Stop()
 {
 	return S_OK;
@@ -262,9 +309,11 @@ HRESULT CVCamStream::Exit()
 	return S_OK;
 }*/
 
-HRESULT CVCamStream::Inactive() // sweet
+HRESULT CVCamStream::Inactive() // sweet, also OnThreadDestroy seems to be called...but never for pause [?]
 {
+	ShowOutput("releasing loopback");
 	loopBackRelease();
+	ShowOutput("loopback released");
 	return CSourceStream::Inactive();
 }
 

@@ -53,10 +53,9 @@ void ShowOutput(const char *str, ...)
   va_start(ptr,str);
   vsprintf_s(buf,str,ptr);
   OutputDebugStringA(buf);
-  OutputDebugString(L"yo ho2");
-  logToFile(buf);
+  // also works: OutputDebugString(L"yo ho2");
+  //logToFile(buf);
 }
-
 
 static DWORD WINAPI propagateBufferForever(LPVOID pv);
 
@@ -280,7 +279,7 @@ HRESULT propagateBufferOnce() {
 	int gotAnyAtAll = FALSE;
 	DWORD start_time = timeGetTime();
 	INT32 nBytesWrote = 0; // LODO remove this nBytesWrote
-    while (true) {
+    while (!shouldStop) {
         UINT32 nNextPacketSize;
         hr = pAudioCaptureClient->GetNextPacketSize(&nNextPacketSize); // get next packet, if one is ready...
         if (FAILED(hr)) {
@@ -306,8 +305,8 @@ HRESULT propagateBufferOnce() {
 				   assert(expectedMaxBufferSize < pBufLocalSize); // LODO needed?
 				   memset(pBufLocal, 0, expectedMaxBufferSize); // guess this simulates silence...
     			   pBufLocalCurrentEndLocation = expectedMaxBufferSize; // LODO does this work at all?
-				 }
-	  			  return S_OK;
+ 	  			   return S_OK;
+ 				 }
 				} else {
 				  assert(false); // want to know if this ever happens...
 				}
@@ -383,6 +382,9 @@ HRESULT propagateBufferOnce() {
 		  for(UINT i = 0; i < lBytesToWrite && pBufLocalCurrentEndLocation < pBufLocalSize; i++) {
 			pBufLocal[pBufLocalCurrentEndLocation++] = pData[i];
 		  }
+		  if(pBufLocalCurrentEndLocation == pBufLocalSize) {
+			  ShowOutput("over filled buffer");
+		  }
 		}
         
         hr = pAudioCaptureClient->ReleaseBuffer(nNumFramesToRead);
@@ -398,9 +400,10 @@ HRESULT propagateBufferOnce() {
 		return hr;
     } // capture something, anything! loop...
 
+	return E_UNEXPECTED;
+
 }
 
-#define MIN(a, b) (((a) < (b)) ? (a) : (b)) // awful
 
 // iSize is max size of the BYTE buffer...so maybe...we should just drop it if we have past that size? hmm...
 HRESULT LoopbackCaptureTakeFromBuffer(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNotNullThenJustSetTypeOnly, LONG* totalBytesWrote)
