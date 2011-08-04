@@ -1,16 +1,27 @@
+== actually do==
+  actually use it. playon competitor? LOL
 
-actually use it.
-advertise it as fully threaded :)
-advertise as a competitor to that other fella :P
+figure out (stackoverflow?) a demo that actually runs on VLC and doesn't upchuck
+  does uscreencapture upchuck? audio from a mic?
+    what if...umm...I...uh...assert monotonicity...umm...uh...maybe just add to the previous if it overlaps?
+    sandwich out a packet?
+
+VLC streaming...sniff...
+
+== meh ==
+
+test if I actually need those threads or not...if not...why...remove them :)
 
 make it installerable etc :P
 
 blog posts that make it...um...match google searches that are high for it.
+  advertise as a competitor to that other fella :P
 
 can I make it higher quality audio...?
 
 tell VLC "here's how to fix it"
 
 handle pauses: http://msdn.microsoft.com/en-us/library/dd377472%28v=vs.85%29.aspx
+
 actually fix timing LOL
   VLC streaming fails currently...

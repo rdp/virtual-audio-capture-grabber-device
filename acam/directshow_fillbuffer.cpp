@@ -59,7 +59,7 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
 	}
 
     hr = pms->SetTime((REFERENCE_TIME*)&rtStart, (REFERENCE_TIME*)&m_rtSampleEndTime);
-    //hr = pms->SetTime(NULL, NULL);
+    hr = pms->SetTime(NULL, NULL);
 	if (FAILED(hr)) {
         return hr;
     }
