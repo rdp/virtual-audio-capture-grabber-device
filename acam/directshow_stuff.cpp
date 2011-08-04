@@ -245,7 +245,8 @@ HRESULT CVCamStream::DecideBufferSize(IMemAllocator *pAlloc,
 
 HRESULT LoopbackCaptureSetup();
 
-/*
+/* 
+less useful, for VLC anyway..
 HRESULT CVCamStream::OnThreadDestroy()
 {
 	return S_OK;
