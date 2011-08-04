@@ -18,3 +18,5 @@ Then you can use it in VLC or whatever directshow compatible player/recorder you
 rogerdpack@gmail.com
 
 Some source from the windows SDK samples, some from http://blogs.msdn.com/b/matthew_van_eerde/archive/2008/12/16/sample-wasapi-loopback-capture-record-what-you-hear.aspx
+
+If you use it in VLC you'll need a directshow cache of at least 40ms, for whatever reason.

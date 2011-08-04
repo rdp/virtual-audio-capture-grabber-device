@@ -45,7 +45,7 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
 
     // Set the sample's start and end time stamps...
 	assert(now > latestGraphStart);
-    REFERENCE_TIME rtStart = now - latestGraphStart; // same as m_pParent->StreamTime(rtStart2);
+    REFERENCE_TIME rtStart = now - latestGraphStart; // this is the same as m_pParent->StreamTime(rtStart2);
 	if(!(rtStart >= m_rtSampleEndTime)) {
 	  //assert(rtStart >= m_rtSampleEndTime);
 	  //rtStart = m_rtSampleEndTime; // ??? doesn't fix it...hmm...
@@ -58,13 +58,11 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
 	  assert(rtStart <= m_rtSampleEndTime); // sanity check my math...
 	}
 
-	
     hr = pms->SetTime((REFERENCE_TIME*)&rtStart, (REFERENCE_TIME*)&m_rtSampleEndTime);
-    if (FAILED(hr)) {
+    //hr = pms->SetTime(NULL, NULL);
+	if (FAILED(hr)) {
         return hr;
     }
-    hr = pms->SetTime(NULL, NULL);
-
 
     // Set the sample's properties.
 

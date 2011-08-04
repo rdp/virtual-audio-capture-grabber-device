@@ -71,7 +71,6 @@ HRESULT LoopbackCaptureSetup()
     hr = get_default_device(&m_pMMDevice); // so it can re-place our pointer...
     if (FAILED(hr)) {
         return hr;
-
     }
 
     // activate an (the default, for us) IAudioClient
