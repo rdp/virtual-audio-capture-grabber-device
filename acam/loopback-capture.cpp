@@ -53,6 +53,7 @@ void ShowOutput(const char *str, ...)
   va_start(ptr,str);
   vsprintf_s(buf,str,ptr);
   OutputDebugStringA(buf);
+  OutputDebugStringA("\n");
   // also works: OutputDebugString(L"yo ho2");
   //logToFile(buf);
 }
@@ -263,7 +264,7 @@ static DWORD WINAPI propagateBufferForever(LPVOID pv) {
   while(!shouldStop) {
     HRESULT hr = propagateBufferOnce();
 	if(FAILED(hr)) {
-	 return hr; // TODO can exit...
+	 return hr;
 	}
   }
   return S_OK;
@@ -273,7 +274,6 @@ HRESULT propagateBufferOnce() {
 	HRESULT hr = S_OK;
 
 	// this should also...umm...detect the timeout stuff and fake fill?
-	// TODO timing...
 
     // grab a chunk...
 	int gotAnyAtAll = FALSE;

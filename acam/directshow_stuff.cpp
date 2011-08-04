@@ -74,7 +74,6 @@ void loopBackRelease();
 CVCamStream::~CVCamStream()
 {
 	//loopBackRelease(); no longer...
-	int a = 3;
 	ShowOutput("destructor");
 } 
 
@@ -297,27 +296,29 @@ HRESULT CVCamStream::OnThreadDestroy()
 	return S_OK; 
 }
 
-/* 
-less useful, for VLC anyway..
+
+//less useful, for VLC anyway..
 HRESULT CVCamStream::Stop()
 {
+	ShowOutput("stop");
+
 	return S_OK;
 }
 
 
 HRESULT CVCamStream::Exit()
 {
+    ShowOutput("exit");
 	return S_OK;
-}*/
+}
 
 HRESULT CVCamStream::Inactive() // sweet, also OnThreadDestroy seems to be called...but never for pause [?]
 {
-	ShowOutput("releasing loopback");
+	ShowOutput("inactive: about to release loopback");
 	loopBackRelease();
 	ShowOutput("loopback released");
 	return CSourceStream::Inactive();
 }
-
 
 // Called when graph is run
 HRESULT CVCamStream::OnThreadCreate()

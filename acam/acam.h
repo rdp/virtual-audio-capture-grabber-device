@@ -114,9 +114,9 @@ public:
     HRESULT SetMediaType(const CMediaType *pmt);
     HRESULT OnThreadCreate(void);
     HRESULT OnThreadDestroy(void);
-	/* don't seem to get called...
+	/* don't seem to get called... */
     HRESULT Stop(void);
-    HRESULT Exit(void);*/
+    HRESULT Exit(void);
     HRESULT Inactive(void); // ondisconnect :)
 
     CVCamStream(HRESULT *phr, CVCam *pParent, LPCWSTR pPinName);

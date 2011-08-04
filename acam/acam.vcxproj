@@ -97,7 +97,7 @@
     <ClCompile Include="directshow_stuff.cpp" />
     <ClCompile Include="loopback-capture-helpers.cpp" />
     <ClCompile Include="loopback-capture.cpp" />
-    <ClCompile Include="vcam_main.cpp">
+    <ClCompile Include="dll_main.cpp">
       <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</CompileAsManaged>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
       </PrecompiledHeader>
