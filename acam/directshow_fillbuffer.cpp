@@ -37,8 +37,10 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
 	}
 
 	WAVEFORMATEX* pwfexCurrent = (WAVEFORMATEX*)m_mt.Format();
+
+
 	IReferenceClock* pClock;
-	m_pParent->GetSyncSource(&pClock);
+	m_pParent->GetSyncSource(&pClock); // I could do this an easier way...https://github.com/rdp/open-source-directshow-video-capture-demo-filter/commit/71fd443e3b28a8e43210cc3cc48b05b63273b5b7
 	REFERENCE_TIME now;
 	pClock->GetTime(&now);
 	REFERENCE_TIME previousEnd = m_rtSampleEndTime;
