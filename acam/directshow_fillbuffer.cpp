@@ -14,9 +14,10 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
 {
 	
     // If graph is inactive stop cueing samples
-    //if(!m_pParent->m_bActive || m_pParent->m_bEOF) 
-    //    return S_FALSE;
+	// hmm ... not sure if this can ever be the case...
 
+	assert(m_pParent->IsActive());
+	assert(!m_pParent->IsStopped());
     CheckPointer(pms,E_POINTER);
     BYTE *pData;
     HRESULT hr = pms->GetPointer(&pData);
@@ -44,7 +45,11 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
 	pClock->Release();
 
     // Set the sample's start and end time stamps...
-	assert(now > latestGraphStart);
+	if(now < latestGraphStart) {
+	  // maybe we're just the freaky too early off-chance?
+      // assert(now > latestGraphStart);
+		ShowOutput("too early? %d %d ", now, latestGraphStart);
+	}
     REFERENCE_TIME rtStart = now - latestGraphStart; // this is the same as m_pParent->StreamTime(rtStart2);
 	if(!(rtStart >= m_rtSampleEndTime)) {
 	  //assert(rtStart >= m_rtSampleEndTime);
@@ -59,7 +64,9 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
 	}
 
     hr = pms->SetTime((REFERENCE_TIME*)&rtStart, (REFERENCE_TIME*)&m_rtSampleEndTime);
-    hr = pms->SetTime(NULL, NULL);
+    //hr = pms->SetTime(NULL, NULL); // causes it to not stream right in VLC...though
+	// also setting any time at all seems to cause VLC, if you set directshow buffers to none, to not
+	// play the audio, so, we lose both ways, but this way works at least if you have a 50ms buffer.
 	if (FAILED(hr)) {
         return hr;
     }

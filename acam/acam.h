@@ -53,10 +53,11 @@ public:
     //  IMediaFilter [added]
     //////////////////////////////////////////////////////////////////////////
     STDMETHODIMP Run(REFERENCE_TIME tStart);
+	STDMETHODIMP GetState(DWORD dw, FILTER_STATE *pState);
 
 	//protected:
 
-   // IReferenceClock *m_pClock;
+   // IReferenceClock *m_pClock; // wrong place I think
 
 
 private:

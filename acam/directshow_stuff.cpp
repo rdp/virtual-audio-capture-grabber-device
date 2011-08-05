@@ -57,6 +57,22 @@ HRESULT CVCam::QueryInterface(REFIID riid, void **ppv)
         return CSource::QueryInterface(riid, ppv);
 }
 
+// I don't think this actually gets called when it's paused, but added here just in case... http://msdn.microsoft.com/en-us/library/dd377472%28v=vs.85%29.aspx
+STDMETHODIMP CVCam::GetState(DWORD dw, FILTER_STATE *pState)
+{
+    CheckPointer(pState, E_POINTER);
+    *pState = m_State;
+    if (m_State == State_Paused)
+    {
+        return VFW_S_CANT_CUE;
+    }
+    else
+    {
+        return S_OK;
+    }
+}
+
+
 //////////////////////////////////////////////////////////////////////////
 // CVCamStream is the one and only output pin of CVCam which handles 
 // all the stuff.
