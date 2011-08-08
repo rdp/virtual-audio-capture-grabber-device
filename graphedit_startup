@@ -1,5 +1,5 @@
 G:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\graphedt
-c:\dev\ruby\virtual-audio-output-sniffer\Debug\yo.grf
+c:\dev\ruby\virtual-audio-output-sniffer\yo.grf
 
 C:\Program Files (x86)\VideoLAN\VLC\vlc.exe
 dshow://  :dshow-vdev=none :dshow-adev="Virtual audio sniffer1"  :dshow-caching=100

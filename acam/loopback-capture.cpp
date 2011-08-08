@@ -31,7 +31,7 @@ BYTE pBufLocal[1024*1024]; // 1MB is quite awhile I think...
 long pBufLocalSize = 1024*1024; // TODO needed?
 long pBufLocalCurrentEndLocation = 0;
 
-long expectedMaxBufferSize;
+long expectedMaxBufferSize = 0;
 
 void setExpectedMaxBufferSize(long toThis) {
   expectedMaxBufferSize = toThis;
@@ -54,13 +54,25 @@ void ShowOutput(const char *str, ...)
   vsprintf_s(buf,str,ptr);
   OutputDebugStringA(buf);
   OutputDebugStringA("\n");
-  // also works: OutputDebugString(L"yo ho2");
   //logToFile(buf);
 }
 
 static DWORD WINAPI propagateBufferForever(LPVOID pv);
 
-// we only call this once...
+
+
+#define EXIT_ON_ERROR(hres)  \
+              if (FAILED(hres)) { return hres; }
+#define REFTIMES_PER_SEC  10000000
+
+
+const CLSID CLSID_MMDeviceEnumerator = __uuidof(MMDeviceEnumerator);
+const IID IID_IMMDeviceEnumerator = __uuidof(IMMDeviceEnumerator);
+const IID IID_IAudioClient = __uuidof(IAudioClient);
+const IID IID_IAudioRenderClient = __uuidof(IAudioRenderClient);
+
+
+// we only call this once...per hit of the play button :)
 HRESULT LoopbackCaptureSetup()
 {
 	shouldStop = false; // allow graphs to restart, if they so desire...
@@ -73,6 +85,9 @@ HRESULT LoopbackCaptureSetup()
         return hr;
     }
 
+	// tell it to not overflow one buffer's worth <sigh> not sure if this is right or not, and thus we don't "cache" or "buffer" more than that much currently...
+	// but a buffer size is a buffer size...hmm...as long as we keep it small though...
+	assert(expectedMaxBufferSize <= pBufLocalSize);
     // activate an (the default, for us) IAudioClient
     hr = m_pMMDevice->Activate(
         __uuidof(IAudioClient),
@@ -186,6 +201,86 @@ HRESULT LoopbackCaptureSetup()
 
     nBlockAlign = pwfx->nBlockAlign;
     
+
+
+	// avoid stuttering on close, http://social.msdn.microsoft.com/forums/en-US/windowspro-audiodevelopment/thread/c7ba0a04-46ce-43ff-ad15-ce8932c00171/ 
+	
+/**************************************/
+/******** Code to fix stuttering on close ******/
+/**************************************/
+
+	// p1 above it
+	
+IMMDeviceEnumerator *pEnumerator = NULL;
+IMMDevice *pDevice = NULL;
+//IAudioClient *pAudioClient = NULL;
+IAudioCaptureClient *pCaptureClient = NULL;
+IAudioRenderClient *pRenderClient = NULL;
+WAVEFORMATEXTENSIBLE *captureDataFormat = NULL;
+BYTE *captureData;
+
+
+    REFERENCE_TIME  hnsRequestedDuration = REFTIMES_PER_SEC;
+
+    hr = CoCreateInstance(
+           CLSID_MMDeviceEnumerator, NULL,
+           CLSCTX_ALL, IID_IMMDeviceEnumerator,
+           (void**)&pEnumerator);
+    EXIT_ON_ERROR(hr)
+
+    hr = pEnumerator->GetDefaultAudioEndpoint(eRender, eConsole, &pDevice);
+    EXIT_ON_ERROR(hr)
+
+    hr = pDevice->Activate(IID_IAudioClient, CLSCTX_ALL, NULL, (void**)&pAudioClient);
+    EXIT_ON_ERROR(hr)
+
+    hr = pAudioClient->GetMixFormat((WAVEFORMATEX **)&captureDataFormat);
+    EXIT_ON_ERROR(hr)
+
+
+	
+    // initialise in sharedmode
+    hr = pAudioClient->Initialize(
+                         AUDCLNT_SHAREMODE_SHARED,
+                         0,
+                         0,
+                         0,
+                         pwfx,
+                         NULL);
+    EXIT_ON_ERROR(hr)
+
+    // get the frame count
+    UINT32  bufferFrameCount;
+    hr = pAudioClient->GetBufferSize(&bufferFrameCount);
+    EXIT_ON_ERROR(hr)
+
+    // create a render client
+    hr = pAudioClient->GetService(IID_IAudioRenderClient, (void**)&pRenderClient);
+    EXIT_ON_ERROR(hr)
+
+    // get the buffer
+    hr = pRenderClient->GetBuffer(bufferFrameCount, &captureData);
+    EXIT_ON_ERROR(hr)
+
+    // release it
+    hr = pRenderClient->ReleaseBuffer(bufferFrameCount, AUDCLNT_BUFFERFLAGS_SILENT);
+    EXIT_ON_ERROR(hr)
+
+    // release the audio client
+    pAudioClient->Release();
+    EXIT_ON_ERROR(hr)
+
+
+    // create a new IAudioClient
+    hr = pDevice->Activate(IID_IAudioClient, CLSCTX_ALL, NULL, (void**)&pAudioClient);
+    EXIT_ON_ERROR(hr)
+
+
+
+
+
+
+
     // call IAudioClient::Initialize
     // note that AUDCLNT_STREAMFLAGS_LOOPBACK and AUDCLNT_STREAMFLAGS_EVENTCALLBACK
     // do not work together...
@@ -252,9 +347,7 @@ HRESULT LoopbackCaptureSetup()
         DWORD dwErr = GetLastError();
         return HRESULT_FROM_WIN32(dwErr);
     }
-
 	return hr;
-
 } // end LoopbackCaptureSetup
 
 
@@ -273,7 +366,7 @@ HRESULT propagateBufferOnce() {
 	HRESULT hr = S_OK;
 
 	// this should also...umm...detect the timeout stuff and fake fill?
-
+   
     // grab a chunk...
 	int gotAnyAtAll = FALSE;
 	DWORD start_time = timeGetTime();
@@ -301,9 +394,8 @@ HRESULT propagateBufferOnce() {
 				  // after a full slice of apparent silence, punt and return fake silence! [to not confuse our downstream friends]
    			     {
                    CAutoLock cObjectLock(&csMyLock);  // Lock the critical section, releases scope after method is over with...
-				   assert(expectedMaxBufferSize < pBufLocalSize); // LODO needed?
-				   memset(pBufLocal, 0, expectedMaxBufferSize); // guess this simulates silence...
-    			   pBufLocalCurrentEndLocation = expectedMaxBufferSize;
+				   memset(pBufLocal, 0, expectedMaxBufferSize/2); // guess this simulates silence...
+    			   pBufLocalCurrentEndLocation = expectedMaxBufferSize/2;
  	  			   return S_OK;
  				 }
 				} else {
@@ -344,7 +436,7 @@ HRESULT propagateBufferOnce() {
         }
 
 		if( dwFlags == 0 ) {
-		  // let fillbuffer do this
+		  // let fillbuffer set this
 		  // bFirstPacket = false;
 		} else if (bFirstPacket && AUDCLNT_BUFFERFLAGS_DATA_DISCONTINUITY == dwFlags) {
             ShowOutput("Probably spurious glitch reported on first packet\n");
@@ -374,15 +466,18 @@ HRESULT propagateBufferOnce() {
         }
 
 		pnFrames += nNumFramesToRead; // increment total count...		
-
+		// typically 1792 bytes...
         LONG lBytesToWrite = nNumFramesToRead * nBlockAlign; // nBlockAlign is "audio block size" or frame size, for one audio segment...
 		{
           CAutoLock cObjectLock(&csMyLock);  // Lock the critical section, releases scope after block is over...
-		  for(UINT i = 0; i < lBytesToWrite && pBufLocalCurrentEndLocation < pBufLocalSize; i++) {
-			pBufLocal[pBufLocalCurrentEndLocation++] = pData[i];
+
+		  if(pBufLocalCurrentEndLocation > 1792) { // I have no idea what I'm doing here... this doesn't fix it, but helps a bit... TODO
+	  		ShowOutput("overfilled buffer, cancelling/flushing."); //over flow overflow appears VLC just keeps reading though, when paused [?] but not graphedit...
+			pBufLocalCurrentEndLocation = 0;
 		  }
-		  if(pBufLocalCurrentEndLocation == pBufLocalSize) {
-			ShowOutput("overfilled buffer");
+
+		  for(UINT i = 0; i < lBytesToWrite && pBufLocalCurrentEndLocation < expectedMaxBufferSize; i++) {
+			pBufLocal[pBufLocalCurrentEndLocation++] = pData[i];
 		  }
 		}
         
@@ -402,7 +497,6 @@ HRESULT propagateBufferOnce() {
 	return E_UNEXPECTED;
 
 }
-
 
 // iSize is max size of the BYTE buffer...so maybe...we should just drop it if we have past that size? hmm...
 HRESULT LoopbackCaptureTakeFromBuffer(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNotNullThenJustSetTypeOnly, LONG* totalBytesWrote)
@@ -424,13 +518,14 @@ HRESULT LoopbackCaptureTakeFromBuffer(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNo
 	  // and it seems to not get any "missed audio" messages...
       Sleep(2); // doesn't seem to hurt the cpu...sleep longer here than the other since it has to do more work [?]
 	}
+	pBufLocalCurrentEndLocation = 0; // not sure who should set this...producer or consumer :)
 	return E_FAIL; // we didn't fill anything...
 }
 
 
 void loopBackRelease() {
 	shouldStop = 1;
-	// wait for thread to end...
+	// wait for collector thread to end...
 	WaitForSingleObject(m_hThread, INFINITE);
     CloseHandle(m_hThread);
     m_hThread = NULL;

@@ -15,7 +15,7 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
 	
     // If graph is inactive stop cueing samples
 	// hmm ... not sure if this can ever be the case...
-
+	ShowOutput("fillbuffer (pull from cache)");
 	assert(m_pParent->IsActive()); // wouldn't expect these...
 	assert(!m_pParent->IsStopped());
     CheckPointer(pms,E_POINTER);
@@ -31,7 +31,7 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
 	LONG totalWrote = -1;
 	hr = LoopbackCaptureTakeFromBuffer(pData, pms->GetSize(), NULL, &totalWrote); // the real meat
 	if(FAILED(hr)) {
-		// this one can return false during shutdown, so ok to return from here...
+		// this one can return false during shutdown, so actually ok to return from here...
 		// assert(false);
 		return hr;
 	}
