@@ -40,10 +40,7 @@ CVCam::CVCam(LPUNKNOWN lpunk, HRESULT *phr) :
     m_paStreams[0] = new CVCamStream(phr, this, L"Virtual cam5");
 }
 
-REFERENCE_TIME latestGraphStart = 0;
-
 STDMETHODIMP CVCam::Run(REFERENCE_TIME tStart) {
-	latestGraphStart = tStart; // get one of these with each 'play' button, but not with pause [?]
 	((CVCamStream*) m_paStreams[0])->m_rtSampleEndTime = 0;
 	return CSource::Run(tStart);
 }
@@ -89,12 +86,12 @@ void loopBackRelease();
 
 CVCamStream::~CVCamStream()
 {
-	//loopBackRelease(); no longer...
+	// don't get here with any consistency...
 	ShowOutput("destructor");
 } 
 
 // these latency/pushsource stuffs never seem to get called...ever...at least by VLC...
-
+/* unimplemented yet...
 HRESULT STDMETHODCALLTYPE CVCamStream::GetLatency(REFERENCE_TIME *storeItHere) {
 	*storeItHere = 10000/SECOND_FRACTIONS_TO_GRAB;
 	// 1_000_000ns per s, this is in 100 ns or 10_000/s
@@ -107,26 +104,23 @@ HRESULT STDMETHODCALLTYPE CVCamStream::GetPushSourceFlags(ULONG *storeHere) {
 }
 
 HRESULT STDMETHODCALLTYPE CVCamStream::SetPushSourceFlags(ULONG storeHere) {
-	return E_UNEXPECTED; // shouldn't call this...
+	return E_UNEXPECTED; // shouldn't ever call this...
 }
 
 HRESULT STDMETHODCALLTYPE CVCamStream::GetStreamOffset(REFERENCE_TIME *toHere) {
-	if(latestGraphStart > 0) {
-	  *toHere = latestGraphStart;
-	  return S_OK;
-	} else {
-	  return E_UNEXPECTED;
-	}
+	return E_UNEXPECTED; // shouldn't ever call this...
+
+//  *toHere = m_tStart; // guess this is right... huh? offset? to what?
 }
 
 HRESULT STDMETHODCALLTYPE CVCamStream::GetMaxStreamOffset(REFERENCE_TIME *toHere) {
-  *toHere = 0; // ??
+  *toHere = 0; // TODO set this to a reasonable value...
   return S_OK;
 }
 
 HRESULT STDMETHODCALLTYPE CVCamStream::SetMaxStreamOffset(REFERENCE_TIME) {
-	return E_UNEXPECTED; // ??
-}
+	return E_UNEXPECTED; // I don't think they'd ever call this either...
+}*/
 
 HRESULT CVCamStream::QueryInterface(REFIID riid, void **ppv)
 {   
@@ -281,8 +275,8 @@ HRESULT CVCamStream::DecideBufferSize(IMemAllocator *pAlloc,
 	// try with 1024B of buffer, just for fun.
 	//pProperties->cbBuffer = 1024;
 	//pProperties->cBuffers = 1;
-
-	setExpectedMaxBufferSize(pProperties->cbBuffer * pProperties->cBuffers);
+	long maxBufferSize = pProperties->cbBuffer * pProperties->cBuffers;
+	setExpectedMaxBufferSize(maxBufferSize);
 
     // Ask the allocator to reserve us the memory...
 
@@ -312,33 +306,39 @@ HRESULT CVCamStream::OnThreadDestroy()
 	return S_OK; 
 }
 
-
 //less useful, for VLC anyway..
 HRESULT CVCamStream::Stop()
 {
+	// never get here
 	ShowOutput("stop");
-
 	return S_OK;
 }
 
 
 HRESULT CVCamStream::Exit()
 {
-    ShowOutput("exit");
+	// never get here
+    ShowOutput("exit method called");
 	return S_OK;
 }
 
-HRESULT CVCamStream::Inactive() // sweet, also OnThreadDestroy seems to be called...but never for pause [?]
+int currentlyRunning = 0;
+HRESULT CVCamStream::Inactive()
 {
+	// do get here
 	ShowOutput("inactive: about to release loopback");
 	loopBackRelease();
 	ShowOutput("loopback released");
+	currentlyRunning = 0;
 	return CSourceStream::Inactive();
 }
+
 
 // Called when graph is run
 HRESULT CVCamStream::OnThreadCreate()
 {
+	assert(currentlyRunning == 0); // sanity check...
+	currentlyRunning = TRUE;
     m_llSampleMediaTimeStart = 0;
     GetMediaType(0, &m_mt);
 

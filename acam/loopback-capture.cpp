@@ -23,18 +23,18 @@ IMMDevice *m_pMMDevice;
 UINT32 nBlockAlign;
 UINT32 pnFrames;
 
-CCritSec csMyLock;  // Critical section starts not locked...
+CCritSec csMyLock;  // Critical section. Starts not locked...
 
 int shouldStop = 0;
 
-BYTE pBufLocal[1024*1024]; // 1MB is quite awhile I think... TODO check overflow...
-long pBufLocalSize = 1024*1024;// TODO needed?
+BYTE pBufLocal[1024*1024]; // 1MB is quite awhile I think...
+long pBufLocalSize = 1024*1024; // TODO needed?
 long pBufLocalCurrentEndLocation = 0;
 
 long expectedMaxBufferSize;
 
 void setExpectedMaxBufferSize(long toThis) {
-	expectedMaxBufferSize = toThis;
+  expectedMaxBufferSize = toThis;
 }
 
 HANDLE m_hThread;
@@ -303,7 +303,7 @@ HRESULT propagateBufferOnce() {
                    CAutoLock cObjectLock(&csMyLock);  // Lock the critical section, releases scope after method is over with...
 				   assert(expectedMaxBufferSize < pBufLocalSize); // LODO needed?
 				   memset(pBufLocal, 0, expectedMaxBufferSize); // guess this simulates silence...
-    			   pBufLocalCurrentEndLocation = expectedMaxBufferSize; // LODO does this work at all?
+    			   pBufLocalCurrentEndLocation = expectedMaxBufferSize;
  	  			   return S_OK;
  				 }
 				} else {
@@ -343,11 +343,13 @@ HRESULT propagateBufferOnce() {
             return hr;            
         }
 
-        if (bFirstPacket && AUDCLNT_BUFFERFLAGS_DATA_DISCONTINUITY == dwFlags) {
+		if( dwFlags == 0 ) {
+		  // let fillbuffer do this
+		  // bFirstPacket = false;
+		} else if (bFirstPacket && AUDCLNT_BUFFERFLAGS_DATA_DISCONTINUITY == dwFlags) {
             ShowOutput("Probably spurious glitch reported on first packet\n");
 			bFirstPacket = true;
-        } else if (AUDCLNT_BUFFERFLAGS_DATA_DISCONTINUITY != dwFlags) {
-			if(dwFlags != 0) {
+        } else if (AUDCLNT_BUFFERFLAGS_DATA_DISCONTINUITY == dwFlags) {
 		      // expected if audio turns on then off...
 			  // LODO make this a non sync point ...
 			  ShowOutput("IAudioCaptureClient::discontinuity GetBuffer set flags to 0x%08x on pass %u after %u frames\n", dwFlags, nBytesWrote, pnFrames);
@@ -357,11 +359,9 @@ HRESULT propagateBufferOnce() {
               pAudioClient->Release();            
               return E_UNEXPECTED;*/
 			  bFirstPacket = true;
-			} else {
-			  bFirstPacket = false; // I think this is right LODO ...
-			}
         } else {
-		  bFirstPacket = false;
+     	  ShowOutput("IAudioCaptureClient::unknown discontinuity GetBuffer set flags to 0x%08x on pass %u after %u frames\n", dwFlags, nBytesWrote, pnFrames);
+		  bFirstPacket = true;
 		}
 
         if (0 == nNumFramesToRead) {
@@ -382,7 +382,7 @@ HRESULT propagateBufferOnce() {
 			pBufLocal[pBufLocalCurrentEndLocation++] = pData[i];
 		  }
 		  if(pBufLocalCurrentEndLocation == pBufLocalSize) {
-			  ShowOutput("over filled buffer");
+			ShowOutput("overfilled buffer");
 		  }
 		}
         
@@ -411,9 +411,10 @@ HRESULT LoopbackCaptureTakeFromBuffer(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNo
        {
         CAutoLock cObjectLock(&csMyLock);  // Lock the critical section, releases scope after block is done...
 		if(pBufLocalCurrentEndLocation > 0) {
-		  // fails lodo ok? assert(pBufLocalCurrentEndLocation <= expectedMaxBufferSize);
-		  memcpy(pBuf, pBufLocal, MIN(pBufLocalCurrentEndLocation, expectedMaxBufferSize));
-          *totalBytesWrote = pBufLocalCurrentEndLocation;
+		  // fails lodo is that ok? assert(pBufLocalCurrentEndLocation <= expectedMaxBufferSize);
+		  int totalToWrite = MIN(pBufLocalCurrentEndLocation, expectedMaxBufferSize);
+		  memcpy(pBuf, pBufLocal, totalToWrite);
+          *totalBytesWrote = totalToWrite;
 		  pBufLocalCurrentEndLocation = 0;
           return S_OK;
 		} // else fall through to sleep
@@ -423,7 +424,7 @@ HRESULT LoopbackCaptureTakeFromBuffer(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNo
 	  // and it seems to not get any "missed audio" messages...
       Sleep(2); // doesn't seem to hurt the cpu...sleep longer here than the other since it has to do more work [?]
 	}
-	return E_FAIL; // unexpected...hmm...
+	return E_FAIL; // we didn't fill anything...
 }
 
 

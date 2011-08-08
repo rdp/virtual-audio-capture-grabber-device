@@ -64,7 +64,7 @@ private:
     CVCam(LPUNKNOWN lpunk, HRESULT *phr);
 };
 
-class CVCamStream : public CSourceStream, public IAMStreamConfig, public IKsPropertySet, public IAMPushSource
+class CVCamStream : public CSourceStream, public IAMStreamConfig, public IKsPropertySet//, public IAMPushSource
 {
 public:
 
@@ -88,15 +88,14 @@ public:
     HRESULT STDMETHODCALLTYPE GetNumberOfCapabilities(int *piCount, int *piSize);
     HRESULT STDMETHODCALLTYPE GetStreamCaps(int iIndex, AM_MEDIA_TYPE **pmt, BYTE *pSCC);
 
-
-	// IAMPushSource
-	HRESULT STDMETHODCALLTYPE GetLatency(REFERENCE_TIME *);
+	// IAMPushSource [not implemented all the way yet]
+	/*HRESULT STDMETHODCALLTYPE GetLatency(REFERENCE_TIME *);
 	HRESULT STDMETHODCALLTYPE GetPushSourceFlags(ULONG *);
 	HRESULT STDMETHODCALLTYPE SetPushSourceFlags(ULONG);
 	HRESULT STDMETHODCALLTYPE SetStreamOffset(REFERENCE_TIME) { return E_FAIL; }
 	HRESULT STDMETHODCALLTYPE GetStreamOffset(REFERENCE_TIME *);
 	HRESULT STDMETHODCALLTYPE GetMaxStreamOffset(REFERENCE_TIME *);
-	HRESULT STDMETHODCALLTYPE SetMaxStreamOffset(REFERENCE_TIME);
+	HRESULT STDMETHODCALLTYPE SetMaxStreamOffset(REFERENCE_TIME);*/
 
     //////////////////////////////////////////////////////////////////////////
     //  IKsPropertySet
