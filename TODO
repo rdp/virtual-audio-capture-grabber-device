@@ -2,7 +2,7 @@
 
 actually use it. playon competitor? LOL
   auto skype recorder :)
-  can use the default record device in...XP [ffmpeg to record?]
+  can use the default record device in...XP [ffmpeg to record? if it's much more efficient I guess...]
 
 slander the "add it to the offset" (might be null),also slander the "must be monotonically increasing"
 
@@ -10,13 +10,12 @@ answer github respondee...
 
 alert them on when... when... it calls discontinuity exactly [and fix my logic]
 
-work when paused...hmm...I think it should flush [!] or maybe I can just pull out the multi-thread [?]
+work when paused (esp. VLC)...hmm...do we need a realtime option? single-threaded m/b?
 
-generate the right amount of silence: http://stackoverflow.com/questions/6362458/generating-silent-audio-track we might be ok here tho...
-
-fix the phreaky ness on stop: http://social.msdn.microsoft.com/forums/en-US/windowspro-audiodevelopment/thread/c7ba0a04-46ce-43ff-ad15-ce8932c00171/
 
 == meh ==
+
+generate the right amount of silence: http://stackoverflow.com/questions/6362458/generating-silent-audio-track we might be ok here tho...
 
 advertise to mauritius, VLC forum...
 
