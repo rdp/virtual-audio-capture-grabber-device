@@ -4,7 +4,7 @@ Basically, it's an audio capture device for all "wave out sound" that is playing
 It works for windows 7/Vista, which come without a default one for most soundcards, for some reason.
 
 
-To install, as an administrator go to the Release subdir, and run
+To install, as an administrator go to the Release subdirectory, and run
 C:\...\Release> regsvr32 audio_sniffer.ax
 
 To uninstall:
