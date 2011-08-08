@@ -11,7 +11,10 @@ answer github respondee...
 alert them on when... when... it calls discontinuity exactly [and fix my logic]
 
 work when paused (esp. VLC)...hmm...do we need a realtime option? single-threaded m/b?
-
+  actually...in this instance shouldn't I be calculating my own timestamps, starting from when I first got non discontinuous data? hmm...
+   pass in the current ref time...hmm...or maybe if the buffer is too large I arbitrarily dump some of it?  I don't accomodate VLC pause but 
+   maybe I'm ok realtime still, as is currently?
+   
 
 == meh ==
 
