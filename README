@@ -1,22 +1,22 @@
 See http://betterlogic.com/roger/2010/08/open-source-audio-sniffergrabber-for-windows-7vista for description.
 
 Basically, it's an audio capture device for all "wave out sound" that is playing on your speakers (record what you hear).
-It works for windows 7/Vista, which come without a default one for most soundcards, for some reason.
-
+It works for windows 7/Vista, which comes without a default capture for most soundcards, it seems.
 
 To install, as an administrator go to the Release subdirectory, and run
-C:\...\Release> regsvr32 audio_sniffer.ax
+C:\...source_code\acam\Release> regsvr32 audio_sniffer.ax
 
 To uninstall:
 
-C:\...\Release> regsvr32 /u audio_sniffer.ax
+C:\...source_code\acam\Release> regsvr32 /u audio_sniffer.ax
 
-ping me if you want installation made easier.
+ping me if you want this installation made easier :)
 
-Then you can use it in VLC or whatever directshow compatible player/recorder you have as an input device.
+Then you can then use it in VLC or whatever directshow compatible player/recorder you have as a new input device.
 
 rogerdpack@gmail.com
 
-Some source from the windows SDK samples, some from http://blogs.msdn.com/b/matthew_van_eerde/archive/2008/12/16/sample-wasapi-loopback-capture-record-what-you-hear.aspx
+Some source from the windows SDK samples, some from 
+http://blogs.msdn.com/b/matthew_van_eerde/archive/2008/12/16/sample-wasapi-loopback-capture-record-what-you-hear.aspx
 
-If you use it in VLC you'll need a directshow cache of at least 40ms, for whatever reason.
+If you use it in VLC you'll need a directshow cache of at least 40ms, for some odd reason.
