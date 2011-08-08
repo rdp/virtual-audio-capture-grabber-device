@@ -6,25 +6,24 @@ actually use it. playon competitor? LOL
 
 slander the "add it to the offset" (might be null),also slander the "must be monotonically increasing"
 
-answer github respondee...
-
-alert them on when... when... it calls discontinuity exactly [and fix my logic]
-
-work when paused (esp. VLC)...hmm...do we need a realtime option? single-threaded m/b?
-  actually...in this instance shouldn't I be calculating my own timestamps, starting from when I first got non discontinuous data? hmm...
-   pass in the current ref time...hmm...or maybe if the buffer is too large I arbitrarily dump some of it?  I don't accomodate VLC pause but 
-   maybe I'm ok realtime still, as is currently?
-   
-
-== meh ==
-
-generate the right amount of silence: http://stackoverflow.com/questions/6362458/generating-silent-audio-track we might be ok here tho...
-
-advertise to mauritius, VLC forum...
-
-test if I actually need those threads or not...if not...why...remove them :)
+tell msdn when... it calls discontinuity exactly [and fix my logic]
 
 make it installerable etc :P
 
+== meh ==
+
+higher quality, like more than 2 track [possible?]
+
+generate the right amount of silence: http://stackoverflow.com/questions/6362458/generating-silent-audio-track we might be ok here tho...
+
+advertise to mauritius, VLC forum, mine...
+
+test if I actually need threads or not...if not...why...remove them :)
+
 blog posts that make it...um...match google searches that are high for it.
   advertise as a competitor to that other fella :P
+  
+work when paused (esp. VLC)...hmm...do we need a realtime option? single-threaded m/b?
+  actually...in this instance shouldn't I be calculating my own timestamps, starting from when I first got non discontinuous data? hmm...
+   pass in the current ref time...hmm...or maybe if the buffer is too large I arbitrarily dump some of it?  I don't accomodate VLC pause but 
+   maybe I'm ok realtime still, as is currently?  
