@@ -11,12 +11,10 @@ extern IReferenceClock *globalClock;
 // "they" call this, every so often...
 // you probably should fill the entire buffer...I think...hmm...
 HRESULT CVCamStream::FillBuffer(IMediaSample *pms) 
-{
-	
-    // If graph is inactive stop cueing samples
-	// hmm ... not sure if this can ever be the case...
-	ShowOutput("fillbuffer (pull from cache)");
-	assert(m_pParent->IsActive()); // wouldn't expect these...
+{	
+	// too chatty
+	// ShowOutput("fillbuffer (pull from cache)");
+	assert(m_pParent->IsActive()); // wouldn't expect these...the parent controls this/us and doesn't call us when it is stopped I guess.
 	assert(!m_pParent->IsStopped());
     CheckPointer(pms,E_POINTER);
     BYTE *pData;

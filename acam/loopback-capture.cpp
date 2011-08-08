@@ -209,18 +209,15 @@ HRESULT LoopbackCaptureSetup()
 /******** Code to fix stuttering on close ******/
 /**************************************/
 
-	// p1 above it
-	
 IMMDeviceEnumerator *pEnumerator = NULL;
 IMMDevice *pDevice = NULL;
 //IAudioClient *pAudioClient = NULL;
-IAudioCaptureClient *pCaptureClient = NULL;
+//IAudioCaptureClient *pCaptureClient = NULL;
 IAudioRenderClient *pRenderClient = NULL;
 WAVEFORMATEXTENSIBLE *captureDataFormat = NULL;
 BYTE *captureData;
 
-
-    REFERENCE_TIME  hnsRequestedDuration = REFTIMES_PER_SEC;
+    REFERENCE_TIME hnsRequestedDuration = REFTIMES_PER_SEC;
 
     hr = CoCreateInstance(
            CLSID_MMDeviceEnumerator, NULL,
@@ -386,10 +383,14 @@ HRESULT propagateBufferOnce() {
         if (0 == nNextPacketSize) {
             // no data yet, we're either waiting between incoming chunks, or...no sound is being played on the computer currently <sigh>...
 			// maybe I don't really...need to worry about this in the end, once I can figure out the timing stuffs? <sniff>
+
+			// we still get here, as we poll for new data...
+
 			DWORD millis_to_fill = (DWORD) (1.0/SECOND_FRACTIONS_TO_GRAB*1000); // truncate is ok :)
 			assert(millis_to_fill > 1); // actually, we kind of lose precision/timing here, don't we...hmm...LODO with correct timing info...
 			DWORD current_time = timeGetTime();
 			if((current_time - start_time > millis_to_fill)) {
+				// I don't think we ever get here anymore...thankfully since it's mostly broken anyway.
 				if(!gotAnyAtAll) {
 				  // after a full slice of apparent silence, punt and return fake silence! [to not confuse our downstream friends]
    			     {
@@ -399,7 +400,7 @@ HRESULT propagateBufferOnce() {
  	  			   return S_OK;
  				 }
 				} else {
-				  assert(false); // want to know if this ever happens...
+				  assert(false); // want to know if this ever happens...hasn't yet...
 				}
 			} else {
 			  Sleep(1); // doesn't seem to hurt cpu
@@ -439,7 +440,7 @@ HRESULT propagateBufferOnce() {
 		  // let fillbuffer set this
 		  // bFirstPacket = false;
 		} else if (bFirstPacket && AUDCLNT_BUFFERFLAGS_DATA_DISCONTINUITY == dwFlags) {
-            ShowOutput("Probably spurious glitch reported on first packet\n");
+            ShowOutput("Probably spurious glitch reported on first packet, or two discon. errors before a read from cache\n");
 			bFirstPacket = true;
         } else if (AUDCLNT_BUFFERFLAGS_DATA_DISCONTINUITY == dwFlags) {
 		      // expected if audio turns on then off...
@@ -471,8 +472,12 @@ HRESULT propagateBufferOnce() {
 		{
           CAutoLock cObjectLock(&csMyLock);  // Lock the critical section, releases scope after block is over...
 
-		  if(pBufLocalCurrentEndLocation > 1792) { // I have no idea what I'm doing here... this doesn't fix it, but helps a bit... TODO
-	  		ShowOutput("overfilled buffer, cancelling/flushing."); //over flow overflow appears VLC just keeps reading though, when paused [?] but not graphedit...
+		  if(pBufLocalCurrentEndLocation > expectedMaxBufferSize) { // I have no idea what I'm doing here... this doesn't fix it, but helps a bit... TODO
+			// it seems like if you're just straight recording then you want this big...otherwise you want it like size 0 and non-threaded [pausing with graphedit, for example]... [?]
+			// if you were recording skype, you'd want it non realtime...hmm...
+			// it seems that if the cpu is loaded, we run into this if it's for the next packet...hmm...
+			// so basically we don't accomodate realtime at all currently...hmmm...
+	  		ShowOutput("overfilled buffer, cancelling/flushing."); //over flow overflow appears VLC just keeps reading though, when paused [?] but not graphedit...or does it?
 			pBufLocalCurrentEndLocation = 0;
 		  }
 
