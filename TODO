@@ -2,7 +2,8 @@
 
 actually use it. playon competitor? LOL
   auto skype recorder :)
-  can use the default record device in...XP [ffmpeg to record? if it's much more efficient I guess...]
+  can use the default record device in...XP
+  ffmpeg to record? if it's much more efficient I guess...so maybe I should do the upconverter first so that I understand it better...
 
 slander the "add it to the offset" (might be null),also slander the "must be monotonically increasing"
 
@@ -10,7 +11,10 @@ tell msdn when... it calls discontinuity exactly [and fix my logic]
 
 make it installerable etc :P
 
+  check...if it's not threaded, do I have discontinuity messages on it?
+
 == meh ==
+audio timestamps should "be monotonous" as long as there's no discontinuity (todo: understand discontinuity better first)
 
 higher quality, like more than 2 track [possible?]
 
