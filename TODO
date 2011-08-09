@@ -13,6 +13,8 @@ make it installerable etc :P
 
   check...if it's not threaded, do I have discontinuity messages on it?
 
+silence should look like it works...
+
 == meh ==
 audio timestamps should "be monotonous" as long as there's no discontinuity (todo: understand discontinuity better first)
 
