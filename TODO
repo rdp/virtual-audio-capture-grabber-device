@@ -5,19 +5,27 @@ actually use it. playon competitor? LOL
   can use the default record device in...XP
   ffmpeg to record? if it's much more efficient I guess...so maybe I should do the upconverter first so that I understand it better...
 
-slander the "add it to the offset" (might be null),also slander the "must be monotonically increasing"
+slander the "must be monotonically increasing"
 
 tell msdn when... it calls discontinuity exactly [and fix my logic]
 
 make it installerable etc :P
 
-  check...if it's not threaded, do I have discontinuity messages on it?
+double check...if it's not threaded, do I have more discontinuity messages on it?
 
 silence should look like it works...
+  we should hit that one line without the new lines, not hit it without
 
 can "convert" audio files :) [vlc?]
 
 propaganda file
+
+update the readme with real XP instructions
+does volume matter?
+
+update readme install
+
+note ffmpeg if it works
 
 == meh ==
 audio timestamps should "be monotonous" as long as there's no discontinuity (todo: understand discontinuity better first)
@@ -26,14 +34,12 @@ higher quality, like more than 2 track [possible?]
 
 generate the right amount of silence: http://stackoverflow.com/questions/6362458/generating-silent-audio-track we might be ok here tho...
 
-advertise to mauritius, VLC forum, mine...
-
 test if I actually need threads or not...if not...why...remove them :)
 
-blog posts that make it...um...match google searches that are high for it.
-  advertise as a competitor to that other fella :P
-  
 work when paused (esp. VLC)...hmm...do we need a realtime option? single-threaded m/b?
   actually...in this instance shouldn't I be calculating my own timestamps, starting from when I first got non discontinuous data? hmm...
    pass in the current ref time...hmm...or maybe if the buffer is too large I arbitrarily dump some of it?  I don't accomodate VLC pause but 
    maybe I'm ok realtime still, as is currently?  
+  
+are there tricks to avoid more discontinuity?
+http://msdn.microsoft.com/en-us/library/dd370858(v=VS.85).aspx

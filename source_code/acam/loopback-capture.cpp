@@ -23,7 +23,7 @@ IMMDevice *m_pMMDevice;
 UINT32 nBlockAlign;
 UINT32 pnFrames;
 
-CCritSec csMyLock;  // Critical section. Starts not locked...
+CCritSec csMyLock;  // shared critical section. Starts not locked...
 
 int shouldStop = 0;
 
@@ -39,12 +39,13 @@ void setExpectedMaxBufferSize(long toThis) {
 
 HANDLE m_hThread;
 
+/* unused ...
 void logToFile(char *log_this) {
     FILE *f;
-	f = fopen("g:\\yo2", "a"); // TODO ...
+	f = fopen("g:\\yo2", "a");
 	fprintf(f, log_this);
 	fclose(f);
-}
+} */
 
 void ShowOutput(const char *str, ...)
 {
@@ -58,7 +59,6 @@ void ShowOutput(const char *str, ...)
 }
 
 static DWORD WINAPI propagateBufferForever(LPVOID pv);
-
 
 
 #define EXIT_ON_ERROR(hres)  \
@@ -164,7 +164,8 @@ HRESULT LoopbackCaptureSetup()
                 return E_UNEXPECTED;
         }
     }
-	/* scawah part
+	/* scawah setting stream types up to match...didn't seem to work well...
+
 	if(ifNotNullThenJustSetTypeOnly) {
 		// pwfx is set at this point...
 		WAVEFORMATEX* pwfex = ifNotNullThenJustSetTypeOnly;
@@ -202,13 +203,9 @@ HRESULT LoopbackCaptureSetup()
     nBlockAlign = pwfx->nBlockAlign;
     
 
-
-	// avoid stuttering on close, http://social.msdn.microsoft.com/forums/en-US/windowspro-audiodevelopment/thread/c7ba0a04-46ce-43ff-ad15-ce8932c00171/ 
+// avoid stuttering on close
+// http://social.msdn.microsoft.com/forums/en-US/windowspro-audiodevelopment/thread/c7ba0a04-46ce-43ff-ad15-ce8932c00171/ 
 	
-/**************************************/
-/******** Code to fix stuttering on close ******/
-/**************************************/
-
 IMMDeviceEnumerator *pEnumerator = NULL;
 IMMDevice *pDevice = NULL;
 //IAudioClient *pAudioClient = NULL;
