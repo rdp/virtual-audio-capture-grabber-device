@@ -1,9 +1,10 @@
 This is an audio capture device to capture all the "wave out sound" that is playing on your speakers 
 (i.e. record what you hear) for Windows 7/Vista.
 
-To use, install it, then use your sound recording program (example: VLC) choose directshow capture device "Virtual Audio Grabber"
+To use, download+install it from https://github.com/rdp/virtual-audio-output-sniffer/downloads
+then use a sound recording program (example: VLC) choose directshow capture device "Virtual Audio Grabber"
 
-Justification:
+History:
 
 Basically, with windows XP, you can "record what you hear" by selecting stereo mix in your “recording properties” 
 and voila, it would record.
