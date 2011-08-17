@@ -14,9 +14,14 @@ ping me if you want this installation made easier :)
 
 Then you can then use it in VLC or whatever directshow compatible player/recorder you have as a new input device.
 
-rogerdpack@gmail.com, or mailing list http://groups.google.com/group/roger-projects
-
-Some source from the windows SDK samples, some from 
-http://blogs.msdn.com/b/matthew_van_eerde/archive/2008/12/16/sample-wasapi-loopback-capture-record-what-you-hear.aspx
+Troubleshooting.
 
 If you use it in VLC you'll need a directshow cache of at least 40ms, for some odd reason.
+Also note that it's tuned currently to work best for recording "what you hear" if this doesn't work for you then ping
+me I can add a "realtime" option or the like.
+Any feedback welcome, including feature requests like "support more audio channels than 2".
+
+rogerdpack@gmail.com or mailing list http://groups.google.com/group/roger-projects
+
+Some source code from the windows SDK samples, some taken from 
+http://blogs.msdn.com/b/matthew_van_eerde/archive/2008/12/16/sample-wasapi-loopback-capture-record-what-you-hear.aspx
