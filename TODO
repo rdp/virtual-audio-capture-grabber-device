@@ -15,6 +15,8 @@ make it installerable etc :P
 
 silence should look like it works...
 
+can "convert" audio files :) [vlc?]
+
 == meh ==
 audio timestamps should "be monotonous" as long as there's no discontinuity (todo: understand discontinuity better first)
 
