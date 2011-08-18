@@ -1,8 +1,9 @@
 This is an audio capture device to capture all the "wave out sound" that is playing on your speakers 
 (i.e. record what you hear) for Windows 7/Vista.
 
-To use, download+install it from https://github.com/rdp/virtual-audio-capture-grabber-device/downloads
-then use a sound recording program (example: VLC) choose directshow capture device "Virtual Audio Grabber"
+To use, download+install it here: https://github.com/rdp/virtual-audio-capture-grabber-device/downloads
+then use a program that can take it as input 
+Example: VLC: capture + select capture device "Virtual Audio Grabber".
 
 History:
 
@@ -25,19 +26,15 @@ or what not, I could come up with an app with "start" and "stop" buttons or what
 
 Basically I programmed this as an open source (free) competitor to virtual audio cable.
 
-To install, as an administrator go to the Release subdirectory, and run
-C:\...source_code\acam\Release> regsvr32 audio_sniffer.ax
-
-To uninstall:
-
-C:\...source_code\acam\Release> regsvr32 /u audio_sniffer.ax
-
-Troubleshooting.
+Troubleshooting/notes.
 
 If you use it in VLC you'll need a directshow cache of at least 40ms, for whatever reason.
-Also note that it's tuned currently to work best for recording "what you hear" 
-if this doesn't work for you then ping me I can add a "realtime" option or the like.
+Also note that it's tuned set to work best for recording "what you hear" 
+if this doesn't work for you then ping me I maybe could add a more "realtime" option or 
+something.
 Basically any feedback welcome, if it doesn't work.
+Also note that if you turn down your system volume within windows, it will still continue recording
+or playing, as apparently it captures it before that.
 Any feedback welcome, including feature requests like "support more audio channels than 2".
 
 rogerdpack@gmail.com or mailing list http://groups.google.com/group/roger-projects

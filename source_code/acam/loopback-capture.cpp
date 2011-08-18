@@ -210,6 +210,7 @@ IMMDeviceEnumerator *pEnumerator = NULL;
 IMMDevice *pDevice = NULL;
 //IAudioClient *pAudioClient = NULL;
 //IAudioCaptureClient *pCaptureClient = NULL;
+
 IAudioRenderClient *pRenderClient = NULL;
 WAVEFORMATEXTENSIBLE *captureDataFormat = NULL;
 BYTE *captureData;
@@ -274,8 +275,8 @@ BYTE *captureData;
 
 
 
-
-    // call IAudioClient::Initialize
+    // code from mauritius:
+	// call IAudioClient::Initialize
     // note that AUDCLNT_STREAMFLAGS_LOOPBACK and AUDCLNT_STREAMFLAGS_EVENTCALLBACK
     // do not work together...
     // the "data ready" event never gets set
@@ -364,12 +365,11 @@ HRESULT propagateBufferOnce() {
     // grab a chunk...
 	int gotAnyAtAll = FALSE;
 	DWORD start_time = timeGetTime();
-	INT32 nBytesWrote = 0; // LODO remove this nBytesWrote
     while (!shouldStop) {
         UINT32 nNextPacketSize;
         hr = pAudioCaptureClient->GetNextPacketSize(&nNextPacketSize); // get next packet, if one is ready...
         if (FAILED(hr)) {
-            ShowOutput("IAudioCaptureClient::GetNextPacketSize failed on pass %u after %u frames: hr = 0x%08x\n", nBytesWrote, pnFrames, hr);
+            ShowOutput("IAudioCaptureClient::GetNextPacketSize failed after %u frames: hr = 0x%08x\n", pnFrames, hr);
             pAudioClient->Stop();
             AvRevertMmThreadCharacteristics(hTask);
             pAudioCaptureClient->Release();
@@ -391,7 +391,7 @@ HRESULT propagateBufferOnce() {
 				if(!gotAnyAtAll) {
 				  // after a full slice of apparent silence, punt and return fake silence! [to not confuse our downstream friends]
    			     {
-                   CAutoLock cObjectLock(&csMyLock);  // Lock the critical section, releases scope after method is over with...
+                   CAutoLock cObjectLock(&csMyLock);  // Lock the critical section, releases scope after block is over with...
 				   memset(pBufLocal, 0, expectedMaxBufferSize/2); // guess this simulates silence...
     			   pBufLocalCurrentEndLocation = expectedMaxBufferSize/2;
  	  			   return S_OK;
@@ -425,7 +425,7 @@ HRESULT propagateBufferOnce() {
         
         
         if (FAILED(hr)) {
-            ShowOutput("IAudioCaptureClient::GetBuffer failed on pass %u after %u frames: hr = 0x%08x\n", nBytesWrote, pnFrames, hr);
+            ShowOutput("IAudioCaptureClient::GetBuffer failed after %u frames: hr = 0x%08x\n", pnFrames, hr);
             pAudioClient->Stop();
             AvRevertMmThreadCharacteristics(hTask);
             pAudioCaptureClient->Release();
@@ -434,28 +434,31 @@ HRESULT propagateBufferOnce() {
         }
 
 		if( dwFlags == 0 ) {
-		  // let fillbuffer set this
+		  // guess we'll let fillbuffer set this [the good case]
+		  // LODO synchronize
 		  // bFirstPacket = false;
 		} else if (bFirstPacket && AUDCLNT_BUFFERFLAGS_DATA_DISCONTINUITY == dwFlags) {
-            ShowOutput("Probably spurious glitch reported on first packet, or two discon. errors before a read from cache\n");
+            ShowOutput("Probably spurious glitch reported on first packet, or two discontinuity errors occurred before a read from cache buffer\n");
 			bFirstPacket = true;
         } else if (AUDCLNT_BUFFERFLAGS_DATA_DISCONTINUITY == dwFlags) {
 		      // expected if audio turns on then off...
 			  // LODO make this a non sync point ...
-			  ShowOutput("IAudioCaptureClient::discontinuity GetBuffer set flags to 0x%08x on pass %u after %u frames\n", dwFlags, nBytesWrote, pnFrames);
+			  ShowOutput("IAudioCaptureClient::discontinuity GetBuffer set flags to 0x%08x after %u frames\n", dwFlags, pnFrames);
               /*pAudioClient->Stop();
               AvRevertMmThreadCharacteristics(hTask);
               pAudioCaptureClient->Release(); // WE GET HERE			  
               pAudioClient->Release();            
               return E_UNEXPECTED;*/
 			  bFirstPacket = true;
-        } else {
-     	  ShowOutput("IAudioCaptureClient::unknown discontinuity GetBuffer set flags to 0x%08x on pass %u after %u frames\n", dwFlags, nBytesWrote, pnFrames);
+        } else if (AUDCLNT_BUFFERFLAGS_SILENT == dwFlags) {
+     	  ShowOutput("IAudioCaptureClient::silence from GetBuffer after %u frames\n", pnFrames);
+		} else {
+     	  ShowOutput("IAudioCaptureClient::unknown discontinuity GetBuffer set flags to 0x%08x after %u frames\n", dwFlags, pnFrames);
 		  bFirstPacket = true;
 		}
 
         if (0 == nNumFramesToRead) {
-            ShowOutput("IAudioCaptureClient::GetBuffer said to read 0 frames on pass %u after %u frames\n", nBytesWrote, pnFrames);
+            ShowOutput("death: IAudioCaptureClient::GetBuffer said to read 0 frames after %u frames\n", pnFrames);
             pAudioClient->Stop();
             AvRevertMmThreadCharacteristics(hTask);
             pAudioCaptureClient->Release();
@@ -464,12 +467,15 @@ HRESULT propagateBufferOnce() {
         }
 
 		pnFrames += nNumFramesToRead; // increment total count...		
-		// typically 1792 bytes...
+
+		// lBytesToWrite typically 1792 bytes...
         LONG lBytesToWrite = nNumFramesToRead * nBlockAlign; // nBlockAlign is "audio block size" or frame size, for one audio segment...
 		{
           CAutoLock cObjectLock(&csMyLock);  // Lock the critical section, releases scope after block is over...
 
-		  if(pBufLocalCurrentEndLocation > expectedMaxBufferSize) { // I have no idea what I'm doing here... this doesn't fix it, but helps a bit... TODO
+		  if(pBufLocalCurrentEndLocation > expectedMaxBufferSize) { 
+			// this happens during VLC pauses...
+			// I have no idea what I'm doing here... this doesn't fix it, but helps a bit... TODO
 			// it seems like if you're just straight recording then you want this big...otherwise you want it like size 0 and non-threaded [pausing with graphedit, for example]... [?]
 			// if you were recording skype, you'd want it non realtime...hmm...
 			// it seems that if the cpu is loaded, we run into this if it's for the next packet...hmm...
@@ -485,7 +491,7 @@ HRESULT propagateBufferOnce() {
         
         hr = pAudioCaptureClient->ReleaseBuffer(nNumFramesToRead);
         if (FAILED(hr)) {
-            ShowOutput("IAudioCaptureClient::ReleaseBuffer failed on pass %u after %u frames: hr = 0x%08x\n", nBytesWrote, pnFrames, hr);
+            ShowOutput("IAudioCaptureClient::ReleaseBuffer failed after %u frames: hr = 0x%08x\n", pnFrames, hr);
             pAudioClient->Stop();
             AvRevertMmThreadCharacteristics(hTask);
             pAudioCaptureClient->Release();

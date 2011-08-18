@@ -9,25 +9,18 @@ slander the "must be monotonically increasing"
 
 tell msdn when... it calls discontinuity exactly [and fix my logic]
 
-make it installerable etc :P
-
 double check...if it's not threaded, do I have more discontinuity messages on it?
-
-silence should look like it works...
-  we should hit that one line without the new lines, not hit it without
-
-can "convert" audio files :) [vlc?]
 
 propaganda file
 
 update the readme with real XP instructions
 does volume matter?
 
-update readme install
-
-note ffmpeg if it works
+note ffmpeg if it also works
 
 == meh ==
+can "convert" audio files :) [vlc?]
+
 audio timestamps should "be monotonous" as long as there's no discontinuity (todo: understand discontinuity better first)
 
 higher quality, like more than 2 track [possible?]
@@ -43,3 +36,6 @@ work when paused (esp. VLC)...hmm...do we need a realtime option? single-threade
   
 are there tricks to avoid more discontinuity?
 http://msdn.microsoft.com/en-us/library/dd370858(v=VS.85).aspx
+
+note: the silence thing I think works...based on not hitting that line...
+note: volume "doesn't" matter...
