@@ -1,4 +1,4 @@
-#define AppVer "0.1.1"
+#define AppVer "0.1.2"
 #define AppName "virtual audio capture grabber device"
 
 [UninstallRun]
@@ -6,7 +6,7 @@ Filename: regsvr32; WorkingDir: {app}; Parameters: /u audio_sniffer.ax
 [Run]
 Filename: regsvr32; WorkingDir: {app}; Parameters: audio_sniffer.ax
 [Files]
-Source: C:\dev\ruby\virtual-audio-output-sniffer\source_code\Release\audio_sniffer.ax; DestDir: {app}
+Source: Release\audio_sniffer.ax; DestDir: {app}
 Source: ..\README.TXT; DestDir: {app}; Flags: isreadme
 [Setup]
 MinVersion=,6.0.6000

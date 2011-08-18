@@ -3,7 +3,13 @@ This is an audio capture device to capture all the "wave out sound" that is play
 
 To use, download+install it here: https://github.com/rdp/virtual-audio-capture-grabber-device/downloads
 then use a program that can take it as input 
-Example: VLC: capture + select capture device "Virtual Audio Grabber".
+Example: VLC: media -> open capture device -> select capture audio device "virtual-audio-capturer"
+
+ffmpeg:
+
+$ ffplay -f dshow -i audio="virtual-audio-capturer":video="screen-capture-recorder"
+
+(if you have https://github.com/rdp/screen-capture-recorder-program installed)
 
 History:
 
