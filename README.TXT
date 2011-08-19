@@ -5,11 +5,12 @@ To use, download+install it here: https://github.com/rdp/virtual-audio-capture-g
 then use a program that can take it as input 
 Example: VLC: media -> open capture device -> select capture audio device "virtual-audio-capturer"
 
-ffmpeg:
+ffmpeg (save audio to file yo.mp3):
 
-$ ffplay -f dshow -i audio="virtual-audio-capturer":video="screen-capture-recorder"
+$ ffmpeg  -f dshow -i audio="virtual-audio-capturer" yo.mp3
 
-(if you have https://github.com/rdp/screen-capture-recorder-program installed)
+(also see https://github.com/rdp/screen-capture-recorder-program if you want to stream your desktop with audio
+as well or capture it or the like)
 
 History:
 
