@@ -6,6 +6,7 @@ actually use it. playon competitor? LOL
   ffmpeg to record? if it's much more efficient I guess...so maybe I should do the upconverter first so that I understand it better...
 
 fix the timestamps because...we can [?] I think that would be better...maybe...under normal cases...
+  audio timestamps should "be monotonous" as long as there's no discontinuity (todo: understand discontinuity better first)
 
 slander the "must be monotonically increasing"
 
@@ -19,12 +20,9 @@ ffmpeg "executable" for recording et al [?]
 
 == meh ==
 can "convert" audio files :) [vlc?]
-
-audio timestamps should "be monotonous" as long as there's no discontinuity (todo: understand discontinuity better first)
+  check it?
 
 higher quality, like more than 2 track [possible?]
-
-generate the right amount of silence: http://stackoverflow.com/questions/6362458/generating-silent-audio-track we might be ok here tho...
 
 test if I actually need threads or not...if not...why...remove them :)
 
@@ -33,8 +31,11 @@ work when paused (esp. VLC)...hmm...do we need a realtime option? single-threade
    pass in the current ref time...hmm...or maybe if the buffer is too large I arbitrarily dump some of it?  I don't accomodate VLC pause but 
    maybe I'm ok realtime still, as is currently?  
   
-are there tricks to avoid more discontinuity?
-http://msdn.microsoft.com/en-us/library/dd370858(v=VS.85).aspx
+are there tricks to avoid more discontinuity? code? http://msdn.microsoft.com/en-us/library/dd370858(v=VS.85).aspx ?
+
+real ddk thing
+
+== notes ==
 
 note: the silence thing I think works...based on not hitting that line...
 note: volume "doesn't" matter...

@@ -1,4 +1,4 @@
-This is an audio capture device to capture all the "wave out sound" that is playing on your speakers 
+﻿This is an audio capture device to capture all the "wave out sound" that is playing on your speakers 
 (i.e. record what you hear) for Windows 7/Vista.
 
 To use, download+install it here: https://github.com/rdp/virtual-audio-capture-grabber-device/downloads
@@ -32,6 +32,8 @@ At least VLC can use this to record, for example.  Ping me if you want me to com
 or what not, I could come up with an app with "start" and "stop" buttons or what not.
 
 Basically I programmed this as an open source (free) competitor to virtual audio cable.
+Ping me if you want me to convert it into a "real" audio device so that any program can use it,
+not just directshow compatible ones.
 
 Troubleshooting/notes.
 
@@ -41,7 +43,7 @@ if this doesn't work for you then ping me I maybe could add a more "realtime" op
 something.
 Basically any feedback welcome, if it doesn't work.
 Also note that if you turn down your system volume within windows, it will still continue recording
-or playing, as apparently it captures it before that.
+or playing, as apparently it captures it at "normal volume" regardless of how high your speaker output is.
 Any feedback welcome, including feature requests like "support more audio channels than 2".
 
 rogerdpack@gmail.com or mailing list http://groups.google.com/group/roger-projects
