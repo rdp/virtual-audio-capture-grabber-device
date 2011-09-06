@@ -2,9 +2,9 @@
 #define AppName "virtual audio capture grabber device"
 
 [UninstallRun]
-Filename: regsvr32; WorkingDir: {app}; Parameters: /u audio_sniffer.ax
+Filename: regsvr32; WorkingDir: {app}; Parameters: /s /u audio_sniffer.ax
 [Run]
-Filename: regsvr32; WorkingDir: {app}; Parameters: audio_sniffer.ax
+Filename: regsvr32; WorkingDir: {app}; Parameters: /s audio_sniffer.ax
 [Files]
 Source: Release\audio_sniffer.ax; DestDir: {app}
 Source: ..\README.TXT; DestDir: {app}; Flags: isreadme
