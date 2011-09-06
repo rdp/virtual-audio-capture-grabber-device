@@ -47,6 +47,8 @@ Also note that if you turn down your system volume within windows, it will still
 or playing, as apparently it captures it at "normal volume" regardless of how high your speaker output is.
 Any feedback welcome, including feature requests like "support more audio channels than 2".
 
+If you want a smaller download you can just download the file source_code\Release\audio_sniffer.ax then run regsvr32 audio_sniffer.ax as an admin user.
+
 rogerdpack@gmail.com or mailing list http://groups.google.com/group/roger-projects
 
 Some source code originally from the windows SDK samples, some taken from [1]

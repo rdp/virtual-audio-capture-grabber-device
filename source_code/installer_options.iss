@@ -1,4 +1,4 @@
-#define AppVer "0.1.2"
+#define AppVer "0.2.0"
 #define AppName "virtual audio capture grabber device"
 
 [UninstallRun]
@@ -21,3 +21,4 @@ OutputBaseFilename=setup {#AppName} v{#AppVer}
 [Icons]
 Name: {group}\Uninstall it; Filename: {uninstallexe}
 Name: {group}\Record Using it; Filename: {app}\script_it\record.bat; WorkingDir: {app}\script_it
+Name: {group}\Test it by listening to it (causes feedback so close window quickly); Filename: {app}\script_it\feedback.bat; WorkingDir: {app}\script_it
