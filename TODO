@@ -1,11 +1,6 @@
 == actually do==
 
-double check...if it's not threaded, do I have more discontinuity messages on it?
-
-fix the timestamps because...we can [?] I think that would be better...maybe...under normal cases...
-  audio timestamps should "be monotonous" as long as there's no discontinuity (todo: understand discontinuity better first)
-
-ffmpeg "executable" for recording et al [?]
+ffmpeg "executable" for recording so long et al [?]
   +- start, stop buttons I guess...
 
 add an executable for "feedback" to check it's working...

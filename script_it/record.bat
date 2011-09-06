@@ -1,0 +1,1 @@
+java -jar jruby-complete-1.6.4.jar start_stop_recording_just_desktop.rb ".mp3" audio="virtual-audio-capturer"

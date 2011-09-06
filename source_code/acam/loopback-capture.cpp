@@ -341,7 +341,13 @@ BYTE *captureData;
     {
         DWORD dwErr = GetLastError();
         return HRESULT_FROM_WIN32(dwErr);
-    }
+    } else {
+		hr = SetThreadPriority(m_hThread, THREAD_PRIORITY_TIME_CRITICAL);
+        if (FAILED(hr)) { // of course we're a high prio thread, right? :)
+		  return hr;
+  	    }
+	}
+
 	return hr;
 } // end LoopbackCaptureSetup
 
