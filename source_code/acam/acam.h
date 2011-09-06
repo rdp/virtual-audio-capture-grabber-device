@@ -23,6 +23,7 @@ HRESULT LoopbackCaptureTakeFromBuffer(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNo
 
 #define BITS_PER_BYTE 8
 
+extern CCritSec m_cSharedState;
 
 // This class is exported from the acam.dll
 class ACAM_API Cacam {
@@ -127,7 +128,6 @@ private:
     CVCam *m_pParent;
     // unused now? REFERENCE_TIME m_rtLastTime;
     HBITMAP m_hLogoBmp;
-    CCritSec m_cSharedState;
     IReferenceClock *m_pClock;
 
     LONGLONG m_llSampleMediaTimeStart;

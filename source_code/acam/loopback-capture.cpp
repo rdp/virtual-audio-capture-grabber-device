@@ -357,6 +357,8 @@ static DWORD WINAPI propagateBufferForever(LPVOID pv) {
   return S_OK;
 }
 
+extern CCritSec m_cSharedState;
+
 HRESULT propagateBufferOnce() {
 	HRESULT hr = S_OK;
 
@@ -387,7 +389,7 @@ HRESULT propagateBufferOnce() {
 			assert(millis_to_fill > 1); // actually, we kind of lose precision/timing here, don't we...hmm...LODO with correct timing info...
 			DWORD current_time = timeGetTime();
 			if((current_time - start_time > millis_to_fill)) {
-				// I don't think we ever get here anymore...thankfully since it's mostly broken anyway.
+				// I don't think we ever get here anymore...thankfully since it's mostly broken code probably
 				if(!gotAnyAtAll) {
 				  // after a full slice of apparent silence, punt and return fake silence! [to not confuse our downstream friends]
    			     {
@@ -433,60 +435,64 @@ HRESULT propagateBufferOnce() {
             return hr;            
         }
 
-		if( dwFlags == 0 ) {
-		  // guess we'll let fillbuffer set this [the good case]
-		  // LODO synchronize
-		  // bFirstPacket = false;
-		} else if (bFirstPacket && AUDCLNT_BUFFERFLAGS_DATA_DISCONTINUITY == dwFlags) {
-            ShowOutput("Probably spurious glitch reported on first packet, or two discontinuity errors occurred before a read from cache buffer\n");
-			bFirstPacket = true;
-        } else if (AUDCLNT_BUFFERFLAGS_DATA_DISCONTINUITY == dwFlags) {
-		      // expected if audio turns on then off...
-			  // LODO make this a non sync point ...
-			  ShowOutput("IAudioCaptureClient::discontinuity GetBuffer set flags to 0x%08x after %u frames\n", dwFlags, pnFrames);
-              /*pAudioClient->Stop();
-              AvRevertMmThreadCharacteristics(hTask);
-              pAudioCaptureClient->Release(); // WE GET HERE			  
-              pAudioClient->Release();            
-              return E_UNEXPECTED;*/
-			  bFirstPacket = true;
-        } else if (AUDCLNT_BUFFERFLAGS_SILENT == dwFlags) {
-     	  ShowOutput("IAudioCaptureClient::silence from GetBuffer after %u frames\n", pnFrames);
-		} else {
-     	  ShowOutput("IAudioCaptureClient::unknown discontinuity GetBuffer set flags to 0x%08x after %u frames\n", dwFlags, pnFrames);
-		  bFirstPacket = true;
-		}
-
-        if (0 == nNumFramesToRead) {
-            ShowOutput("death: IAudioCaptureClient::GetBuffer said to read 0 frames after %u frames\n", pnFrames);
-            pAudioClient->Stop();
-            AvRevertMmThreadCharacteristics(hTask);
-            pAudioCaptureClient->Release();
-            pAudioClient->Release();            
-            return E_UNEXPECTED;            
-        }
-
-		pnFrames += nNumFramesToRead; // increment total count...		
-
-		// lBytesToWrite typically 1792 bytes...
-        LONG lBytesToWrite = nNumFramesToRead * nBlockAlign; // nBlockAlign is "audio block size" or frame size, for one audio segment...
 		{
-          CAutoLock cObjectLock(&csMyLock);  // Lock the critical section, releases scope after block is over...
+  		  CAutoLock cAutoLockShared(&m_cSharedState);
 
-		  if(pBufLocalCurrentEndLocation > expectedMaxBufferSize) { 
-			// this happens during VLC pauses...
-			// I have no idea what I'm doing here... this doesn't fix it, but helps a bit... TODO
-			// it seems like if you're just straight recording then you want this big...otherwise you want it like size 0 and non-threaded [pausing with graphedit, for example]... [?]
-			// if you were recording skype, you'd want it non realtime...hmm...
-			// it seems that if the cpu is loaded, we run into this if it's for the next packet...hmm...
-			// so basically we don't accomodate realtime at all currently...hmmm...
-	  		ShowOutput("overfilled buffer, cancelling/flushing."); //over flow overflow appears VLC just keeps reading though, when paused [?] but not graphedit...or does it?
-			pBufLocalCurrentEndLocation = 0;
-		  }
+			if( dwFlags == 0 ) {
+			  // guess we'll let fillbuffer set this [the good case]
+			  // LODO synchronize
+			  // bFirstPacket = false;
+			} else if (bFirstPacket && AUDCLNT_BUFFERFLAGS_DATA_DISCONTINUITY == dwFlags) {
+				ShowOutput("Probably spurious glitch reported on first packet, or two discontinuity errors occurred before a read from cache buffer\n");
+				bFirstPacket = true;
+			} else if (AUDCLNT_BUFFERFLAGS_DATA_DISCONTINUITY == dwFlags) {
+				  // expected if audio turns on then off...
+				  // LODO make this a non sync point ...
+				  ShowOutput("IAudioCaptureClient::discontinuity GetBuffer set flags to 0x%08x after %u frames\n", dwFlags, pnFrames);
+				  /*pAudioClient->Stop();
+				  AvRevertMmThreadCharacteristics(hTask);
+				  pAudioCaptureClient->Release(); // WE GET HERE			  
+				  pAudioClient->Release();            
+				  return E_UNEXPECTED;*/
+				  bFirstPacket = true;
+			} else if (AUDCLNT_BUFFERFLAGS_SILENT == dwFlags) {
+     		  ShowOutput("IAudioCaptureClient::silence from GetBuffer after %u frames\n", pnFrames);
+			} else {
+     		  ShowOutput("IAudioCaptureClient::unknown discontinuity GetBuffer set flags to 0x%08x after %u frames\n", dwFlags, pnFrames);
+			  bFirstPacket = true;
+			}
 
-		  for(UINT i = 0; i < lBytesToWrite && pBufLocalCurrentEndLocation < expectedMaxBufferSize; i++) {
-			pBufLocal[pBufLocalCurrentEndLocation++] = pData[i];
-		  }
+			if (0 == nNumFramesToRead) {
+				ShowOutput("death: IAudioCaptureClient::GetBuffer said to read 0 frames after %u frames\n", pnFrames);
+				pAudioClient->Stop();
+				AvRevertMmThreadCharacteristics(hTask);
+				pAudioCaptureClient->Release();
+				pAudioClient->Release();            
+				return E_UNEXPECTED;            
+			}
+
+			pnFrames += nNumFramesToRead; // increment total count...		
+
+			// lBytesToWrite typically 1792 bytes...
+			LONG lBytesToWrite = nNumFramesToRead * nBlockAlign; // nBlockAlign is "audio block size" or frame size, for one audio segment...
+			{
+			  CAutoLock cObjectLock(&csMyLock);  // Lock the critical section, releases scope after block is over...
+
+			  if(pBufLocalCurrentEndLocation > expectedMaxBufferSize) { 
+				// this happens during VLC pauses...
+				// I have no idea what I'm doing here... this doesn't fix it, but helps a bit... TODO
+				// it seems like if you're just straight recording then you want this big...otherwise you want it like size 0 and non-threaded [pausing with graphedit, for example]... [?]
+				// if you were recording skype, you'd want it non realtime...hmm...
+				// it seems that if the cpu is loaded, we run into this if it's for the next packet...hmm...
+				// so basically we don't accomodate realtime at all currently...hmmm...
+	  			ShowOutput("overfilled buffer, cancelling/flushing."); //over flow overflow appears VLC just keeps reading though, when paused [?] but not graphedit...or does it?
+				pBufLocalCurrentEndLocation = 0;
+			  }
+
+			  for(UINT i = 0; i < lBytesToWrite && pBufLocalCurrentEndLocation < expectedMaxBufferSize; i++) {
+				pBufLocal[pBufLocalCurrentEndLocation++] = pData[i];
+			  }
+			}
 		}
         
         hr = pAudioCaptureClient->ReleaseBuffer(nNumFramesToRead);
@@ -500,7 +506,7 @@ HRESULT propagateBufferOnce() {
         }
         
 		return hr;
-    } // capture something, anything! loop...
+    } // while !got anything && should continue loop
 
 	return E_UNEXPECTED;
 
