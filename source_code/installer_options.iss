@@ -18,3 +18,4 @@ UninstallDisplayName=virtual audio capture grabber device uninstall
 OutputBaseFilename=setup {#AppName} v{#AppVer}
 [Icons]
 Name: {group}\Uninstall it; Filename: {uninstallexe}
+Name: {group}\script_it; Filename: {app}\script_it\record.bat; WorkingDir: {app}\configuration_setup_utility
