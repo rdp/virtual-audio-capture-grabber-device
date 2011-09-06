@@ -1,6 +1,6 @@
 require 'jruby-swing-helpers/swing_helpers'
 # use like ".mp3" "audio=xxx" if desired
-
+ENV['PATH'] = 'ffmpeg\bin;' + ENV['PATH']
 include SwingHelpers
 
 seconds = SwingHelpers.get_user_input("Seconds to record for?", 60)
