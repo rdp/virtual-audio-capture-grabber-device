@@ -14,11 +14,11 @@ Source: ..\script_it\*.*; DestDir: {app}\script_it; Flags: recursesubdirs
 MinVersion=,6.0.6000
 AppName={#AppName}
 AppVerName={#AppVer}
-DefaultDirName={pf}\virtual audio capture grabber device
-DefaultGroupName=virtual audio capture grabber device
-UninstallDisplayName=virtual audio capture grabber device uninstall
+DefaultDirName={pf}\virtual audio capturer
+DefaultGroupName=virtual audio capturer
+UninstallDisplayName=virtual audio capture grabber uninstall
 OutputBaseFilename=setup {#AppName} v{#AppVer}
 [Icons]
 Name: {group}\Uninstall it; Filename: {uninstallexe}
 Name: {group}\Record Using it; Filename: {app}\script_it\record.bat; WorkingDir: {app}\script_it
-Name: {group}\Test it by listening to it (causes feedback so close window quickly); Filename: {app}\script_it\feedback.bat; WorkingDir: {app}\script_it
+Name: {group}\Test it by listening to it (DANGER causes feedback); Filename: {app}\script_it\feedback.bat; WorkingDir: {app}\script_it

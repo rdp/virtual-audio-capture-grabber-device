@@ -1,5 +1,5 @@
 require 'jruby-swing-helpers/swing_helpers'
-# use like ".mp3" "audio=xxx" "ffplay"
+# use like ".mp3" "audio=xxx" "ffplay" "anything"
 # if desired
 ENV['PATH'] = 'ffmpeg\bin;' + ENV['PATH']
 include SwingHelpers
@@ -26,7 +26,7 @@ end
 #got = JOptionPane.show_select_buttons_prompt 'Select start to start', :yes => "start", :no => "stop"
 #raise unless got == :yes
 
-c = "#{exe} -f dshow -i #{device} #{seconds} #{'"' + file + '"' if file}"
+c = "#{exe} -f dshow -i #{device} #{seconds} #{'"' + file + '"' if file} #{ARGV[3]}"
 puts c
 p c
 system c
