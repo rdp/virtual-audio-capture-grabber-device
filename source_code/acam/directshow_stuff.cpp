@@ -78,7 +78,6 @@ CVCamStream::CVCamStream(HRESULT *phr, CVCam *pParent, LPCWSTR pPinName) :
     CSourceStream(NAME("Virtual cam5"),phr, pParent, pPinName), m_pParent(pParent)
 {
     // Set the media type...
-    m_llSampleMediaTimeStart = 0;
 	GetMediaType(0, &m_mt);
 }
 
@@ -339,7 +338,6 @@ HRESULT CVCamStream::OnThreadCreate()
 {
 	assert(currentlyRunning == 0); // sanity check...
 	currentlyRunning = TRUE;
-    m_llSampleMediaTimeStart = 0;
     GetMediaType(0, &m_mt);
 
     HRESULT hr = LoopbackCaptureSetup();

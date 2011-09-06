@@ -130,8 +130,6 @@ private:
     HBITMAP m_hLogoBmp;
     IReferenceClock *m_pClock;
 
-    LONGLONG m_llSampleMediaTimeStart;
-
 	HRESULT setAsNormal(CMediaType *pmt);
 
 };

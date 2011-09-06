@@ -44,11 +44,12 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
     // Set the sample's start and end time stamps...
     CRefTime rtStart;
 	if(bFirstPacket) {
-      m_pParent->StreamTime(rtStart); // get current graph ref time as "start", as normal "capture" devices would
+      m_pParent->StreamTime(rtStart); // gets current graph ref time [now] as its "start", as normal "capture" devices would
 	} else {
 		// since there hasn't been discontinuity, I think we should be safe to tell it
 		// that this packet starts where the previous packet ended off
 		// since that's theoretically accurate...
+		// I don't "think" this will hurt graphs that have no reference clock...hopefully...
     	REFERENCE_TIME previousEnd = m_rtSampleEndTime;
 		rtStart = previousEnd;
 		bFirstPacket = false;
@@ -71,7 +72,7 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
 	// [a possible VLC bug?] http://forum.videolan.org/viewtopic.php?f=14&t=92659&hilit=+50ms
 
     hr = pms->SetMediaTime((REFERENCE_TIME*)&rtStart, (REFERENCE_TIME*)&m_rtSampleEndTime);
-    m_llSampleMediaTimeStart = m_rtSampleEndTime;
+    //m_llSampleMediaTimeStart = m_rtSampleEndTime;
 
 	if (FAILED(hr)) {
 		assert(false);
