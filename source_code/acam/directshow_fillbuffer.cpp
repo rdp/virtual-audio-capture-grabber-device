@@ -45,6 +45,8 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
     CRefTime rtStart;
 	if(bFirstPacket) {
       m_pParent->StreamTime(rtStart); // gets current graph ref time [now] as its "start", as normal "capture" devices would
+	  bFirstPacket = false;
+	  ShowOutput("got a first packet");
 	} else {
 		// since there hasn't been discontinuity, I think we should be safe to tell it
 		// that this packet starts where the previous packet ended off
@@ -52,7 +54,6 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
 		// I don't "think" this will hurt graphs that have no reference clock...hopefully...
     	REFERENCE_TIME previousEnd = m_rtSampleEndTime;
 		rtStart = previousEnd;
-		bFirstPacket = false;
 	}
 
 

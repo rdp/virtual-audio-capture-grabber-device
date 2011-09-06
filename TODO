@@ -1,13 +1,9 @@
 == actually do==
 
-fix the timestamps because...we can [?] I think that would be better...maybe...under normal cases...
-  audio timestamps should "be monotonous" as long as there's no discontinuity (todo: understand discontinuity better first)
-
-slander the "must be monotonically increasing"
-
 double check...if it's not threaded, do I have more discontinuity messages on it?
 
-update the readme with real XP instructions
+fix the timestamps because...we can [?] I think that would be better...maybe...under normal cases...
+  audio timestamps should "be monotonous" as long as there's no discontinuity (todo: understand discontinuity better first)
 
 ffmpeg "executable" for recording et al [?]
   +- start, stop buttons I guess...

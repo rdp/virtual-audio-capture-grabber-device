@@ -439,16 +439,20 @@ HRESULT propagateBufferOnce() {
   		  CAutoLock cAutoLockShared(&m_cSharedState);
 
 			if( dwFlags == 0 ) {
-			  // guess we'll let fillbuffer set this [the good case]
-			  // LODO synchronize
-			  // bFirstPacket = false;
+			  // the good case
+			  // we'll let fillbuffer set bFirstPacket = false; since it repackages the audio
 			} else if (bFirstPacket && AUDCLNT_BUFFERFLAGS_DATA_DISCONTINUITY == dwFlags) {
-				ShowOutput("Probably spurious glitch reported on first packet, or two discontinuity errors occurred before a read from cache buffer\n");
-				bFirstPacket = true;
+				ShowOutput("Probably spurious glitch reported on first packet, or two discontinuity errors occurred before it read from the cached buffer\n");
+				bFirstPacket = true; // won't hurt
+				// LODO it should probably clear the buffers if it ever gets discontinuity
+				// or "let" it clear the buffers then send the new data on
+				// as we have any left-over data that will be assigned a wrong timestamp
+				// but it won't be too far wrong, compared to what it would otherwise be with always
+				// assigning it the current graph timestamp, like we used to...
 			} else if (AUDCLNT_BUFFERFLAGS_DATA_DISCONTINUITY == dwFlags) {
-				  // expected if audio turns on then off...
-				  // LODO make this a non sync point ...
 				  ShowOutput("IAudioCaptureClient::discontinuity GetBuffer set flags to 0x%08x after %u frames\n", dwFlags, pnFrames);
+				  // expected if audio turns on then off...
+				  // or if your CPU gets behind or what not.
 				  /*pAudioClient->Stop();
 				  AvRevertMmThreadCharacteristics(hTask);
 				  pAudioCaptureClient->Release(); // WE GET HERE			  
@@ -456,10 +460,11 @@ HRESULT propagateBufferOnce() {
 				  return E_UNEXPECTED;*/
 				  bFirstPacket = true;
 			} else if (AUDCLNT_BUFFERFLAGS_SILENT == dwFlags) {
-     		  ShowOutput("IAudioCaptureClient::silence from GetBuffer after %u frames\n", pnFrames);
+     		  ShowOutput("IAudioCaptureClient::silence (just) from GetBuffer after %u frames\n", pnFrames);
+			  // expected if there's silence, esp. since we have the "silence generation" work-around...
 			} else {
      		  ShowOutput("IAudioCaptureClient::unknown discontinuity GetBuffer set flags to 0x%08x after %u frames\n", dwFlags, pnFrames);
-			  bFirstPacket = true;
+			  bFirstPacket = true; // it probably is discontinuity
 			}
 
 			if (0 == nNumFramesToRead) {
@@ -480,7 +485,7 @@ HRESULT propagateBufferOnce() {
 
 			  if(pBufLocalCurrentEndLocation > expectedMaxBufferSize) { 
 				// this happens during VLC pauses...
-				// I have no idea what I'm doing here... this doesn't fix it, but helps a bit... TODO
+				// I have no idea what I'm doing here... this doesn't fix it, but helps a bit... TODO FINISH THIS
 				// it seems like if you're just straight recording then you want this big...otherwise you want it like size 0 and non-threaded [pausing with graphedit, for example]... [?]
 				// if you were recording skype, you'd want it non realtime...hmm...
 				// it seems that if the cpu is loaded, we run into this if it's for the next packet...hmm...
@@ -489,7 +494,7 @@ HRESULT propagateBufferOnce() {
 				pBufLocalCurrentEndLocation = 0;
 			  }
 
-			  for(UINT i = 0; i < lBytesToWrite && pBufLocalCurrentEndLocation < expectedMaxBufferSize; i++) {
+			  for(INT i = 0; i < lBytesToWrite && pBufLocalCurrentEndLocation < expectedMaxBufferSize; i++) {
 				pBufLocal[pBufLocalCurrentEndLocation++] = pData[i];
 			  }
 			}
@@ -512,34 +517,37 @@ HRESULT propagateBufferOnce() {
 
 }
 
-// iSize is max size of the BYTE buffer...so maybe...we should just drop it if we have past that size? hmm...
+// iSize is max size of the BYTE buffer...so maybe...we should just drop it if we have past that size? hmm...we're probably
 HRESULT LoopbackCaptureTakeFromBuffer(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNotNullThenJustSetTypeOnly, LONG* totalBytesWrote)
  {
 	while(!shouldStop) { // allow this one to exit, too, oddly.
        {
         CAutoLock cObjectLock(&csMyLock);  // Lock the critical section, releases scope after block is done...
 		if(pBufLocalCurrentEndLocation > 0) {
-		  // fails lodo is that ok? assert(pBufLocalCurrentEndLocation <= expectedMaxBufferSize);
+		  // fails lodo is that ok? 
+		  // assert(pBufLocalCurrentEndLocation <= expectedMaxBufferSize);
 		  int totalToWrite = MIN(pBufLocalCurrentEndLocation, expectedMaxBufferSize);
 		  memcpy(pBuf, pBufLocal, totalToWrite);
+		  ASSERT(totalToWrite <= iSize); // just in case
           *totalBytesWrote = totalToWrite;
 		  pBufLocalCurrentEndLocation = 0;
           return S_OK;
 		} // else fall through to sleep
 	  }
 	  // sleep outside the lock ...
-	  // using the sleeps doesn't seem to hurt the cpu
-	  // and it seems to not get any "missed audio" messages...
-      Sleep(2); // doesn't seem to hurt the cpu...sleep longer here than the other since it has to do more work [?]
+	  // using sleep doesn't seem to hurt the cpu
+	  // and it seems to not get many "discontinuity" messages...
+      Sleep(1);
 	}
 	pBufLocalCurrentEndLocation = 0; // not sure who should set this...producer or consumer :)
 	return E_FAIL; // we didn't fill anything...
 }
 
 
+// clean up
 void loopBackRelease() {
+	// tell running collector thread to end...
 	shouldStop = 1;
-	// wait for collector thread to end...
 	WaitForSingleObject(m_hThread, INFINITE);
     CloseHandle(m_hThread);
     m_hThread = NULL;
