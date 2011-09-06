@@ -9,10 +9,9 @@ CCritSec m_cSharedState;
 //
 // Stuffs the buffer with data
 // "they" call this, every so often...
-// you probably should fill the entire buffer...I think...hmm...
 HRESULT CVCamStream::FillBuffer(IMediaSample *pms) 
 {	
-	// don't expect these...the parent controls this/us and doesn't call us when it is stopped I guess, so should be active
+	// I don't expect these...the parent controls this/us and doesn't call us when it is stopped I guess, so should be active
 	assert(m_pParent->IsActive());
 	assert(!m_pParent->IsStopped());
 
@@ -33,8 +32,7 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
 		return hr;
 	}
 
-	CAutoLock cAutoLockShared(&m_cSharedState); // do we have any threading conflicts though? don't think so...just in case though :P
-	// TODO do with the boolean false fella, too...
+	CAutoLock cAutoLockShared(&m_cSharedState); // for the bFirstPacket boolean control, except there's probably still some odd race condition er other...
 
 	hr = pms->SetActualDataLength(totalWrote);
 	if(FAILED(hr)) {
@@ -45,8 +43,17 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
 
     // Set the sample's start and end time stamps...
     CRefTime rtStart;
-    m_pParent->StreamTime(rtStart);
-	REFERENCE_TIME previousEnd = m_rtSampleEndTime;
+	if(bFirstPacket) {
+      m_pParent->StreamTime(rtStart); // get current graph ref time as "start", as normal "capture" devices would
+	} else {
+		// since there hasn't been discontinuity, I think we should be safe to tell it
+		// that this packet starts where the previous packet ended off
+		// since that's theoretically accurate...
+    	REFERENCE_TIME previousEnd = m_rtSampleEndTime;
+		rtStart = previousEnd;
+		bFirstPacket = false;
+	}
+
 
 	// I once tried to change it to always have monotonicity of timestamps at this point, but it didn't fix any problems, and seems to do all right without it [?]
 
@@ -95,7 +102,6 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
 		assert(false);
         return hr;
     }
-    bFirstPacket = false; // correct playback has started, or re-started...
 
     return NOERROR;
 
