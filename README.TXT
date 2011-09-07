@@ -1,14 +1,13 @@
 ﻿This is an audio capture device to capture all the "wave out sound" that is playing on your speakers 
-(i.e. record what you hear) for Windows 7/Vista+.
-
-Windows XP users see the "history" section
+(i.e. record what you hear) for Windows 7/Vista+.  Windows XP users please read the "history" section
+for something else you can try in its place.
 
 To use, download+install here: https://github.com/rdp/virtual-audio-capture-grabber-device/downloads
-then use a via any program that can take directshow devices as input 
-Example: VLC: media -> open capture device -> select capture audio device "virtual-audio-capturer"
+then use it a via any program that can take directshow devices as input 
+
+Example: VLC media player: media [menu] -> open capture device -> select capture audio device "virtual-audio-capturer"
 
 Example: ffmpeg (to save audio to file yo.mp3 from what is currently playing):
-
 $ ffmpeg  -f dshow -i audio="virtual-audio-capturer" yo.mp3
 
 (also see https://github.com/rdp/screen-capture-recorder-program if you want to stream your desktop with audio
