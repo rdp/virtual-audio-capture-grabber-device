@@ -15,14 +15,20 @@ as well or capture it or the like)
 
 History:
 
-Basically, with windows XP, you can already "record what you hear" by selecting stereo mix in your “recording properties” 
-and voila, the default record output will be "what you hear."
-With Windows Vista/7, for some reason most sound card drivers do not include this as an option.
+Basically, with windows XP, you can already "record what you hear"
+
+
+Basically run sndvol32, options [menu] -> properties -> recording radio button, click ok, now click the "select" checkbox underneath "Wave Out Mix"
+Now with VLC choose "Open Capture Device" -> Audio Device Name -> select "your soundcard's name" (other
+programs just select your soundcard's name).
+
+With Windows Vista/7, for some reason many sound card drivers do not include this as an option.
 Some do though. You can check if yours already does by following instructions here:
 http://downloadsquad.switched.com/2007/01/15/how-to-enable-wave-out-recording-in-vista
 
-If you see a "Wave Out Mix" then you're good to go: enable it, and you can use it (you don't need this program in that cast).
-If you don't see it then you're in luck.
+If you see a "Wave Out Mix" then you're good to go: enable it, and you can use it (you don't need this device at
+all).
+If you don't see it then you're in luck this device is for you.
 Windows Vista/7 offer a new interface called a "loopback" adapter that captures the outgoing audio just
 as it is sent to your speakers [1].
 
