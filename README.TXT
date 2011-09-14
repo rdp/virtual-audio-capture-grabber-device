@@ -44,7 +44,16 @@ Ping me if you want me to convert it into a "real" kernel level audio device so 
 not just directshow compatible ones.
 Ping me if you want an easier "start/stop" recorder, too.
 
-Troubleshooting/notes.
+
+Another option is "If your sound card doesn't have the option to record what you hear, 
+use a cable (with 3.5mm headphone jacks on both ends) to connect the line out of your 
+sound card to the line in (using a splitter if you need to be able to hear what you're doing, 
+and disabling mic boost if you use a microphone input)."
+
+But that's hardware and so passe.
+
+
+==Troubleshooting/notes. ==
 
 If you use it in VLC you'll need a directshow cache of at least 40ms, for whatever reason.
 Also note that it's tuned set to work best for recording "what you hear" 
