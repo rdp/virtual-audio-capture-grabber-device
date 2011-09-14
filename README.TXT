@@ -13,29 +13,47 @@ $ ffmpeg  -f dshow -i audio="virtual-audio-capturer" yo.mp3
 (also see https://github.com/rdp/screen-capture-recorder-program if you want to stream your desktop with audio
 as well or capture it or the like)
 
-History:
+History/XP users:
 
-Basically, with windows XP, you can already "record what you hear" by selecting stereo mix in your “recording properties” 
-and voila, the default record output will be "what you hear."
-With Windows Vista/7, for some reason most sound card drivers do not include this as an option.
+Basically, with windows XP, you can already "record what you hear"
+Run sndvol32 (Start menu -> Accessories -> Volume/Audio), choose options [menu] -> properties -> recording radio button, click ok, 
+now click the "select" checkbox underneath "Wave Out Mix"
+
+Now with for example VLC choose "Open Capture Device" -> Audio Device Name -> select "your soundcard's name" (other
+programs just select your soundcard's name).
+
+With Windows Vista/7, for some reason many sound card drivers do not include this as an option.
 Some do though. You can check if yours already does by following instructions here:
 http://downloadsquad.switched.com/2007/01/15/how-to-enable-wave-out-recording-in-vista
+You may want to download and install new audio drivers first before looking for it, sometimes that helps.
 
-If you see a "Wave Out Mix" then you're good to go: enable it, and you can use it (you don't need this program in that cast).
-If you don't see it then you're in luck.
+If you're in Vista/Windows 7 and see a "Wave Out Mix" following the above instructions
+then you're good to go: enable it, and you can use it (you thus don't need virtual-audio-capture-grabber-device at
+all).
+
+If you don't see it then you're in luck this, device is for you.
 Windows Vista/7 offer a new interface called a "loopback" adapter that captures the outgoing audio just
 as it is sent to your speakers [1].
 
-This little utility captures this loopback audio and offers it to you as an input device
-that you can then record (it's a directshow audio capture device, if that means anything).
-VLC can use this to record, for example.  Ping me if you want me to come up with an easier way to record
-or what not, I could come up with an app with "start" and "stop" buttons or what not.
+This little utility captures the loopback audio and offers it to you as an input device
+that you can then record (it's captured as a directshow audio capture device, if that means anything to you).
+VLC can use this to record, for example.  There are some example apps included with this package.
 
 Basically I programmed this as an open source (free) competitor to virtual audio cable.
 Ping me if you want me to convert it into a "real" kernel level audio device so that any program can use it,
 not just directshow compatible ones.
+Ping me if you want an easier "start/stop" recorder, too.
 
-Troubleshooting/notes.
+
+Another option is "If your sound card doesn't have the option to record what you hear, 
+use a cable (with 3.5mm headphone jacks on both ends) to connect the line out of your 
+sound card to the line in (using a splitter if you need to be able to hear what you're doing, 
+and disabling mic boost if you use a microphone input)."
+
+But that's hardware and so passe.
+
+
+==Troubleshooting/notes. ==
 
 If you use it in VLC you'll need a directshow cache of at least 40ms, for whatever reason.
 Also note that it's tuned set to work best for recording "what you hear" 
