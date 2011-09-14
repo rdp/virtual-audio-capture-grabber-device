@@ -1,26 +1,23 @@
 == actually do==
 
-ffmpeg +- start, stop buttons I guess...
 
 == meh ==
+ffmpeg +- start, stop buttons I guess...
+  just leach
 have a "real" webpage for it so I can track analytics
 propaganda file
 can "convert" audio files :)
 
 higher quality, like more than 2 track [possible?]
 
-test if I actually need threads or not...if not...why...remove them :)
-
 work when paused (esp. VLC)...hmm...do we need a realtime option? single-threaded m/b?
   actually...in this instance shouldn't I be calculating my own timestamps, starting from when I first got non discontinuous data? hmm...
    pass in the current ref time...hmm...or maybe if the buffer is too large I arbitrarily dump some of it?  I don't accomodate VLC pause but 
    maybe I'm ok realtime still, as is currently?  
   
-are there tricks to avoid more discontinuity? code? http://msdn.microsoft.com/en-us/library/dd370858(v=VS.85).aspx ?
-
-real ddk thing
+real ddk thing [never]
 
 == notes ==
 
 note: the silence thing I think works...based on not hitting that line...
-note: volume "doesn't" matter...
+note: output setting volume "doesn't" matter...
