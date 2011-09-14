@@ -1,6 +1,6 @@
 == actually do==
 
-ffmpeg +- start, stop buttons I guess...
+link to screen capture once that can capture audio (so I don't have to do start/stop here)
 
 == meh ==
 
@@ -9,9 +9,11 @@ figure out a way to stream to say ps3: http://superuser.com/questions/44629/appl
 
 have a "real" webpage for it so I can track analytics
 do the propaganda file
-can "convert" audio files :)
+  also propaganda something like "record what you hear program" or whatever to compete with freecorder and the like
 
-higher quality, like more than 2 track [possible?]
+can "convert" any audio file to a media player friendly mp3 :)
+
+higher quality, like more than 2 tracks/44Khz [possible?]
 
 test if I actually need threads or not...if not...why...remove them :)
 
@@ -22,7 +24,7 @@ work when paused (esp. VLC)...hmm...do we need a realtime option? single-threade
   
 are there tricks to avoid more discontinuity? code? http://msdn.microsoft.com/en-us/library/dd370858(v=VS.85).aspx ?
 
-real ddk thing
+real ddk thing [if anybody asks for it]
 
 == notes ==
 
