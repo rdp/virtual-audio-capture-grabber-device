@@ -1,9 +1,10 @@
-﻿This is an audio capture device to capture all the "wave out sound" that is playing on your speakers 
-(i.e. record what you hear) for Windows 7/Vista+.  Windows XP users please read the "history" section
+﻿This is an audio capture device allowing you to capture all the "wave out sound" that is playing on your speakers 
+(i.e. record what you hear) for Windows 7/Vista.  Windows XP users please read the "history" section
 for something else you can try in its place.
 
 To use, download+install here: https://github.com/rdp/virtual-audio-capture-grabber-device/downloads
-then use it a via any program that can take directshow devices as input 
+then use it via its included "record for x seconds" utility, or
+via any other program that can take directshow devices as input 
 
 Example: VLC media player: media [menu] -> open capture device -> select capture audio device "virtual-audio-capturer"
 
@@ -15,7 +16,7 @@ as well or capture it or the like)
 
 History/XP users:
 
-Basically, with windows XP, you can already "record what you hear"
+Basically, with windows XP, you can typically already "record what you hear"
 Run sndvol32 (Start menu -> Accessories -> Volume/Audio), choose options [menu] -> properties -> recording radio button, click ok, 
 now click the "select" checkbox underneath "Wave Out Mix"
 
@@ -50,10 +51,11 @@ use a cable (with 3.5mm headphone jacks on both ends) to connect the line out of
 sound card to the line in (using a splitter if you need to be able to hear what you're doing, 
 and disabling mic boost if you use a microphone input)."
 
-But that's hardware and so passe.
+But that's hardware and this is a software answer :)
 
 
-==Troubleshooting/notes. ==
+
+==Troubleshooting/feedback ==
 
 If you use it in VLC you'll need a directshow cache of at least 40ms, for whatever reason.
 Also note that it's tuned set to work best for recording "what you hear" 
@@ -68,8 +70,13 @@ If you want a smaller download you can just download the file source_code\Releas
 
 rogerdpack@gmail.com or mailing list http://groups.google.com/group/roger-projects
 
+== attribution ==
+
 Some source code originally from the windows SDK samples, some taken from [1]
 So you'll probably need to install the Windows SDK before playing around with the source code, legally.
+
+Also you may find this project, a directshow screen capture device, similarly useful:
+https://github.com/rdp/on-screen-capture-recorder-to-video-windows-free
 
 Enjoy!
 
