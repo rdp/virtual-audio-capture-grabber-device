@@ -206,10 +206,10 @@ HRESULT LoopbackCaptureSetup()
 // avoid stuttering on close
 // http://social.msdn.microsoft.com/forums/en-US/windowspro-audiodevelopment/thread/c7ba0a04-46ce-43ff-ad15-ce8932c00171/ 
 	
-IMMDeviceEnumerator *pEnumerator = NULL;
-IMMDevice *pDevice = NULL;
 //IAudioClient *pAudioClient = NULL;
 //IAudioCaptureClient *pCaptureClient = NULL;
+IMMDeviceEnumerator *pEnumerator = NULL;
+IMMDevice *pDevice = NULL;
 
 IAudioRenderClient *pRenderClient = NULL;
 WAVEFORMATEXTENSIBLE *captureDataFormat = NULL;
@@ -273,9 +273,7 @@ BYTE *captureData;
 
 
 
-
-
-    // code from mauritius:
+    // now code from mauritius:
 	// call IAudioClient::Initialize
     // note that AUDCLNT_STREAMFLAGS_LOOPBACK and AUDCLNT_STREAMFLAGS_EVENTCALLBACK
     // do not work together...
@@ -385,17 +383,14 @@ HRESULT propagateBufferOnce() {
 
 
         if (0 == nNextPacketSize) {
-			ShowOutput("0 size");
-            // no data yet, we're either waiting between incoming chunks, or...no sound is being played on the computer currently <sigh>...
-			// maybe I don't really...need to worry about this in the end, once I can figure out the timing stuffs? <sniff>
-
-			// we still get here, as we poll for new data...
+            // no data yet, we're waiting, between incoming chunks of audio.
+			// this doesn't mean silence, because with true global silence it still sends you packets, they're just blank, I think
 
 			DWORD millis_to_fill = (DWORD) (1.0/SECOND_FRACTIONS_TO_GRAB*1000); // truncate is ok :)
 			assert(millis_to_fill > 1); // actually, we kind of lose precision/timing here, don't we...hmm...LODO with correct timing info...
 			DWORD current_time = timeGetTime();
 			if((current_time - start_time > millis_to_fill)) {
-				// I don't think we ever get here anymore...thankfully since it's mostly broken code probably
+				// I don't think we ever get to here anymore...thankfully since it's mostly broken code probably
 				if(!gotAnyAtAll) {
 				  // after a full slice of apparent silence, punt and return fake silence! [to not confuse our downstream friends]
    			     {
@@ -420,7 +415,7 @@ HRESULT propagateBufferOnce() {
         UINT32 nNumFramesToRead;
         DWORD dwFlags;
 
-		// I guess it gives us...umm...as much as possible?
+		// I guess it gives us...as much audio as possible to read...probably
 
         hr = pAudioCaptureClient->GetBuffer(
             &pData,
@@ -429,7 +424,6 @@ HRESULT propagateBufferOnce() {
             NULL,
             NULL
         ); // ACTUALLY GET THE BUFFER which I assume it reads in the format of the fella we passed in
-        // so...it reads nNumFrames and calls it good or what?
         
         
         if (FAILED(hr)) {
