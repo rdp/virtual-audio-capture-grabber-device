@@ -300,7 +300,6 @@ BYTE *captureData;
     );
     if (FAILED(hr)) {
         ShowOutput("IAudioClient::GetService(IAudioCaptureClient) failed: hr 0x%08x\n", hr);
-        //CloseHandle(hWakeUp);
         pAudioClient->Release();
         return hr;
     }
@@ -312,7 +311,6 @@ BYTE *captureData;
         DWORD dwErr = GetLastError();
         ShowOutput("AvSetMmThreadCharacteristics failed: last error = %u\n", dwErr);
         pAudioCaptureClient->Release();
-        //CloseHandle(hWakeUp);
         pAudioClient->Release();
         return HRESULT_FROM_WIN32(dwErr);
     }    
@@ -370,7 +368,7 @@ HRESULT propagateBufferOnce() {
 
 	// this should also...umm...detect the timeout stuff and fake fill?
    
-    // grab a chunk...
+    // grab next audio chunk...
 	int gotAnyAtAll = FALSE;
 	DWORD start_time = timeGetTime();
     while (!shouldStop) {
@@ -385,7 +383,9 @@ HRESULT propagateBufferOnce() {
             return hr;
         }
 
+
         if (0 == nNextPacketSize) {
+			ShowOutput("0 size");
             // no data yet, we're either waiting between incoming chunks, or...no sound is being played on the computer currently <sigh>...
 			// maybe I don't really...need to worry about this in the end, once I can figure out the timing stuffs? <sniff>
 
@@ -414,7 +414,7 @@ HRESULT propagateBufferOnce() {
         } else {
 			gotAnyAtAll = TRUE;
 		}
-
+		
         // get the captured data
         BYTE *pData;
         UINT32 nNumFramesToRead;
