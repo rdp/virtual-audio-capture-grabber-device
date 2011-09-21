@@ -16,7 +16,7 @@ AppVerName={#AppVer}
 DefaultDirName={pf}\virtual audio capturer
 DefaultGroupName=virtual audio capturer
 UninstallDisplayName={#AppName} uninstall
-OutputBaseFilename=setup  v{#AppVer}
+OutputBaseFilename=setup directshow device only {#AppName} v{#AppVer}
 
 [Icons]
 Name: {group}\Readme; Filename: {app}\README.TXT
