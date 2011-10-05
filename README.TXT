@@ -6,6 +6,11 @@ To use, download+install here: https://github.com/rdp/virtual-audio-capture-grab
 then use it via its included "record for x seconds" utility, or
 via any other program that can take directshow devices as input 
 
+  If you want other options for its use, like broadcasting, or saving from any audio device input (ex: waveout with Windows XP)
+  download http://sourceforge.net/projects/screencapturer/files
+  which has it included in that download and has more options and a better UI for broadcast/recording.
+
+
 Example: VLC media player: media [menu] -> open capture device -> select capture audio device "virtual-audio-capturer"
 
 Example: ffmpeg (to save audio to file yo.mp3 from what is currently playing):
