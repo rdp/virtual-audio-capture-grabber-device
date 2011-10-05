@@ -1,5 +1,5 @@
 #define AppVer "0.2.0"
-#define AppName "virtual audio capture grabber device"
+#define AppName "virtual audio capture grabber device only"
 
 [UninstallRun]
 Filename: regsvr32; WorkingDir: {app}; Parameters: /s /u audio_sniffer.ax
@@ -16,7 +16,7 @@ AppVerName={#AppVer}
 DefaultDirName={pf}\virtual audio capturer
 DefaultGroupName=virtual audio capturer
 UninstallDisplayName={#AppName} uninstall
-OutputBaseFilename=setup directshow device only {#AppName} v{#AppVer}
+OutputBaseFilename=setup {#AppName} v{#AppVer}
 
 [Icons]
 Name: {group}\Readme; Filename: {app}\README.TXT

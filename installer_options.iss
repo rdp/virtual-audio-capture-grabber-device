@@ -1,4 +1,4 @@
-#define AppVer "0.2.0"
+#define AppVer "0.2.1"
 #define AppName "virtual audio capture grabber device"
 
 [UninstallRun]
