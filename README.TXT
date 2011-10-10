@@ -4,12 +4,11 @@ for something else you can try in its place.
 
 To use, download+install here: https://github.com/rdp/virtual-audio-capture-grabber-device/downloads
 then use it via its included "record for x seconds" utility, or
-via any other program that can take directshow devices as input 
+via any other program that can take directshow devices as an input.
 
-  If you want other options for its use, like broadcasting, or saving from any audio device input (ex: waveout with Windows XP)
-  download http://sourceforge.net/projects/screencapturer/files
-  which has it included in that download and has more options and a better UI for broadcast/recording.
-
+  If you want other options for its use, like broadcasting, or saving from it or any specific audio device input (ex: waveout with Windows XP)
+  then download this utility: http://sourceforge.net/projects/screencapturer/files
+  which has has more options and a different/better UI for broadcast/recording.
 
 Example: VLC media player: media [menu] -> open capture device -> select capture audio device "virtual-audio-capturer"
 
