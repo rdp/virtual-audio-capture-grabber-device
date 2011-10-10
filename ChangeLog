@@ -1,3 +1,5 @@
 0.2.2: rename program files icon, new README
 
+0.2.1: slightly better gui
+
 0.2.0: make the capture thread realtime priority (better performance), add some record scripts, make timestamps match up now [I think this is right]
