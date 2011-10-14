@@ -18,6 +18,8 @@ $ ffmpeg  -f dshow -i audio="virtual-audio-capturer" yo.mp3
 (also see https://github.com/rdp/screen-capture-recorder-program if you want to stream your desktop with audio
 as well or capture it or the like)
 
+NB that you'll need java JRE installed to use the bundled utility apps.
+
 History/XP users:
 
 Basically, with windows XP, you can typically already "record what you hear"
