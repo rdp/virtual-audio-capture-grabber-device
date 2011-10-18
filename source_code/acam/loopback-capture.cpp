@@ -238,7 +238,7 @@ BYTE *captureData;
     hr = pAudioClient->Initialize(
                          AUDCLNT_SHAREMODE_SHARED,
                          0,
-                         0,
+                         0, // buffer size?
                          0,
                          pwfx,
                          NULL);
@@ -273,7 +273,7 @@ BYTE *captureData;
 
 
 
-    // now code from mauritius:
+    // -============================ now code from mauritius:
 	// call IAudioClient::Initialize
     // note that AUDCLNT_STREAMFLAGS_LOOPBACK and AUDCLNT_STREAMFLAGS_EVENTCALLBACK
     // do not work together...
@@ -282,7 +282,8 @@ BYTE *captureData;
     hr = pAudioClient->Initialize(
         AUDCLNT_SHAREMODE_SHARED,
         AUDCLNT_STREAMFLAGS_LOOPBACK,
-        0, 0, pwfx, 0
+        0,  // bffer
+		0, pwfx, 0
     );
     if (FAILED(hr)) {
         ShowOutput("IAudioClient::Initialize failed: hr = 0x%08x\n", hr);

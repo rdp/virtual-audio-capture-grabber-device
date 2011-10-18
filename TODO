@@ -1,8 +1,13 @@
 == actually do==
 
+hnsBufferDuration
+  use if doesn't increase latency (bigger)
+  see if it helps avoid glitches [!]
+  
+== meh ==
 application specific recordings
 
-== meh ==
+
 
 maybe something like VAC's usefulness for gamers? 
 
