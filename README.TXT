@@ -2,6 +2,8 @@
 (i.e. record what you hear) for Windows 7/Vista.  Windows XP users please read the "history" section
 for something else you can try in its place.
 
+== Installation ==
+
 To use, download+install here: https://github.com/rdp/virtual-audio-capture-grabber-device/downloads
 then use it via its included "record for x seconds" utility, or
 via any other program that can take directshow devices as an input.
@@ -10,9 +12,15 @@ via any other program that can take directshow devices as an input.
   then download this utility: http://sourceforge.net/projects/screencapturer/files
   which has has more options and a different/better UI for broadcast/recording.
 
+ NB that you may need need to install the MSVC 2010 runtime distro first, if it's not already
+  installed on your machine (typically, it already is).
+  http://www.microsoft.com/download/en/details.aspx?id=5555
+
+== Usage ==
+
 Example: VLC media player: media [menu] -> open capture device -> select capture audio device "virtual-audio-capturer"
 
-Example: ffmpeg (to save audio to file yo.mp3 from what is currently playing):
+Example: ffmpeg (to save audio to file yo.mp3 from what is currently playing, requires 32 bit ffmpeg, 64 bit DLL available upon demand):
 $ ffmpeg  -f dshow -i audio="virtual-audio-capturer" yo.mp3
 
 (also see https://github.com/rdp/screen-capture-recorder-program if you want to stream your desktop with audio
