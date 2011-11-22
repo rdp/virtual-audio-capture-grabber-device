@@ -1,9 +1,9 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <LocalDebuggerCommand>g:\downloads\ffmpeg-dshow-params-4\ffmpeg.exe</LocalDebuggerCommand>
+    <LocalDebuggerCommand>c:\dev\ruby\sensible-cinema\vendor\cache\ffmpeg\ffmpeg.exe</LocalDebuggerCommand>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerCommandArguments>-y -f dshow -i audio=virtual-audio-capturer -t 30 yo.wav</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>-y -f dshow -i audio=virtual-audio-capturer -t 5 yo.wav</LocalDebuggerCommandArguments>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LocalDebuggerCommand>C:\Program Files (x86)\VideoLAN\VLC\vlc.exe</LocalDebuggerCommand>

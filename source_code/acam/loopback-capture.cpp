@@ -14,6 +14,7 @@
 //HRESULT open_file(LPCWSTR szFileName, HMMIO *phFile);
 
 HRESULT get_default_device(IMMDevice **ppMMDevice);
+void outputStats();
 
 IAudioCaptureClient *pAudioCaptureClient;
 IAudioClient *pAudioClient;
@@ -38,25 +39,6 @@ void setExpectedMaxBufferSize(long toThis) {
 }
 
 HANDLE m_hThread;
-
-/* unused ...
-void logToFile(char *log_this) {
-    FILE *f;
-	f = fopen("g:\\yo2", "a");
-	fprintf(f, log_this);
-	fclose(f);
-} */
-
-void ShowOutput(const char *str, ...)
-{
-  char buf[2048];
-  va_list ptr;
-  va_start(ptr,str);
-  vsprintf_s(buf,str,ptr);
-  OutputDebugStringA(buf);
-  OutputDebugStringA("\n");
-  //logToFile(buf);
-}
 
 static DWORD WINAPI propagateBufferForever(LPVOID pv);
 
@@ -273,7 +255,7 @@ BYTE *captureData;
 
 
 
-    // -============================ now code from mauritius:
+    // -============================ now the sniffing code initialization stuff, from mauritius:
 	// call IAudioClient::Initialize
     // note that AUDCLNT_STREAMFLAGS_LOOPBACK and AUDCLNT_STREAMFLAGS_EVENTCALLBACK
     // do not work together...
@@ -282,7 +264,7 @@ BYTE *captureData;
     hr = pAudioClient->Initialize(
         AUDCLNT_SHAREMODE_SHARED,
         AUDCLNT_STREAMFLAGS_LOOPBACK,
-        0,  // bffer
+        0,  // buffer size
 		0, pwfx, 0
     );
     if (FAILED(hr)) {
@@ -362,6 +344,9 @@ static DWORD WINAPI propagateBufferForever(LPVOID pv) {
 
 extern CCritSec m_cSharedState;
 
+int totalSuccessFullyread = 0;
+int totalBlips = 0;
+
 HRESULT propagateBufferOnce() {
 	HRESULT hr = S_OK;
 
@@ -391,7 +376,7 @@ HRESULT propagateBufferOnce() {
 			assert(millis_to_fill > 1); // actually, we kind of lose precision/timing here, don't we...hmm...LODO with correct timing info...
 			DWORD current_time = timeGetTime();
 			if((current_time - start_time > millis_to_fill)) {
-				// I don't think we ever get to here anymore...thankfully since it's mostly broken code probably
+				// I don't think we ever get to here anymore...thankfully, since it's mostly broken code probably, anyway
 				if(!gotAnyAtAll) {
 				  // after a full slice of apparent silence, punt and return fake silence! [to not confuse our downstream friends]
    			     {
@@ -409,6 +394,7 @@ HRESULT propagateBufferOnce() {
 			}
         } else {
 			gotAnyAtAll = TRUE;
+			totalSuccessFullyread++;
 		}
 		
         // get the captured data
@@ -465,15 +451,18 @@ HRESULT propagateBufferOnce() {
 			  // expected if there's silence, esp. since we have the "silence generation" work-around...
 			} else {
      		  ShowOutput("IAudioCaptureClient::unknown discontinuity GetBuffer set flags to 0x%08x after %u frames\n", dwFlags, pnFrames);
-			  bFirstPacket = true; // it probably is discontinuity
+			  bFirstPacket = true; // probably is some type of discontinuity :P
 			}
+
+			if(bFirstPacket)
+				totalBlips++;
 
 			if (0 == nNumFramesToRead) {
 				ShowOutput("death: IAudioCaptureClient::GetBuffer said to read 0 frames after %u frames\n", pnFrames);
 				pAudioClient->Stop();
 				AvRevertMmThreadCharacteristics(hTask);
 				pAudioCaptureClient->Release();
-				pAudioClient->Release();            
+				pAudioClient->Release();
 				return E_UNEXPECTED;            
 			}
 
@@ -557,5 +546,11 @@ void loopBackRelease() {
     pAudioCaptureClient->Release();
     pAudioClient->Release();
     m_pMMDevice->Release();
+	outputStats();
 }
 
+void outputStats() {
+	wchar_t output[250];
+	wsprintf(output, L"total reads %d total blips %d", totalSuccessFullyread , totalBlips);
+	set_config_string_setting(L"last_output", output);
+}

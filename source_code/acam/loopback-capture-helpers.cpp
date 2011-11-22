@@ -6,31 +6,8 @@
 #include <audioclient.h>
 #include <stdio.h>
 #include <avrt.h>
-#include <stdio.h>
 
-// unused [?]
-
-HRESULT open_file(LPCWSTR szFileName, HMMIO *phFile) {
-    MMIOINFO mi = {0};
-
-    *phFile = mmioOpen(
-        // some flags cause mmioOpen write to this buffer
-        // but not any that we're using
-        const_cast<LPWSTR>(szFileName),
-        &mi,
-        MMIO_WRITE | MMIO_CREATE
-    );
-
-    if (NULL == *phFile) {
-        printf("mmioOpen(\"%ls\", ...) failed. wErrorRet == %u\n", szFileName, mi.wErrorRet);
-        return E_FAIL;
-    }
-
-    return S_OK;
-}
-
-
-// I guess this is default umm...audio output device?
+// I guess this is the default umm...audio output device?
 
 HRESULT get_default_device(IMMDevice **ppMMDevice) {
     HRESULT hr = S_OK;
