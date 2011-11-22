@@ -1,0 +1,8 @@
+threaded:
+
+with 5 other threads, dual core, they both seem to start giving bad feedback, possibly single threaded with smaller sizes [?]
+
+with high prioritied single thread:  4480, some big though...seems as good as single thread maybe...
+
+seemed that it avoided discontinuity messages even if "lots" of them were running at once [!]
+  unless one had to pause to delete a file, then it could get it.
