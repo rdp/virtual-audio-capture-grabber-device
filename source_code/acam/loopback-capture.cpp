@@ -220,7 +220,7 @@ BYTE *captureData;
     hr = pAudioClient->Initialize(
                          AUDCLNT_SHAREMODE_SHARED,
                          0,
-                         0, // buffer size?
+                         REFTIMES_PER_SEC, // buffer size 1s
                          0,
                          pwfx,
                          NULL);
@@ -546,7 +546,9 @@ void loopBackRelease() {
     pAudioCaptureClient->Release();
     pAudioClient->Release();
     m_pMMDevice->Release();
-	outputStats();
+	#ifdef _DEBUG 
+	  outputStats();
+    #endif
 }
 
 void outputStats() {

@@ -6,3 +6,7 @@ with high prioritied single thread:  4480, some big though...seems as good as si
 
 seemed that it avoided discontinuity messages even if "lots" of them were running at once [!]
   unless one had to pause to delete a file, then it could get it.
+
+
+virtual "they can play into me:"
+  http://social.msdn.microsoft.com/Forums/en-AU/wdk/thread/5dce267b-d452-4d1c-ad18-0c5b6edcff5f
