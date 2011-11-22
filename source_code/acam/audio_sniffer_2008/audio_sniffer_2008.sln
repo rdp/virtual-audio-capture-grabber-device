@@ -1,0 +1,20 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual C++ Express 2008
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "audio_sniffer_2008", "audio_sniffer_2008.vcproj", "{4A2C122E-9B3D-45EF-A712-D202FA21CFFF}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4A2C122E-9B3D-45EF-A712-D202FA21CFFF}.Debug|Win32.ActiveCfg = Debug|Win32
+		{4A2C122E-9B3D-45EF-A712-D202FA21CFFF}.Debug|Win32.Build.0 = Debug|Win32
+		{4A2C122E-9B3D-45EF-A712-D202FA21CFFF}.Release|Win32.ActiveCfg = Release|Win32
+		{4A2C122E-9B3D-45EF-A712-D202FA21CFFF}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
