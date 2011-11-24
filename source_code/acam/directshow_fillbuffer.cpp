@@ -45,7 +45,6 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
     CRefTime rtStart;
 	if(bFirstPacket) {
       m_pParent->StreamTime(rtStart); // gets current graph ref time [now] as its "start", as normal "capture" devices would
-	  bFirstPacket = false;
 	  ShowOutput("got a first packet");
 	} else {
 		// since there hasn't been discontinuity, I think we should be safe to tell it
@@ -104,6 +103,8 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
 		assert(false);
         return hr;
     }
+
+	bFirstPacket = false;
 
     return NOERROR;
 
