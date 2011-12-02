@@ -2,6 +2,8 @@
 (i.e. record what you hear) for Windows 7/Vista.  Windows XP users please read the "history" section
 for something else you can try in its place.
 
+NB THAT IT IS USED WITHIN THE MORE FULL FEATURED https://github.com/rdp/screen-capture-recorder-to-video-windows-free
+
 == Installation ==
 
 To use, download+install here: https://github.com/rdp/virtual-audio-capture-grabber-device/downloads
@@ -9,7 +11,7 @@ then use it via its included "record for x seconds" utility, or
 via any other program that can take directshow devices as an input.
 
   If you want other options for its use, like broadcasting, or saving from it or any specific audio device input (ex: waveout with Windows XP)
-  then download this utility: http://sourceforge.net/projects/screencapturer/files
+  then download this utility: https://github.com/rdp/screen-capture-recorder-to-video-windows-free
   which has has more options and a different/better UI for broadcast/recording.
 
  NB that you may need need to install the MSVC 2010 runtime distro first, if it's not already
