@@ -9,7 +9,8 @@ hnsBufferDuration
   system tray "start" "stop"
   prompt for filename after
   move broadcaster here I guess?
-
+  write your version to...the registry at startup
+  
 == meh ==
 application specific recordings
 

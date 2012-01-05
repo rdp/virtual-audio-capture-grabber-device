@@ -214,7 +214,6 @@ BYTE *captureData;
     hr = pAudioClient->GetMixFormat((WAVEFORMATEX **)&captureDataFormat);
     EXIT_ON_ERROR(hr)
 
-
 	
     // initialise in sharedmode
     hr = pAudioClient->Initialize(
