@@ -320,14 +320,15 @@ HRESULT CVCamStream::Exit()
 }
 
 int currentlyRunning = 0;
+
 HRESULT CVCamStream::Inactive()
 {
-	// do get here
+	// we get here
 	ShowOutput("inactive: about to release loopback");
 	loopBackRelease();
 	ShowOutput("loopback released");
-	currentlyRunning = 0;
-	return CSourceStream::Inactive();
+	currentlyRunning = 0; //allow it to restart later...
+	return CSourceStream::Inactive(); //parent method
 }
 
 

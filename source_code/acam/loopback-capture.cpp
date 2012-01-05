@@ -367,34 +367,24 @@ HRESULT propagateBufferOnce() {
             return hr;
         }
 
-
         if (0 == nNextPacketSize) {
-            // no data yet, we're waiting, between incoming chunks of audio.
-			// this doesn't mean silence, because with true global silence it still sends you packets, they're just blank, I think
+            // no data yet, we're waiting, between incoming chunks of audio. [occurs even with silence on the line--it just means no new data yet]
 
-			DWORD millis_to_fill = (DWORD) (1.0/SECOND_FRACTIONS_TO_GRAB*1000); // truncate is ok :)
-			assert(millis_to_fill > 1); // actually, we kind of lose precision/timing here, don't we...hmm...LODO with correct timing info...
+			DWORD millis_to_fill = (DWORD) (1.0/SECOND_FRACTIONS_TO_GRAB*1000); // truncate is ok :) -- 1s
+			assert(millis_to_fill > 1); // sanity
 			DWORD current_time = timeGetTime();
 			if((current_time - start_time > millis_to_fill)) {
 				// I don't think we ever get to here anymore...thankfully, since it's mostly broken code probably, anyway
 				if(!gotAnyAtAll) {
-				  // after a full slice of apparent silence, punt and return fake silence! [to not confuse our downstream friends]
-   			     {
-                   CAutoLock cObjectLock(&csMyLock);  // Lock the critical section, releases scope after block is over with...
-				   memset(pBufLocal, 0, expectedMaxBufferSize/2); // guess this simulates silence...
-    			   pBufLocalCurrentEndLocation = expectedMaxBufferSize/2;
- 	  			   return S_OK;
- 				 }
-				} else {
-				  assert(false); // want to know if this ever happens...hasn't yet...
+				  assert(false); // want to know if this ever happens...
 				}
 			} else {
-			  Sleep(1); // doesn't seem to hurt cpu
+			  Sleep(1); // doesn't seem to hurt cpu--sleep 1ms
 			  continue;
 			}
         } else {
-			gotAnyAtAll = TRUE;
-			totalSuccessFullyread++;
+		  gotAnyAtAll = TRUE;
+		  totalSuccessFullyread++;
 		}
 		
         // get the captured data

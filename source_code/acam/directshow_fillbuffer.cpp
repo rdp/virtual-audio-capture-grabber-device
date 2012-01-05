@@ -43,9 +43,9 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
     // Now set the sample's start and end time stamps...
 
     CRefTime rtStart;
-	if(true) { //bFirstPacket
+	if(bFirstPacket) { //bFirstPacket/true
       m_pParent->StreamTime(rtStart); // gets current graph ref time [now] as its "start", as normal "capture" devices would
-	  //ShowOutput("got a first packet");
+	  ShowOutput("got a first packet");
 	} else {
 		// since there hasn't been discontinuity, I think we should be safe to tell it
 		// that this packet starts where the previous packet ended off
