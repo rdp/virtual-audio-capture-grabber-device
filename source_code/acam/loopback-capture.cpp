@@ -215,11 +215,11 @@ BYTE *captureData;
     EXIT_ON_ERROR(hr)
 
 	
-    // initialise in sharedmode
+    // initialise in sharedmode [this is the "silence" bug fella]
     hr = pAudioClient->Initialize(
                          AUDCLNT_SHAREMODE_SHARED,
                          0,
-                         REFTIMES_PER_SEC, // buffer size a full 1.0s
+					     REFTIMES_PER_SEC, // buffer size a full 1.0s, though prolly doesn't matter here.
                          0,
                          pwfx,
                          NULL);
@@ -252,9 +252,8 @@ BYTE *captureData;
     EXIT_ON_ERROR(hr)
 
 
+    // -============================ now the sniffing code initialization stuff, direct from mauritius... ===================================
 
-
-    // -============================ now the sniffing code initialization stuff, from mauritius:
 	// call IAudioClient::Initialize
     // note that AUDCLNT_STREAMFLAGS_LOOPBACK and AUDCLNT_STREAMFLAGS_EVENTCALLBACK
     // do not work together...
@@ -263,7 +262,7 @@ BYTE *captureData;
     hr = pAudioClient->Initialize(
         AUDCLNT_SHAREMODE_SHARED,
         AUDCLNT_STREAMFLAGS_LOOPBACK,
-        0,  // buffer size
+        REFTIMES_PER_SEC, // buffer size a full 1.0s
 		0, pwfx, 0
     );
     if (FAILED(hr)) {
@@ -307,7 +306,7 @@ BYTE *captureData;
     
     bFirstPacket = true;
 
-	// start the grabbing thread...hmm...
+	// start the forever grabbing thread...
 	DWORD dwThreadID;
     m_hThread = CreateThread(NULL,
                             0,
@@ -320,10 +319,12 @@ BYTE *captureData;
         DWORD dwErr = GetLastError();
         return HRESULT_FROM_WIN32(dwErr);
     } else {
-		hr = SetThreadPriority(m_hThread, THREAD_PRIORITY_TIME_CRITICAL);
-        if (FAILED(hr)) { // of course we're a high prio thread, right? :)
-		  return hr;
-  	    }
+		// we...shouldn't need this...maybe?
+		// seems to make no difference...
+		//hr = SetThreadPriority(m_hThread, THREAD_PRIORITY_TIME_CRITICAL);
+        //if (FAILED(hr)) { // of course we always want to be a high prio thread, right? [we don't use much cpu...]
+		//  return hr;
+  	    //}
 	}
 
 	return hr;

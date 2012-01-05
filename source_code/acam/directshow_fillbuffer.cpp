@@ -80,7 +80,7 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
     }
 
     // Set the sample's properties.
-    hr = pms->SetPreroll(FALSE); // tell it that this isn't preroll, so to actually use it
+    hr = pms->SetPreroll(FALSE); // tell it that this isn't preroll, so to actually use it...I think.
     if (FAILED(hr)) {
 		assert(false);
         return hr;
@@ -92,13 +92,14 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
         return hr;
     }
    
-    hr = pms->SetDiscontinuity(!bFirstPacket);
+    hr = pms->SetDiscontinuity(bFirstPacket); // true for the first
     if (FAILED(hr)) {
 		assert(false);
         return hr;
     }
     
-    hr = pms->SetSyncPoint(!bFirstPacket);
+	// Set TRUE on every sample for PCM audio http://msdn.microsoft.com/en-us/library/windows/desktop/dd407021%28v=vs.85%29.aspx
+    pms->SetSyncPoint(TRUE);
 	if (FAILED(hr)) {
 		assert(false);
         return hr;

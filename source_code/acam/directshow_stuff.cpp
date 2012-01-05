@@ -212,7 +212,9 @@ HRESULT CVCamStream::GetMediaType(int iPosition, CMediaType *pmt)
     pmt->SetFormatType(&FORMAT_WaveFormatEx);
     pmt->SetTemporalCompression(FALSE);
 	setupPwfex(pwfex, pmt);	
-	pmt->SetSampleSize(pwfex->nAvgBytesPerSec/2); // .5s worth...
+
+	// SetSampleSize: If value is zero, the media type uses variable sample sizes. Otherwise, the sample size is fixed at sz bytes.
+	pmt->SetSampleSize(pwfex->nBlockAlign); // see other comment that uses nBlockAlign
 
 	return S_OK;
 }
@@ -221,16 +223,12 @@ HRESULT CVCamStream::GetMediaType(int iPosition, CMediaType *pmt)
 HRESULT CVCamStream::CheckMediaType(const CMediaType *pMediaType)
 {
 	int cbFormat = pMediaType->cbFormat;
-	int a = memcmp(pMediaType->pbFormat, m_mt.pbFormat, cbFormat);
-	//BYTE pb1[18] = (BYTE [18]) pMediaType->pbFormat;
-	//BYTE pb2[18] = (BYTE [18]) m_mt->pbFormat;
     if(*pMediaType != m_mt) {
         return E_INVALIDARG;
 	}
 
     return S_OK;
 } // CheckMediaType
-
 
 
 // Size of each allocated buffer
@@ -333,12 +331,12 @@ HRESULT CVCamStream::Inactive()
 }
 
 
-// Called when graph is run
+// Called when graph is first started
 HRESULT CVCamStream::OnThreadCreate()
 {
-	assert(currentlyRunning == 0); // sanity check...
+	assert(currentlyRunning == 0); // sanity...
 	currentlyRunning = TRUE;
-    GetMediaType(0, &m_mt);
+    GetMediaType(0, &m_mt); // give it a default type...
 
     HRESULT hr = LoopbackCaptureSetup();
     if (FAILED(hr)) {
@@ -355,17 +353,18 @@ HRESULT CVCamStream::OnThreadCreate()
 
 HRESULT STDMETHODCALLTYPE CVCamStream::SetFormat(AM_MEDIA_TYPE *pmt)
 {
-	// this is them saying you "must" use this type now...
+	// this is them saying you "must" use this type from now on...unless pmt is NULL that "means" reset...LODO handle it someday...
+	assert(pmt);
+	m_mt = *pmt;
 
-    m_mt = *pmt;
+	IPin* pin; 
+	ConnectedTo(&pin);
+	if(pin)
+	{
+		IFilterGraph *pGraph = m_pParent->GetGraph();
+		pGraph->Reconnect(this);
+	}
 
-    IPin* pin; 
-    ConnectedTo(&pin);
-    if(pin)
-    {
-        IFilterGraph *pGraph = m_pParent->GetGraph();
-        pGraph->Reconnect(this);
-    }
     return S_OK;
 }
 
@@ -412,23 +411,24 @@ HRESULT STDMETHODCALLTYPE CVCamStream::GetStreamCaps(int iIndex, AM_MEDIA_TYPE *
     pm->formattype = FORMAT_WaveFormatEx;
     pm->bTemporalCompression = FALSE;
     pm->bFixedSizeSamples = TRUE;
-    pm->lSampleSize = pAudioFormat->nBlockAlign; // appears reasonable http://github.com/tap/JamomaDSP/blob/2c80c487c6e560d959dd85e7d2bcca3a19ce9b26/src/os/win/DX/BaseClasses/mtype.cpp
+    pm->lSampleSize = pAudioFormat->nBlockAlign; // appears reasonable from http://github.com/tap/JamomaDSP/blob/2c80c487c6e560d959dd85e7d2bcca3a19ce9b26/src/os/win/DX/BaseClasses/mtype.cpp
     pm->cbFormat = sizeof(WAVEFORMATEX);
 	pm->pUnk = NULL;
 
 	AUDIO_STREAM_CONFIG_CAPS* pASCC = (AUDIO_STREAM_CONFIG_CAPS*) pSCC;
 	ZeroMemory(pSCC, sizeof(AUDIO_STREAM_CONFIG_CAPS)); 
 
-	// Set the audio capabilities
+	// Set up audio capabilities [one type only, for now]
+	// LODO propagate these better, from our returned type
 	pASCC->guid = MEDIATYPE_Audio;
 	pASCC->ChannelsGranularity = 1;
 	pASCC->MaximumChannels = 2;
 	pASCC->MinimumChannels = 2;
 	pASCC->MaximumSampleFrequency = 44100;
+	pASCC->MinimumSampleFrequency = 44100;
 	pASCC->BitsPerSampleGranularity = 16;
 	pASCC->MaximumBitsPerSample = 16;
 	pASCC->MinimumBitsPerSample = 16;
-	pASCC->MinimumSampleFrequency = 44100;
 	pASCC->SampleFrequencyGranularity = 11025;
 
 	return S_OK;
