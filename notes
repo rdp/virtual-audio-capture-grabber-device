@@ -1,3 +1,87 @@
+
+adding "sleeps"
+resulted in this message fast:
+...
+main debug: Decoder buffering done in 0 ms
+main warning: received buffer in the future
+main warning: received buffer in the future
+main warning: PTS is out of range (-10000), dropping buffer
+main warning: PTS is out of range (-21000), dropping buffer
+main warning: PTS is out of range (-32000), dropping buffer
+main warning: output date isn't PTS date, requesting resampling (68000)
+*repeat* with similar numbers.
+
+"normal" doesn't have the output date isn't PTS date message, just
+  main warning: buffer is 40569 late, triggering upsampling
+  main warning: resampling stopped after 5324000 usec (drift: -1875)
+  after awhile
+
+MIN() didn't help VLC
+
+with "choose the MAX I know what you want!:"
+creeps up,
+tons of
+
+main warning: received buffer in the future
+main warning: PTS is out of range (-10000), dropping buffer
+main warning: PTS is out of range (-33219), dropping buffer
+main warning: buffer is 68850 late, triggering upsampling
+main warning: output date isn't PTS date, requesting resampling (58561)
+main warning: audio drift is too big (120953), dropping buffer
+main warning: timing screwed, stopping resampling
+main warning: buffer is 110795 late, triggering upsampling
+main warning: audio drift is too big (120316), dropping buffer
+main warning: output date isn't PTS date, requesting resampling (45000)
+main warning: audio drift is too big (155214), dropping buffer
+
+
+with "subtract":
+
+main debug: Buffering 80%
+main debug: Buffering 90%
+main debug: Stream buffering done (100 ms in 110 ms)
+main debug: Decoder buffering done in 0 ms
+main warning: received buffer in the future
+main warning: PTS is out of range (-10000), dropping buffer
+main warning: PTS is out of range (-33219), dropping buffer
+main warning: PTS is out of range (-9841), dropping buffer
+main warning: PTS is out of range (-18841), dropping buffer
+main warning: output date isn't PTS date, requesting resampling (40159)
+main warning: buffer is 68108 late, triggering upsampling
+main warning: output date isn't PTS date, requesting resampling (45000)
+main warning: resampling stopped after 7688000 usec (drift: -40807)
+main warning: buffer is 40966 late, triggering upsampling
+main warning: output date isn't PTS date, requesting resampling (45000)
+main warning: resampling stopped after 5839000 usec (drift: -43702)
+main warning: buffer is 43860 late, triggering upsampling
+weird weird stuff there...gah!
+
+
+normal "set it like they tell me to:"
+
+main debug: Buffering 71%
+main debug: Buffering 81%
+main debug: Buffering 91%
+main debug: Stream buffering done (101 ms in 95 ms)
+main debug: Decoder buffering done in 0 ms
+main warning: PTS is out of range (-10000), dropping buffer
+main warning: PTS is out of range (-20158), dropping buffer
+main warning: PTS is out of range (-30317), dropping buffer
+
+after a long while:
+
+main warning: buffer is 40176 late, triggering upsampling
+main warning: output date isn't PTS date, requesting resampling (44524)
+main warning: resampling stopped after 5862000 usec (drift: -42776)
+main warning: buffer is 42777 late, triggering upsampling
+main warning: resampling stopped after 6079000 usec (drift: 765)
+main warning: output date isn't PTS date, requesting resampling (45000)
+main warning: buffer is 44792 late, triggering upsampling
+main warning: resampling stopped after 6225000 usec (drift: 1394)
+
+
+
+
 threaded:
 
 with 5 other threads, dual core, they both seem to start giving bad feedback, possibly single threaded with smaller sizes [?]

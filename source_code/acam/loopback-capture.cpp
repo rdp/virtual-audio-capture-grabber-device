@@ -321,10 +321,10 @@ BYTE *captureData;
     } else {
 		// we...shouldn't need this...maybe?
 		// seems to make no difference...
-		//hr = SetThreadPriority(m_hThread, THREAD_PRIORITY_TIME_CRITICAL);
-        //if (FAILED(hr)) { // of course we always want to be a high prio thread, right? [we don't use much cpu...]
-		//  return hr;
-  	    //}
+		hr = SetThreadPriority(m_hThread, THREAD_PRIORITY_TIME_CRITICAL);
+        if (FAILED(hr)) { // of course we always want to be a high prio thread, right? [we don't use much cpu...]
+		  return hr;
+  	    }
 	}
 
 	return hr;

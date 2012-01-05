@@ -1,3 +1,9 @@
+0.2.7 1-5-12
+  some minor directshow stuff has been updated, I believe
+
+0.2.6
+  some stuff from earlier, like adding bigger buffers and setting it to the graph's timestamp.
+
 0.2.3: better timestamps barely
 
 0.2.2: rename program files icon, new README
