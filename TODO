@@ -1,18 +1,14 @@
 == actually do==
-
-hnsBufferDuration
-  use if doesn't increase latency (bigger)
-  see if it helps avoid glitches [!]
+  a "real" kernel level driver
+  fix "everybody's bug"
   
 == maybe ==
-  kernel level
   system tray "start" "stop"
   prompt for filename after
   move broadcaster here I guess?
-  write your version to...the registry at startup
   
 == meh ==
-application specific recordings
+write your version to...the registry at startup
 
 maybe something like VAC's usefulness for gamers? 
 
