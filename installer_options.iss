@@ -19,6 +19,7 @@ DefaultDirName={pf}\virtual audio capturer
 DefaultGroupName=virtual audio capturer
 UninstallDisplayName={#AppName} uninstall
 OutputBaseFilename=setup {#AppName} v{#AppVer}
+OutputDir=releases
 
 [Icons]
 Name: {group}\Readme; Filename: {app}\README.TXT

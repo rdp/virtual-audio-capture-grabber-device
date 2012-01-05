@@ -45,7 +45,7 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
     CRefTime rtStart;
 	if(true) { //bFirstPacket
       m_pParent->StreamTime(rtStart); // gets current graph ref time [now] as its "start", as normal "capture" devices would
-	  ShowOutput("got a first packet");
+	  //ShowOutput("got a first packet");
 	} else {
 		// since there hasn't been discontinuity, I think we should be safe to tell it
 		// that this packet starts where the previous packet ended off
@@ -54,7 +54,6 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
     	REFERENCE_TIME previousEnd = m_rtSampleEndTime;
 		rtStart = previousEnd;
 	}
-
 
 	// I once tried to change it to always have monotonicity of timestamps at this point, but it didn't fix any problems, and seems to do all right without it so maybe ok [?]
 	WAVEFORMATEX* pwfexCurrent = (WAVEFORMATEX*)m_mt.Format();
