@@ -39,11 +39,11 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
 		assert(false);
 		return hr;
 	}
-	WAVEFORMATEX* pwfexCurrent = (WAVEFORMATEX*)m_mt.Format();
 
-    // Set the sample's start and end time stamps...
+    // Now set the sample's start and end time stamps...
+
     CRefTime rtStart;
-	if(bFirstPacket) {
+	if(true) { //bFirstPacket
       m_pParent->StreamTime(rtStart); // gets current graph ref time [now] as its "start", as normal "capture" devices would
 	  ShowOutput("got a first packet");
 	} else {
@@ -56,12 +56,12 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
 	}
 
 
-	// I once tried to change it to always have monotonicity of timestamps at this point, but it didn't fix any problems, and seems to do all right without it [?]
-
+	// I once tried to change it to always have monotonicity of timestamps at this point, but it didn't fix any problems, and seems to do all right without it so maybe ok [?]
+	WAVEFORMATEX* pwfexCurrent = (WAVEFORMATEX*)m_mt.Format();
     m_rtSampleEndTime = rtStart + (REFERENCE_TIME)(UNITS * pms->GetActualDataLength()) / 
                      (REFERENCE_TIME)pwfexCurrent->nAvgBytesPerSec;
 
-	// NB that this *can* set it negative...odd...hmm...which apparently is "ok" when a graph is just starting up...
+	// NB that this *can* set it to a negative start time...hmm...which apparently is "ok" when a graph is just starting up it's expected...
     hr = pms->SetTime((REFERENCE_TIME*)&rtStart, (REFERENCE_TIME*)&m_rtSampleEndTime);
 	if (FAILED(hr)) {
 		assert(false);

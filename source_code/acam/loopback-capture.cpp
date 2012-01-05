@@ -220,7 +220,7 @@ BYTE *captureData;
     hr = pAudioClient->Initialize(
                          AUDCLNT_SHAREMODE_SHARED,
                          0,
-                         REFTIMES_PER_SEC, // buffer size 1s
+                         REFTIMES_PER_SEC, // buffer size a full 1.0s
                          0,
                          pwfx,
                          NULL);

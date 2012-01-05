@@ -31,6 +31,7 @@ as well or capture it or the like)
 NB that you'll need java JRE previously installed to use the included helper apps.
 
 Also note that VLC directshow input needs buffers of at least 40 or 50 ms or it fails for some reason.
+""I was able to reduce the VLC delay messages by changing the output frame rate from 30 to 24 and increasing the dsow buffer from 200 to 20000"
 
 History/XP users:
 
