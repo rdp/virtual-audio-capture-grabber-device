@@ -28,7 +28,9 @@ $ ffmpeg  -f dshow -i audio="virtual-audio-capturer" yo.mp3
 (also see https://github.com/rdp/screen-capture-recorder-program if you want to stream your desktop with audio
 as well or capture it or the like)
 
-NB that you'll need java JRE installed to use the bundled utility apps.
+NB that you'll need java JRE previously installed to use the included helper apps.
+
+Also note that VLC directshow input needs buffers of at least 40 or 50 ms or it fails for some reason.
 
 History/XP users:
 

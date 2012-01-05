@@ -11,7 +11,7 @@ CCritSec m_cSharedState;
 // "they" call this, every so often...
 HRESULT CVCamStream::FillBuffer(IMediaSample *pms) 
 {	
-	// I don't expect these...the parent controls this/us and doesn't call us when it is stopped I guess, so should be active
+	// I don't expect these...the parent controls this/us and doesn't call us when it is stopped I guess, so we should always be active...
 	assert(m_pParent->IsActive());
 	assert(!m_pParent->IsStopped());
 
@@ -22,17 +22,17 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
 		assert(false);
         return hr;
     }
-
     
 	LONG totalWrote = -1;
-	hr = LoopbackCaptureTakeFromBuffer(pData, pms->GetSize(), NULL, &totalWrote); // the real meat
+	 // the real meat -- get all the incoming data
+	hr = LoopbackCaptureTakeFromBuffer(pData, pms->GetSize(), NULL, &totalWrote);
 	if(FAILED(hr)) {
 		// this one can return false during shutdown, so it's actually ok to just return from here...
 		// assert(false);
 		return hr;
 	}
 
-	CAutoLock cAutoLockShared(&m_cSharedState); // for the bFirstPacket boolean control, except there's probably still some odd race condition er other...
+	CAutoLock cAutoLockShared(&m_cSharedState); // for the bFirstPacket boolean control, except there's probably still some odd race conditions er other...
 
 	hr = pms->SetActualDataLength(totalWrote);
 	if(FAILED(hr)) {
@@ -61,7 +61,7 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
     m_rtSampleEndTime = rtStart + (REFERENCE_TIME)(UNITS * pms->GetActualDataLength()) / 
                      (REFERENCE_TIME)pwfexCurrent->nAvgBytesPerSec;
 
-	// NB that this *can* set it negative...odd...hmm...
+	// NB that this *can* set it negative...odd...hmm...which apparently is "ok" when a graph is just starting up...
     hr = pms->SetTime((REFERENCE_TIME*)&rtStart, (REFERENCE_TIME*)&m_rtSampleEndTime);
 	if (FAILED(hr)) {
 		assert(false);
@@ -71,6 +71,7 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
 	// however, then VLC cannot then stream it at all.  So we leave it set to some time, and just require you to have VLC buffers of at least 40 or 50 ms
 	// [a possible VLC bug?] http://forum.videolan.org/viewtopic.php?f=14&t=92659&hilit=+50ms
 
+	// whatever SetMediaTime even does...
     hr = pms->SetMediaTime((REFERENCE_TIME*)&rtStart, (REFERENCE_TIME*)&m_rtSampleEndTime);
     //m_llSampleMediaTimeStart = m_rtSampleEndTime;
 
