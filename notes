@@ -1,6 +1,18 @@
+notes:
+
+
+ increase dshow-caching=200 to dshow-caching=900 ?
+
+
+ng VLC 1.0.0 native, w
+
+disable "cool'n'quiet"
+  Changing back to High Performance Power Plan is a workaround to fix it, but consumes a lot more energy and produces more heat.
+
+
 
 adding "sleeps"
-resulted in this message fast:
+resulted in this message very fast:
 ...
 main debug: Decoder buffering done in 0 ms
 main warning: received buffer in the future
