@@ -2,6 +2,8 @@
   a "real" kernel level driver
   fix "everybody's bug"
     no op outputter?
+
+  maybe I don't want to cache as much? user configurable? hmm...
   
 == maybe ==
   system tray "start" "stop"
