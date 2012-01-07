@@ -1,12 +1,15 @@
 == actually do==
   a "real" kernel level driver
   fix "everybody's bug"
+    no op outputter?
   
 == maybe ==
   system tray "start" "stop"
   prompt for filename after
   move broadcaster here I guess?
-  
+  check for existence of "that file"
+  check for absence of java on startup
+
 == meh ==
 write your version to...the registry at startup
 
