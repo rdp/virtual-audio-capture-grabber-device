@@ -11,6 +11,7 @@
   move broadcaster here I guess?
   check for existence of "that file"
   check for absence of java on startup
+  check with virtualdub
 
 == meh ==
 write your version to...the registry at startup
