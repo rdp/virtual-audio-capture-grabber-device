@@ -379,7 +379,7 @@ HRESULT propagateBufferOnce() {
 				  assert(false); // want to know if this ever happens...
 				}
 			} else {
-			  Sleep(1); // doesn't seem to hurt cpu--sleep 1ms
+			  Sleep(1); // doesn't seem to hurt cpu--"sleep x ms"
 			  continue;
 			}
         } else {
@@ -500,7 +500,7 @@ HRESULT propagateBufferOnce() {
 // iSize is max size of the BYTE buffer...so maybe...we should just drop it if we have past that size? hmm...we're probably
 HRESULT LoopbackCaptureTakeFromBuffer(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNotNullThenJustSetTypeOnly, LONG* totalBytesWrote)
  {
-	while(!shouldStop) { // allow this one to exit, too, oddly.
+	while(!shouldStop) { // allow this to exit, at shutdown.
        {
         CAutoLock cObjectLock(&csMyLock);  // Lock the critical section, releases scope after block is done...
 		if(pBufLocalCurrentEndLocation > 0) {
@@ -512,12 +512,12 @@ HRESULT LoopbackCaptureTakeFromBuffer(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNo
           *totalBytesWrote = totalToWrite;
 		  pBufLocalCurrentEndLocation = 0;
           return S_OK;
-		} // else fall through to sleep
+		} // else fall through to sleep outside the lock...
 	  }
 	  // sleep outside the lock ...
 	  // using sleep doesn't seem to hurt the cpu
-	  // and it seems to not get many "discontinuity" messages...
-      Sleep(1);
+	  // and it seems to not get many "discontinuity" messages currently...
+    Sleep(1);
 	}
 	pBufLocalCurrentEndLocation = 0; // not sure who should set this...producer or consumer :)
 	return E_FAIL; // we didn't fill anything...

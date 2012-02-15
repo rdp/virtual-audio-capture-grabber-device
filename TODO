@@ -1,16 +1,19 @@
 == actually do==
-  a "real" kernel level driver
+  a "real" kernel level receive from driver
   fix "everybody's bug"
-  
+      sleep 0's?
+      reproduce?
+      timestamps offset with a maximum end time?
+      
 == maybe ==
   system tray "start" "stop"
   prompt for filename after
-  move broadcaster here I guess?
+  copy broadcaster here I guess?
   
 == meh ==
 write your version to...the registry at startup
 
-maybe something like VAC's usefulness for gamers? 
+maybe something like VAC's usefulness for gamers or something? 
 
 try "mixing" of several? http://msdn.microsoft.com/en-us/library/windows/hardware/ff537517%28v=vs.85%29.aspx
 
