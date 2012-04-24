@@ -4,6 +4,7 @@
       sleep 0's?
       reproduce?
       timestamps offset with a maximum end time?
+     max(should, real) etc.!
   
 == maybe ==
   maybe I don't want to cache as much? user configurable? hmm...
