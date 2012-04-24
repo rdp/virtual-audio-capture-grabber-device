@@ -5,6 +5,7 @@
       reproduce?
       timestamps offset with a maximum end time?
      max(should, real) etc.!
+      maybe it's fixed/ok? http://msdn.microsoft.com/en-us/library/windows/desktop/dd407208(v=vs.85).aspx
   
 == maybe ==
   maybe I don't want to cache as much? user configurable? hmm...
