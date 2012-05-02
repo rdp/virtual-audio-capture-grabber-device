@@ -346,12 +346,11 @@ extern CCritSec m_cSharedState;
 
 int totalSuccessFullyread = 0;
 int totalBlips = 0;
+int totalOverflows = 0;
 
 HRESULT propagateBufferOnce() {
 	HRESULT hr = S_OK;
 
-	// this should also...umm...detect the timeout stuff and fake fill?
-   
     // grab next audio chunk...
 	int gotAnyAtAll = FALSE;
 	DWORD start_time = timeGetTime();
@@ -417,10 +416,10 @@ HRESULT propagateBufferOnce() {
 
 			if( dwFlags == 0 ) {
 			  // the good case
-			  // we'll let fillbuffer set bFirstPacket = false; since it repackages the audio
+			  // we'll let fillbuffer set bFirstPacket = false; since it uses it to know if the next packet should restart, etc.
 			} else if (bFirstPacket && AUDCLNT_BUFFERFLAGS_DATA_DISCONTINUITY == dwFlags) {
 				ShowOutput("Probably spurious glitch reported on first packet, or two discontinuity errors occurred before it read from the cached buffer\n");
-				bFirstPacket = true; // won't hurt
+				bFirstPacket = true; // won't hurt, even if it is a real first packet :)
 				// LODO it should probably clear the buffers if it ever gets discontinuity
 				// or "let" it clear the buffers then send the new data on
 				// as we have any left-over data that will be assigned a wrong timestamp
@@ -428,18 +427,18 @@ HRESULT propagateBufferOnce() {
 				// assigning it the current graph timestamp, like we used to...
 			} else if (AUDCLNT_BUFFERFLAGS_DATA_DISCONTINUITY == dwFlags) {
 				  ShowOutput("IAudioCaptureClient::discontinuity GetBuffer set flags to 0x%08x after %u frames\n", dwFlags, pnFrames);
-				  // expected if audio turns on then off...
-				  // or if your CPU gets behind or what not.
+				  // expected your CPU gets behind or what not. I guess.
 				  /*pAudioClient->Stop();
 				  AvRevertMmThreadCharacteristics(hTask);
-				  pAudioCaptureClient->Release(); // WE GET HERE			  
+				  pAudioCaptureClient->Release();		  
 				  pAudioClient->Release();            
 				  return E_UNEXPECTED;*/
 				  bFirstPacket = true;
 			} else if (AUDCLNT_BUFFERFLAGS_SILENT == dwFlags) {
-     		  ShowOutput("IAudioCaptureClient::silence (just) from GetBuffer after %u frames\n", pnFrames);
-			  // expected if there's silence, esp. since we have the "silence generation" work-around...
+     		  // ShowOutput("IAudioCaptureClient::silence (just) from GetBuffer after %u frames\n", pnFrames);
+			  // expected if there's silence (i.e. nothing playing), since we now include the "silence generator" work-around...
 			} else {
+			  // probably silence + discontinuity
      		  ShowOutput("IAudioCaptureClient::unknown discontinuity GetBuffer set flags to 0x%08x after %u frames\n", dwFlags, pnFrames);
 			  bFirstPacket = true; // probably is some type of discontinuity :P
 			}
@@ -448,7 +447,7 @@ HRESULT propagateBufferOnce() {
 				totalBlips++;
 
 			if (0 == nNumFramesToRead) {
-				ShowOutput("death: IAudioCaptureClient::GetBuffer said to read 0 frames after %u frames\n", pnFrames);
+				ShowOutput("death failure: IAudioCaptureClient::GetBuffer said to read 0 frames after %u frames\n", pnFrames);
 				pAudioClient->Stop();
 				AvRevertMmThreadCharacteristics(hTask);
 				pAudioCaptureClient->Release();
@@ -472,6 +471,8 @@ HRESULT propagateBufferOnce() {
 				// so basically we don't accomodate realtime at all currently...hmmm...
 	  			ShowOutput("overfilled buffer, cancelling/flushing."); //over flow overflow appears VLC just keeps reading though, when paused [?] but not graphedit...or does it?
 				pBufLocalCurrentEndLocation = 0;
+				totalOverflows++;
+				bFirstPacket = true;
 			  }
 
 			  for(INT i = 0; i < lBytesToWrite && pBufLocalCurrentEndLocation < expectedMaxBufferSize; i++) {
@@ -500,15 +501,15 @@ HRESULT propagateBufferOnce() {
 // iSize is max size of the BYTE buffer...so maybe...we should just drop it if we have past that size? hmm...we're probably
 HRESULT LoopbackCaptureTakeFromBuffer(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNotNullThenJustSetTypeOnly, LONG* totalBytesWrote)
  {
-	while(!shouldStop) { // allow this to exit, at shutdown.
+	while(!shouldStop) { // allow this to exit, too, at shutdown.
        {
         CAutoLock cObjectLock(&csMyLock);  // Lock the critical section, releases scope after block is done...
 		if(pBufLocalCurrentEndLocation > 0) {
 		  // fails lodo is that ok? 
 		  // assert(pBufLocalCurrentEndLocation <= expectedMaxBufferSize);
 		  int totalToWrite = MIN(pBufLocalCurrentEndLocation, expectedMaxBufferSize);
+		  ASSERT(totalToWrite <= iSize); // just in case...just in case almost...
 		  memcpy(pBuf, pBufLocal, totalToWrite);
-		  ASSERT(totalToWrite <= iSize); // just in case
           *totalBytesWrote = totalToWrite;
 		  pBufLocalCurrentEndLocation = 0;
           return S_OK;
@@ -517,12 +518,10 @@ HRESULT LoopbackCaptureTakeFromBuffer(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNo
 	  // sleep outside the lock ...
 	  // using sleep doesn't seem to hurt the cpu
 	  // and it seems to not get many "discontinuity" messages currently...
-    Sleep(1);
+      Sleep(1);
 	}
-	pBufLocalCurrentEndLocation = 0; // not sure who should set this...producer or consumer :)
-	return E_FAIL; // we didn't fill anything...
+	return E_FAIL; // we didn't fill anything...and are shutting down...
 }
-
 
 // clean up
 void loopBackRelease() {
@@ -536,13 +535,13 @@ void loopBackRelease() {
     pAudioCaptureClient->Release();
     pAudioClient->Release();
     m_pMMDevice->Release();
-	#ifdef _DEBUG 
-	  outputStats();
-    #endif
+	// thread is done, we are exiting...
+	pBufLocalCurrentEndLocation = 0;
+	outputStats();
 }
 
 void outputStats() {
 	wchar_t output[250];
-	wsprintf(output, L"total reads %d total blips %d", totalSuccessFullyread , totalBlips);
+	wsprintf(output, L"total reads %d total blips %d total overflows %d", totalSuccessFullyread , totalBlips, totalOverflows);
 	set_config_string_setting(L"last_output", output);
 }

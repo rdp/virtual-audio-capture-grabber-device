@@ -41,7 +41,7 @@ CVCam::CVCam(LPUNKNOWN lpunk, HRESULT *phr) :
 }
 
 STDMETHODIMP CVCam::Run(REFERENCE_TIME tStart) {
-	((CVCamStream*) m_paStreams[0])->m_rtSampleEndTime = 0;
+	((CVCamStream*) m_paStreams[0])->m_rtPreviousSampleEndTime = 0;
 	return CSource::Run(tStart);
 }
 
@@ -179,9 +179,7 @@ HRESULT CVCamStream::setAsNormal(CMediaType *pmt) {
             return E_OUTOFMEMORY;
         }
 		return setupPwfex(pwfex, pmt);
-
 }
-
 
 // GetMediaType
 // I believe "they" call this...
@@ -233,7 +231,7 @@ HRESULT CVCamStream::CheckMediaType(const CMediaType *pMediaType)
 
 // Size of each allocated buffer
 // seems arbitrary
-// maybe downstream needed a certain size?
+// maybe downstream needs a certain size?
 const int WaveBufferChunkSize = 16*1024;     
 
 void setExpectedMaxBufferSize(long toThis);

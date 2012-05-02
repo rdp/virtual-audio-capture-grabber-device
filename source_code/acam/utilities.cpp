@@ -24,7 +24,7 @@ void ShowOutput(const char *str, ...)
 
 HRESULT set_config_string_setting(LPCTSTR szValueName, wchar_t *szToThis ) {
 
-   HKEY hKey;
+   HKEY hKey = NULL;
    LONG i;
 
     DWORD dwDisp = 0;
@@ -39,9 +39,11 @@ HRESULT set_config_string_setting(LPCTSTR szValueName, wchar_t *szToThis ) {
         i = RegSetValueEx(hKey, szValueName, 0, REG_SZ, (LPBYTE) szToThis, wcslen(szToThis)*2+1);
 
     } else {
-       // failed to set...
+       // failed to create key...
 	}
-	RegCloseKey(hKey);
+
+	if(hKey)
+	  RegCloseKey(hKey);
 	return i;
 
 }

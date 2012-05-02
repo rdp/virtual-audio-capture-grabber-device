@@ -24,7 +24,7 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
     }
     
 	LONG totalWrote = -1;
-	 // the real meat -- get all the incoming data
+	// the real meat -- get all the incoming data
 	hr = LoopbackCaptureTakeFromBuffer(pData, pms->GetSize(), NULL, &totalWrote);
 	if(FAILED(hr)) {
 		// this one can return false during shutdown, so it's actually ok to just return from here...
@@ -47,27 +47,26 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
                      (REFERENCE_TIME)pwfexCurrent->nAvgBytesPerSec;
 
     CRefTime rtStart;
-	if(true) { // bFirstPacket
+	if(bFirstPacket) { // bFirstPacket or true here...
       m_pParent->StreamTime(rtStart); // gets current graph ref time [now] as its "start", as normal "capture" devices would, just in case that's better...
- 	  if(bFirstPacket)
-	    ShowOutput("got a first packet");
+	  if(bFirstPacket)
+	    ShowOutput("retrieving a first packet");
 	} else {
 		// since there hasn't been discontinuity, I think we should be safe to tell it
 		// that this packet starts where the previous packet ended off
 		// since that's theoretically accurate...
-		// exept that it ends up being bad
+		// exept that it ends up being bad [?]
 		// I don't "think" this will hurt graphs that have no reference clock...hopefully...
-		CRefTime cur_time;
-		m_pParent->StreamTime(cur_time);
-    	REFERENCE_TIME previousEnd = m_rtSampleEndTime;
-		rtStart = previousEnd;
+
+		// rtStart = cur_time;
+		rtStart = m_rtPreviousSampleEndTime;
 	}
 
 	// I once tried to change it to always have monotonicity of timestamps at this point, but it didn't fix any problems, and seems to do all right without it so maybe ok [?]
-    m_rtSampleEndTime = rtStart + sampleTimeUsed;
+    m_rtPreviousSampleEndTime = rtStart + sampleTimeUsed;
 
 	// NB that this *can* set it to a negative start time...hmm...which apparently is "ok" when a graph is just starting up it's expected...
-    hr = pms->SetTime((REFERENCE_TIME*)&rtStart, (REFERENCE_TIME*)&m_rtSampleEndTime);
+    hr = pms->SetTime((REFERENCE_TIME*) &rtStart, (REFERENCE_TIME*) &m_rtPreviousSampleEndTime);
 	if (FAILED(hr)) {
 		assert(false);
         return hr;
@@ -77,7 +76,7 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
 	// [a possible VLC bug?] http://forum.videolan.org/viewtopic.php?f=14&t=92659&hilit=+50ms
 
 	// whatever SetMediaTime even does...
-    hr = pms->SetMediaTime((REFERENCE_TIME*)&rtStart, (REFERENCE_TIME*)&m_rtSampleEndTime);
+    // hr = pms->SetMediaTime((REFERENCE_TIME*)&rtStart, (REFERENCE_TIME*)&m_rtPreviousSampleEndTime);
     //m_llSampleMediaTimeStart = m_rtSampleEndTime;
 
 	if (FAILED(hr)) {

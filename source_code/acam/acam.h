@@ -122,7 +122,7 @@ public:
 
     CVCamStream(HRESULT *phr, CVCam *pParent, LPCWSTR pPinName);
     ~CVCamStream();
-    CRefTime     m_rtSampleEndTime;    // The time to be stamped on each sample
+    CRefTime     m_rtPreviousSampleEndTime;
 
 private:
     CVCam *m_pParent;

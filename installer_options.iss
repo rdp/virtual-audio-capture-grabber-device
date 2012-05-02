@@ -1,15 +1,18 @@
-#define AppVer "0.2.8"
+#define AppVer "0.2.9"
 #define AppName "virtual audio capture grabber device"
+
+[Run]
+Filename: regsvr32; WorkingDir: {app}; Parameters: /s audio_sniffer.ax
+Filename: {app}\vendor\vcredist_x86.exe; Parameters: "/passive /Q:a /c:""msiexec /qb /i vcredist.msi"" "; StatusMsg: Installing 2010 RunTime...
 
 [UninstallRun]
 Filename: regsvr32; WorkingDir: {app}; Parameters: /s /u audio_sniffer.ax
-[Run]
-Filename: regsvr32; WorkingDir: {app}; Parameters: /s audio_sniffer.ax
 
 [Files]
 Source: source_code\Release\audio_sniffer.ax; DestDir: {app}
 Source: README.TXT; DestDir: {app}; Flags: isreadme
 Source: script_it\*.*; DestDir: {app}\script_it; Flags: recursesubdirs
+Source: vendor\vcredist_x86.exe; DestDir: {app}\vendor
 
 [Setup]
 MinVersion=,6.0.6000

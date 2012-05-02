@@ -1,3 +1,8 @@
+0.2.9 5/2/12
+
+  move an assertion, also we use a more "directshowy" fillbuffer now, which...is probably wrong LOL.
+  more debug logs
+
 0.2.8 2-21-12
   64 bit release kind of
 
