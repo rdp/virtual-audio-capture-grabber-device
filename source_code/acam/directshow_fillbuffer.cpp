@@ -47,8 +47,8 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
                      (REFERENCE_TIME)pwfexCurrent->nAvgBytesPerSec;
 
     CRefTime rtStart;
-	if(true) { //bFirstPacket/true
-      m_pParent->StreamTime(rtStart); // gets current graph ref time [now] as its "start", as normal "capture" devices would
+	if(true) { // bFirstPacket
+      m_pParent->StreamTime(rtStart); // gets current graph ref time [now] as its "start", as normal "capture" devices would, just in case that's better...
  	  if(bFirstPacket)
 	    ShowOutput("got a first packet");
 	} else {
