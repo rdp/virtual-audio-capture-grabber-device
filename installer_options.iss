@@ -28,4 +28,4 @@ OutputDir=releases
 Name: {group}\Readme; Filename: {app}\README.TXT
 Name: {group}\Uninstall it; Filename: {uninstallexe}
 Name: {group}\Record Using it for x seconds; Filename: {app}\script_it\record.bat; WorkingDir: {app}\script_it
-Name: {group}\Test it by listening to it (DANGER causes feedback); Filename: {app}\script_it\feedback.bat; WorkingDir: {app}\script_it
+;Name: {group}\Test it by listening to it (DANGER causes feedback); Filename: {app}\script_it\feedback.bat; WorkingDir: {app}\script_it*/
