@@ -32,7 +32,7 @@ NB that you'll need java JRE previously installed to use the included helper app
 
 == Troubleshooting ==
 
-Also note that VLC directshow input might need buffers of at least 40 or 50 ms or it fails for some reason.
+Also note that VLC directshow input might need buffers of at least 40 or 50 ms or it fails for some reason.  But trying even higher might help.
 
 Notes from users:
 
