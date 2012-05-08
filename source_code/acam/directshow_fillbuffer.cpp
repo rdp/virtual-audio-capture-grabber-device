@@ -45,9 +45,8 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
 	WAVEFORMATEX* pwfexCurrent = (WAVEFORMATEX*)m_mt.Format();
 	CRefTime sampleTimeUsed = (REFERENCE_TIME)(UNITS * pms->GetActualDataLength()) / 
                      (REFERENCE_TIME)pwfexCurrent->nAvgBytesPerSec;
-
     CRefTime rtStart;
-	if(bFirstPacket) { // bFirstPacket or true here...
+	if(true) { // bFirstPacket or true here...
       m_pParent->StreamTime(rtStart); // gets current graph ref time [now] as its "start", as normal "capture" devices would, just in case that's better...
 	  if(bFirstPacket)
 	    ShowOutput("retrieving a first packet");
@@ -58,8 +57,11 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
 		// exept that it ends up being bad [?]
 		// I don't "think" this will hurt graphs that have no reference clock...hopefully...
 
-		// rtStart = cur_time;
 		rtStart = m_rtPreviousSampleEndTime;
+
+        // CRefTime cur_time;
+	    // m_pParent->StreamTime(cur_time);
+	    // rtStart = max(rtStart, cur_time);
 	}
 
 	// I once tried to change it to always have monotonicity of timestamps at this point, but it didn't fix any problems, and seems to do all right without it so maybe ok [?]

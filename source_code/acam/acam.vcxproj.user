@@ -3,7 +3,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LocalDebuggerCommand>C:\Program Files (x86)\VideoLAN\VLC\vlc.exe</LocalDebuggerCommand>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerCommandArguments>dshow://  :dshow-vdev=none :dshow-adev="virtual-audio-capturer"  :dshow-caching=100</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>dshow://  :dshow-vdev=none :dshow-adev="virtual-audio-capturer"  :dshow-caching=50</LocalDebuggerCommandArguments>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LocalDebuggerCommand>C:\Program Files (x86)\VideoLAN\VLC\vlc.exe</LocalDebuggerCommand>

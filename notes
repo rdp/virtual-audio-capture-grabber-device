@@ -1,9 +1,16 @@
 notes:
-
-
+ 
+= the need for "true" =
+ 
+"C:\Programs\VLC TEST 1.1.10\vlc.exe" -vvv dshow:// --sout=#transcode{venc=ffmpeg,vcodec=mp2v,vb=10000,fps=30,scale=0.5,width=1280,acodec=mp3,ab=192,channels=2,samplerate=44100,soverlay}:std{access=http,mux=ts,dst=:8081} --no-sout-rtp-sap --no-sout-standard-sap --ttl=1 --sout-keep  :dshow-vdev=screen-capture-recorder :dshow-adev=virtual-audio-capturer  :dshow-caching=0
+  I think play it with VLC, or with mplayer, and/or substitute VAC with it, see what happens.
+   check for "tearing" and out of sync audio...
+  
+ = random =
+ 
  increase dshow-caching=200 to dshow-caching=900 ?
-
-
+ 
+ 
 ng VLC 1.0.0 native, w
 
 disable "cool'n'quiet"

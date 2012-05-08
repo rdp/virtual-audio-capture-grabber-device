@@ -2,7 +2,7 @@
 (i.e. record what you hear) for Windows 7/Vista.  Windows XP users please read the "history" section
 for something else you can try in its place.
 
-NB THAT IT IS USED WITHIN THE MORE FULL FEATURED https://github.com/rdp/screen-capture-recorder-to-video-windows-free
+NB THAT IT IS USED WITHIN/INCLUDED IN THE MORE FULL FEATURED https://github.com/rdp/screen-capture-recorder-to-video-windows-free
 
 == Installation ==
 
@@ -33,9 +33,14 @@ NB that you'll need java JRE previously installed to use the included helper app
 == Troubleshooting ==
 
 Also note that VLC directshow input might need buffers of at least 40 or 50 ms or it fails for some reason.
+
+Notes from users:
+
 "I was able to reduce the VLC delay messages by changing the output frame rate from 30 to 24 and increasing the dsow buffer from 200 to 20000"
 
-History/XP users:
+If I make the "PlayOn Virtual Audio Device" or the "Virtual Audio Cable" the Playback Default device instead of the Realtek speakers all the problems with your filter go away. So it would seem the problem is really with the Realtek Driver. 
+
+= History/XP users =
 
 Basically, with windows XP, you can typically already "record what you hear"
 Run sndvol32 (Start menu -> Accessories -> Volume/Audio), choose options [menu] -> properties -> recording radio button, click ok, 
