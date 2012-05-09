@@ -40,7 +40,13 @@ Notes from users:
 
 If I make the "PlayOn Virtual Audio Device" or the "Virtual Audio Cable" the Playback Default device instead of the Realtek speakers all the problems with your filter go away. So it would seem the problem is really with the Realtek Driver. 
 
-= History/XP users =
+If it doesn't work well for you (of course please report this fact), then you may be able to turn on "record what you hear"/"wave out mix" for your system,
+see "alternatives".
+
+If that also doesn't work then you could use a small audio cable to connect your input jack with your output jack,
+and then record using that.  See end section of "alternatives".
+
+= History/XP users/Alternatives =
 
 Basically, with windows XP, you can typically already "record what you hear"
 Run sndvol32 (Start menu -> Accessories -> Volume/Audio), choose options [menu] -> properties -> recording radio button, click ok, 
@@ -70,7 +76,6 @@ Basically I programmed this as an open source (free) competitor to virtual audio
 Ping me if you want me to convert it into a "real" kernel level audio device so that any program can use it,
 not just directshow compatible ones.
 Ping me if you want an easier "start/stop" recorder, too.
-
 
 Another option is "If your sound card doesn't have the option to record what you hear, 
 use a cable (with 3.5mm headphone jacks on both ends) to connect the line out of your 
