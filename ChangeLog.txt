@@ -1,3 +1,7 @@
+0.3.0
+
+Fix output for 48000 Hz etc. Sweet!
+
 0.2.10 
 
 Fix installer.

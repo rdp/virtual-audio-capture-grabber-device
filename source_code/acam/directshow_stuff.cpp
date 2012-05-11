@@ -161,7 +161,7 @@ HRESULT setupPwfex(WAVEFORMATEX *pwfex, CMediaType *pmt) {
 		pwfex->wFormatTag = WAVE_FORMAT_PCM;
 		pwfex->cbSize=0; // apparently should be zero if using WAVE_FORMAT_PCM http://msdn.microsoft.com/en-us/library/ff538799(VS.85).aspx
 		pwfex->nChannels = 2;
-		pwfex->nSamplesPerSec = 44100;
+		pwfex->nSamplesPerSec = getHtzRate();
 		pwfex->wBitsPerSample = 16;
 		pwfex->nAvgBytesPerSec = pwfex->nSamplesPerSec * pwfex->nChannels * pwfex->wBitsPerSample / BITS_PER_BYTE; // it can't calculate this itself? huh?
 		pwfex->nBlockAlign = (WORD)((pwfex->wBitsPerSample * pwfex->nChannels) / BITS_PER_BYTE); // it can't calculate this itself?
@@ -397,11 +397,11 @@ HRESULT STDMETHODCALLTYPE CVCamStream::GetStreamCaps(int iIndex, AM_MEDIA_TYPE *
 
 	pAudioFormat->cbSize				= 0;
 	pAudioFormat->wFormatTag			= WAVE_FORMAT_PCM;		// This is the wave format (needed for more than 2 channels)
-	pAudioFormat->nSamplesPerSec		= 44100;	// This is in hertz
+	pAudioFormat->nSamplesPerSec		= getHtzRate();
 	pAudioFormat->nChannels				= 2;		// 1 for mono, 2 for stereo, and 4 because the camera puts out dual stereo
 	pAudioFormat->wBitsPerSample		= 16;	// 16-bit sound
 	pAudioFormat->nBlockAlign			= 2*16/8;
-	pAudioFormat->nAvgBytesPerSec		= 44100*pAudioFormat->nBlockAlign; // TODO match our current audio settings [?]
+	pAudioFormat->nAvgBytesPerSec		= getHtzRate()*pAudioFormat->nBlockAlign; // TODO match our current audio settings [?]
 	
 	AM_MEDIA_TYPE * pm = *ppMediaType;
 
@@ -423,8 +423,8 @@ HRESULT STDMETHODCALLTYPE CVCamStream::GetStreamCaps(int iIndex, AM_MEDIA_TYPE *
 	pASCC->ChannelsGranularity = 1;
 	pASCC->MaximumChannels = 2;
 	pASCC->MinimumChannels = 2;
-	pASCC->MaximumSampleFrequency = 44100;
-	pASCC->MinimumSampleFrequency = 44100;
+	pASCC->MaximumSampleFrequency = getHtzRate();
+	pASCC->MinimumSampleFrequency = getHtzRate();
 	pASCC->BitsPerSampleGranularity = 16;
 	pASCC->MaximumBitsPerSample = 16;
 	pASCC->MinimumBitsPerSample = 16;

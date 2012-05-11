@@ -54,6 +54,39 @@ const IID IID_IAudioClient = __uuidof(IAudioClient);
 const IID IID_IAudioRenderClient = __uuidof(IAudioRenderClient);
 
 
+int getHtzRate() {
+    HRESULT hr;
+    hr = get_default_device(&m_pMMDevice); // so it can re-place our pointer...
+    if (FAILED(hr)) {
+        return hr;
+    }
+	// activate an (the default, for us, since we want loopback) IAudioClient
+    hr = m_pMMDevice->Activate(
+        __uuidof(IAudioClient),
+        CLSCTX_ALL, NULL,
+        (void**)&pAudioClient
+    );
+    if (FAILED(hr)) {
+        ShowOutput("IMMDevice::Activate(IAudioClient) failed: hr = 0x%08x", hr);
+		assert(false);
+    }
+
+    WAVEFORMATEX *pwfx; // hope this doesn't leak...
+	hr = pAudioClient->GetMixFormat(&pwfx);
+    if (FAILED(hr)) {
+        ShowOutput("IAudioClient::GetMixFormat failed: hr = 0x%08x\n", hr);
+        CoTaskMemFree(pwfx);
+        pAudioClient->Release();
+   		assert(false);
+    }
+	pAudioClient->Stop();
+    AvRevertMmThreadCharacteristics(hTask);
+    pAudioClient->Release();
+    m_pMMDevice->Release();
+	return pwfx->nSamplesPerSec;
+
+}
+
 // we only call this once...per hit of the play button :)
 HRESULT LoopbackCaptureSetup()
 {
@@ -70,7 +103,7 @@ HRESULT LoopbackCaptureSetup()
 	// tell it to not overflow one buffer's worth <sigh> not sure if this is right or not, and thus we don't "cache" or "buffer" more than that much currently...
 	// but a buffer size is a buffer size...hmm...as long as we keep it small though...
 	assert(expectedMaxBufferSize <= pBufLocalSize);
-    // activate an (the default, for us) IAudioClient
+    // activate an (the default, for us, since we want loopback) IAudioClient
     hr = m_pMMDevice->Activate(
         __uuidof(IAudioClient),
         CLSCTX_ALL, NULL,
@@ -81,7 +114,7 @@ HRESULT LoopbackCaptureSetup()
         return hr;
     }
     
-    // get the default device periodicity
+    // get the default device periodicity, why? I don't know...
     REFERENCE_TIME hnsDefaultDevicePeriod;
     hr = pAudioClient->GetDevicePeriod(&hnsDefaultDevicePeriod, NULL);
     if (FAILED(hr)) {
@@ -101,12 +134,13 @@ HRESULT LoopbackCaptureSetup()
         return hr;
     }
 
-    if (bInt16) {
+    if (true /*bInt16*/) {
         // coerce int-16 wave format
         // can do this in-place since we're not changing the size of the format
         // also, the engine will auto-convert from float to int for us
         switch (pwfx->wFormatTag) {
             case WAVE_FORMAT_IEEE_FLOAT:
+				assert(false);// we never get here...I hope...
                 pwfx->wFormatTag = WAVE_FORMAT_PCM;
                 pwfx->wBitsPerSample = 16;
                 pwfx->nBlockAlign = pwfx->nChannels * pwfx->wBitsPerSample / 8;
@@ -215,7 +249,7 @@ BYTE *captureData;
     EXIT_ON_ERROR(hr)
 
 	
-    // initialise in sharedmode [this is the "silence" bug fella]
+    // Silence: initialise in sharedmode [this is the "silence" bug overwriter, so buffer doesn't matter as much...]
     hr = pAudioClient->Initialize(
                          AUDCLNT_SHAREMODE_SHARED,
                          0,
@@ -258,7 +292,8 @@ BYTE *captureData;
     // note that AUDCLNT_STREAMFLAGS_LOOPBACK and AUDCLNT_STREAMFLAGS_EVENTCALLBACK
     // do not work together...
     // the "data ready" event never gets set
-    // so we're going to do a timer-driven loop...
+    // so we're going to have to do this in a timer-driven loop...
+
     hr = pAudioClient->Initialize(
         AUDCLNT_SHAREMODE_SHARED,
         AUDCLNT_STREAMFLAGS_LOOPBACK,
