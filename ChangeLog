@@ -1,3 +1,7 @@
+0.2.10 
+
+Fix installer.
+
 0.2.9 5/8/12
 
   move an assertion, also we use a more "directshowy" fillbuffer now, which...is probably wrong but hey :P
