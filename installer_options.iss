@@ -1,5 +1,5 @@
 #define AppVer "0.2.10"
-#define AppName "virtual audio capture grabber device"
+#define AppName "virtual audio capture grabber device 32-bit"
 
 [Run]
 Filename: {app}\vendor\vcredist_x86.exe; Parameters: "/passive /Q:a /c:""msiexec /qb /i vcredist.msi"" "; StatusMsg: Installing 2010 RunTime...
