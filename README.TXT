@@ -6,7 +6,7 @@ NB THAT IT IS USED WITHIN/INCLUDED IN THE MORE FULL FEATURED https://github.com/
 
 == Installation ==
 
-To use, download+install here: https://sourceforge.net/projects/screencapturer/files/virtual-audio-capture-grabber-device
+To use, download+install from here: https://sourceforge.net/projects/virtualaudiodev/files
 then use it via its included "record for x seconds" utility, or
 via any other program that can take directshow devices as an input.
 
