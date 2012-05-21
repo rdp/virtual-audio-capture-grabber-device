@@ -2,21 +2,14 @@
 (i.e. record what you hear) for Windows 7/Vista.  Windows XP users please read the "history" section
 for something else you can try in its place.
 
-NB THAT IT IS USED WITHIN/INCLUDED IN THE MORE FULL FEATURED https://github.com/rdp/screen-capture-recorder-to-video-windows-free
+NB THAT IF YOU WANT TO USE WITH SCREEN RECORDING THEN PLEASE INSTALL
+THE MORE FULL FEATURED https://github.com/rdp/screen-capture-recorder-to-video-windows-free
 
 == Installation ==
 
 To use, download+install from here: https://sourceforge.net/projects/virtualaudiodev/files
 then use it via its included "record for x seconds" utility, or
-via any other program that can take directshow devices as an input.
-
-  If you want other options for its use, like broadcasting, or saving from it or any specific audio device input (ex: waveout with Windows XP)
-  then download this utility: https://github.com/rdp/screen-capture-recorder-to-video-windows-free
-  which has has more options and a different/better UI for broadcast/recording.
-
- NB that you may need need to install the MSVC 2010 runtime distro first, if it's not already
-  installed on your machine (typically, it already is).
-  http://www.microsoft.com/download/en/details.aspx?id=5555
+as input to any other program that can take directshow devices as an input.
 
 == Usage ==
 
@@ -30,13 +23,17 @@ as well or capture it or the like)
 
 NB that you'll need java JRE previously installed to use the included helper apps.
 
-== Troubleshooting ==
+== Troubleshooting/Contact ==
+
+Basically, if you have a problem, ask!
+
+rogerdpack@gmail.com or mailing list http://groups.google.com/group/roger-projects
 
 Also note that VLC directshow input might need buffers of at least 40 or 50 ms or it fails for some reason.  But trying even higher might help.
 
 Notes from users:
 
-"I was able to reduce the VLC delay messages by changing the output frame rate from 30 to 24 and increasing the dsow buffer from 200 to 20000"
+"I was able to reduce the VLC delay messages by changing the output frame rate from 30 to 24 and increasing the dshow buffer from 200 to 20000" (you shouldn't need to though).
 
 If I make the "PlayOn Virtual Audio Device" or the "Virtual Audio Cable" the Playback Default device instead of the Realtek speakers all the problems with your filter go away. So it would seem the problem is really with the Realtek Driver. 
 
@@ -45,6 +42,19 @@ see "alternatives".
 
 If that also doesn't work then you could use a small audio cable to connect your input jack with your output jack,
 and then record using that.  See end section of "alternatives".
+
+
+If you use it in VLC you'll need a directshow cache of at least 40ms, for whatever reason.
+Also note that it's tuned set to work best for recording "what you hear" 
+if this doesn't work for you then ping me I maybe could add a more "realtime" option or 
+something.
+Basically any feedback welcome, if it doesn't work.
+Also note that if you turn down your system volume within windows, it will still continue recording
+or playing, as apparently it captures it at "normal volume" regardless of how high your speaker output is.
+Any feedback welcome, including feature requests like "support more audio channels than 2".
+
+If you want a smaller download you can just download the file source_code\Release\audio_sniffer.ax then run regsvr32 audio_sniffer.ax as an admin user.
+
 
 = History/XP users/Alternatives =
 
@@ -84,30 +94,10 @@ and disabling mic boost if you use a microphone input)."
 
 But that's hardware and this is a software answer :)
 
-
-
-==Troubleshooting/feedback ==
-
-If you use it in VLC you'll need a directshow cache of at least 40ms, for whatever reason.
-Also note that it's tuned set to work best for recording "what you hear" 
-if this doesn't work for you then ping me I maybe could add a more "realtime" option or 
-something.
-Basically any feedback welcome, if it doesn't work.
-Also note that if you turn down your system volume within windows, it will still continue recording
-or playing, as apparently it captures it at "normal volume" regardless of how high your speaker output is.
-Any feedback welcome, including feature requests like "support more audio channels than 2".
-
-If you want a smaller download you can just download the file source_code\Release\audio_sniffer.ax then run regsvr32 audio_sniffer.ax as an admin user.
-
-rogerdpack@gmail.com or mailing list http://groups.google.com/group/roger-projects
-
 == attribution ==
 
 Some source code originally from the windows SDK samples, some taken from [1]
 So you'll probably need to install the Windows SDK before playing around with the source code, legally.
-
-Also you may find this project, a directshow screen capture device, similarly useful:
-https://github.com/rdp/on-screen-capture-recorder-to-video-windows-free
 
 Enjoy!
 

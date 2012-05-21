@@ -1,4 +1,5 @@
-#define AppVer "0.3.0"
+#define AppVer "0.4.0"
+; 0.4.0: new program icons etc.
 #define AppName "virtual audio capture grabber device 32-bit"
 
 [Run]
@@ -11,7 +12,7 @@ Filename: regsvr32; WorkingDir: {app}; Parameters: /s /u audio_sniffer.ax
 [Files]
 Source: source_code\Release\audio_sniffer.ax; DestDir: {app}
 Source: README.TXT; DestDir: {app}; Flags: isreadme
-Source: script_it\*.*; DestDir: {app}\script_it; Flags: recursesubdirs
+Source: screen-capture-recorder-to-video-windows-free\configuration_setup_utility\*.*; DestDir: {app}\screen-capture-recorder-to-video-windows-free\configuration_setup_utility; Flags: recursesubdirs
 Source: vendor\vcredist_x86.exe; DestDir: {app}\vendor
 
 [Setup]
@@ -27,5 +28,4 @@ OutputDir=releases
 [Icons]
 Name: {group}\Readme; Filename: {app}\README.TXT
 Name: {group}\Uninstall it; Filename: {uninstallexe}
-Name: {group}\Record Using it for x seconds; Filename: {app}\script_it\record.bat; WorkingDir: {app}\script_it
-;Name: {group}\Test it by listening to it (DANGER causes feedback); Filename: {app}\script_it\feedback.bat; WorkingDir: {app}\script_it*/
+Name: {group}\Record Using it for x seconds; Filename: {app}\screen-capture-recorder-to-video-windows-free\configuration_setup_utility\timed_recording.bat; WorkingDir: {app}\screen-capture-recorder-to-video-windows-free\configuration_setup_utility
