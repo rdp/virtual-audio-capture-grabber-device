@@ -1,3 +1,7 @@
+0.3.2 
+
+ fix for 64 bit windows, fix button recording
+
 0.3.1
 
 new program icons, new record option
