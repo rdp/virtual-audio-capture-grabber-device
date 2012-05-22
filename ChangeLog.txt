@@ -1,3 +1,7 @@
+0.3.1
+
+new program icons, new record option
+
 0.3.0
 
 Fix output for 48000 Hz etc. Sweet!
