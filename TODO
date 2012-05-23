@@ -1,24 +1,27 @@
 == actually do==
   a "real" kernel level receive from driver
+  copy broadcaster here I guess, start menu
+
+  new name?
+  
+== maybe ==
+
+faster script start speed?
+
+== meh ==
+One feature I had thought of would be a "strip trailing silence" option or the like.  I know if I were recording things I might like it :)
+Another option that might be useful/interesting might be to record/merge several audio input streams at a time.  This might be useful for recording skype calls so you can get the microphone as well as the "audio out".
+
+  copy broadcaster here I guess?
+
   fix "everybody's bug"
       sleep 0's?
       reproduce?
       timestamps offset with a maximum end time?
      max(should, real) etc.!
       maybe it's fixed/ok? http://msdn.microsoft.com/en-us/library/windows/desktop/dd407208(v=vs.85).aspx
-  
-== maybe ==
-  maybe I don't want to cache as much? user configurable? hmm...
-  prompt for filename after
-  copy broadcaster here I guess?
-  check for existence of "that file"
-  check for absence of java on startup
-  check with virtualdub
-  start/stop buttons
-    just leach off the other project
 
-== meh ==
-maybe something like VAC's usefulness for gamers or something? 
+	  maybe something like VAC's usefulness for gamers or something? 
 
 try "mixing" of several? http://msdn.microsoft.com/en-us/library/windows/hardware/ff537517%28v=vs.85%29.aspx
   

@@ -297,7 +297,7 @@ BYTE *captureData;
     hr = pAudioClient->Initialize(
         AUDCLNT_SHAREMODE_SHARED,
         AUDCLNT_STREAMFLAGS_LOOPBACK,
-        REFTIMES_PER_SEC, // buffer size a full 1.0s
+        REFTIMES_PER_SEC, // buffer size a full 1.0s, seems ok VLC
 		0, pwfx, 0
     );
     if (FAILED(hr)) {

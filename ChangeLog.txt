@@ -1,3 +1,7 @@
+0.3.3 
+
+cleaner recorder, add broadcast links, allow xp users to install it, device didn't change at all
+
 0.3.2 
 
  fix for 64 bit windows, fix button recording

@@ -23,9 +23,9 @@ as well or capture it or the like)
 
 NB that you'll need java JRE previously installed to use the included helper apps.
 
-== Troubleshooting/Contact ==
+== Troubleshooting/Contact/feature requests ==
 
-Basically, if you have a problem, ask!
+Basically, if you have a problem/feature request (ex: recording multiple audio at the same time, adding ability to strip silence, etc.), ask!
 
 rogerdpack@gmail.com or mailing list http://groups.google.com/group/roger-projects
 
@@ -53,7 +53,7 @@ Also note that if you turn down your system volume within windows, it will still
 or playing, as apparently it captures it at "normal volume" regardless of how high your speaker output is.
 Any feedback welcome, including feature requests like "support more audio channels than 2".
 
-If you want a smaller download you can just download the file source_code\Release\audio_sniffer.ax then run regsvr32 audio_sniffer.ax as an admin user.
+If you want a smaller download you can just download the file source_code\Release\audio_sniffer.ax then run regsvr32 audio_sniffer.ax on it as an admin user, or use the "just device" distro.
 
 
 = History/XP users/Alternatives =
