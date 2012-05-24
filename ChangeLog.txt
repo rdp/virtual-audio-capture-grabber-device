@@ -1,3 +1,6 @@
+
+can record to ac3/video now
+
 0.3.3 
 
 cleaner recorder, add broadcast links, allow xp users to install it, device didn't change at all
