@@ -41,12 +41,17 @@
 STDAPI AMovieSetupRegisterServer( CLSID   clsServer, LPCWSTR szDescription, LPCWSTR szFileName, LPCWSTR szThreadingModel = L"Both", LPCWSTR szServerType     = L"InprocServer32" );
 STDAPI AMovieSetupUnregisterServer( CLSID clsServer );
 
-
+#ifdef _WIN64
+// was {8E14549A-DB61-4309-AFA1-3578E927E933}
+// {8E14549B-DB61-4309-AFA1-3578E927E935} now...
+DEFINE_GUID(CLSID_VirtualCam,
+            0x8e146464, 0xdb61, 0x4309, 0xaf, 0xa1, 0x35, 0x78, 0xe9, 0x27, 0xe9, 0x35);
+#else
 // was {8E14549A-DB61-4309-AFA1-3578E927E933}
 // {8E14549B-DB61-4309-AFA1-3578E927E935} now...
 DEFINE_GUID(CLSID_VirtualCam,
             0x8e14549b, 0xdb61, 0x4309, 0xaf, 0xa1, 0x35, 0x78, 0xe9, 0x27, 0xe9, 0x35);
-
+#endif
 
 const AMOVIESETUP_MEDIATYPE AMSMediaTypesVCam = 
 { &MEDIATYPE_Audio      // clsMajorType

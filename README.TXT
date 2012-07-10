@@ -15,7 +15,7 @@ as input to any other program that can take directshow devices as an input.
 
 Example: VLC media player: media [menu] -> open capture device -> select capture audio device "virtual-audio-capturer"
 
-Example: ffmpeg (to save audio to file yo.mp3 from what is currently playing, requires 32 bit ffmpeg, 64 bit DLL available upon demand):
+Example: ffmpeg (to save audio to file yo.mp3 from what is currently playing):
 $ ffmpeg  -f dshow -i audio="virtual-audio-capturer" yo.mp3
 
 (also see https://github.com/rdp/screen-capture-recorder-program if you want to stream your desktop with audio
