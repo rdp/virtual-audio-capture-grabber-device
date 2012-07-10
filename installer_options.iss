@@ -1,9 +1,10 @@
 #define AppVer "0.3.4"
-; bundle 64 with 32 bit
+
 #define AppName "Virtual Audio Capture Grabber"
 
 [Run]
-; only need the runtime for the audio_sniffer, the rest uses java/ffmpeg [?]
+; only really need the runtime for the audio_sniffer, the rest uses java/ffmpeg...
+
 Filename: {app}\vendor\vcredist_x86.exe; Parameters: "/passive /Q:a /c:""msiexec /qb /i vcredist.msi"" "; StatusMsg: Installing 2010 RunTime...; MinVersion: 0,6.0.6000
 Filename: {app}\vendor\vcredist_x64.exe; Parameters: "/passive /Q:a /c:""msiexec /qb /i vcredist.msi"" "; StatusMsg: Installing 2010 64 bit RunTime...; MinVersion: 0,6.0.6000; Check: IsWin64
 Filename: regsvr32; WorkingDir: {app}; Parameters: /s audio_sniffer.dll; MinVersion: 0,6.0.6000
