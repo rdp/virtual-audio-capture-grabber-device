@@ -1,5 +1,7 @@
+0.3.4
 
 can record to ac3/video now
+includes the 64 bit device now, too.
 
 0.3.3 
 
