@@ -156,8 +156,8 @@ HRESULT CVCamStream::SetMediaType(const CMediaType *pmt)
 #define DECLARE_PTR(type, ptr, expr) type* ptr = (type*)(expr);
 
 HRESULT setupPwfex(WAVEFORMATEX *pwfex, AM_MEDIA_TYPE *pmt) {
-	    // a "normal" audio stream...
 	    // TODO match more than just htz...
+	    // a "normal" audio stream...
 		pwfex->wFormatTag = WAVE_FORMAT_PCM;
 		pwfex->cbSize = 0;                  // apparently should be zero if using WAVE_FORMAT_PCM http://msdn.microsoft.com/en-us/library/ff538799(VS.85).aspx
 		pwfex->nChannels = 2;               // 1 for mono, 2 for stereo..
@@ -196,25 +196,9 @@ HRESULT CVCamStream::GetMediaType(int iPosition, CMediaType *pmt)
         return VFW_S_NO_MORE_ITEMS;
 	}
 
-    // If iPosition equals zero then we always return the currently configured MediaType 
-	// except we only have one, so no use in having it as a default :)
-    /*if (iPosition == 0) {
-        *pmt = m_mt;
-        return S_OK;
-    }*/
-
     WAVEFORMATEX *pwfex = (WAVEFORMATEX *) pmt->AllocFormatBuffer(sizeof(WAVEFORMATEX));
 	
 	setupPwfex(pwfex, pmt);
-	/*pmt->SetType(&MEDIATYPE_Audio);
-	pmt->SetSubtype(&MEDIASUBTYPE_PCM);
-    pmt->SetFormatType(&FORMAT_WaveFormatEx);
-    pmt->SetTemporalCompression(FALSE);
-	// SetSampleSize: If value is zero, the media type uses variable sample sizes. Otherwise, the sample size is fixed at sz bytes.
-	pmt->SetSampleSize(pwfex->nBlockAlign); // see other comment that uses nBlockAlign
-	*/
-	
-
 	return S_OK;
 }
 
@@ -401,30 +385,11 @@ HRESULT STDMETHODCALLTYPE CVCamStream::GetStreamCaps(int iIndex, AM_MEDIA_TYPE *
 	AM_MEDIA_TYPE * pm = *ppMediaType;
 	
 	setupPwfex(pAudioFormat, pm);
-	/*
-	pAudioFormat->cbSize				= 0; // apparently should be zero if using WAVE_FORMAT_PCM http://msdn.microsoft.com/en-us/library/ff538799(VS.85).aspx
-	pAudioFormat->wFormatTag			= WAVE_FORMAT_PCM;// This is the wave format (needed for more than 2 channels)
-	pAudioFormat->nSamplesPerSec		= getHtzRate();
-	pAudioFormat->nChannels				= 2;	// 1 for mono, 2 for stereo..
-	pAudioFormat->wBitsPerSample		= 16;	// 16-bit sound
-	pAudioFormat->nBlockAlign			= 2*16/8;
-	pAudioFormat->nAvgBytesPerSec		= getHtzRate()*pAudioFormat->nBlockAlign; 
-	*/
-
-    /*pm->majortype = MEDIATYPE_Audio;
-    pm->subtype = MEDIASUBTYPE_PCM;
-    pm->formattype = FORMAT_WaveFormatEx;
-    pm->bTemporalCompression = FALSE;
-    pm->bFixedSizeSamples = TRUE;
-    pm->lSampleSize = pAudioFormat->nBlockAlign;
-    pm->cbFormat = sizeof(WAVEFORMATEX);
-	pm->pUnk = NULL;*/
 
 	AUDIO_STREAM_CONFIG_CAPS* pASCC = (AUDIO_STREAM_CONFIG_CAPS*) pSCC;
 	ZeroMemory(pSCC, sizeof(AUDIO_STREAM_CONFIG_CAPS)); 
 
 	// Set up audio capabilities [one type only, for now]
-	// LODO propagate these better, from our current type
 	pASCC->guid = MEDIATYPE_Audio;
 	pASCC->MaximumChannels = pAudioFormat->nChannels;
 	pASCC->MinimumChannels = pAudioFormat->nChannels;
