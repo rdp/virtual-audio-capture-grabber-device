@@ -1,1 +1,1 @@
-regsvr32  %~dp0\audio_sniffer.ax
+regsvr32  %~dp0\audio_sniffer.dll

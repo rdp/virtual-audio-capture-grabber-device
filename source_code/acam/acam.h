@@ -10,7 +10,6 @@
 #define ACAM_API __declspec(dllimport)
 #endif
 
-
 #include <streams.h>
 #include <initguid.h>
 #include <dllsetup.h>
@@ -65,7 +64,12 @@ private:
     CVCam(LPUNKNOWN lpunk, HRESULT *phr);
 };
 
-class CVCamStream : public CSourceStream, public IAMStreamConfig, public IKsPropertySet//, public IAMPushSource
+// child
+
+
+// // IPersistStreamInit, IPersistStream, ISpecifyPropertyPages, IPersistPropertyBag, IBaseFilter, IMediaFilter, IPersist, IAMovieSetup, IAMFilterMiscFlags, IToneSourceFilter, IDispatch
+
+class CVCamStream : public CSourceStream, public IAMStreamConfig, public IKsPropertySet, public IAMBufferNegotiation, public IAMFilterMiscFlags //IAMPushSource
 {
 public:
 
@@ -89,14 +93,14 @@ public:
     HRESULT STDMETHODCALLTYPE GetNumberOfCapabilities(int *piCount, int *piSize);
     HRESULT STDMETHODCALLTYPE GetStreamCaps(int iIndex, AM_MEDIA_TYPE **pmt, BYTE *pSCC);
 
-	// IAMPushSource [not implemented all the way yet]
-	/*HRESULT STDMETHODCALLTYPE GetLatency(REFERENCE_TIME *);
-	HRESULT STDMETHODCALLTYPE GetPushSourceFlags(ULONG *);
-	HRESULT STDMETHODCALLTYPE SetPushSourceFlags(ULONG);
+	// IAMPushSource [not implemented yet]
+	/*HRESULT STDMETHODCALLTYPE GetLatency(REFERENCE_TIME *in) {return S_OK;};
+	HRESULT STDMETHODCALLTYPE GetPushSourceFlags(ULONG *in){return S_OK;};
+	HRESULT STDMETHODCALLTYPE SetPushSourceFlags(ULONG) {return S_OK;};
 	HRESULT STDMETHODCALLTYPE SetStreamOffset(REFERENCE_TIME) { return E_FAIL; }
-	HRESULT STDMETHODCALLTYPE GetStreamOffset(REFERENCE_TIME *);
-	HRESULT STDMETHODCALLTYPE GetMaxStreamOffset(REFERENCE_TIME *);
-	HRESULT STDMETHODCALLTYPE SetMaxStreamOffset(REFERENCE_TIME);*/
+	HRESULT STDMETHODCALLTYPE GetStreamOffset(REFERENCE_TIME *) {return S_OK;};
+	HRESULT STDMETHODCALLTYPE GetMaxStreamOffset(REFERENCE_TIME *) {return S_OK;};
+	HRESULT STDMETHODCALLTYPE SetMaxStreamOffset(REFERENCE_TIME) {return S_OK;};*/
 
     //////////////////////////////////////////////////////////////////////////
     //  IKsPropertySet
@@ -123,6 +127,14 @@ public:
     CVCamStream(HRESULT *phr, CVCam *pParent, LPCWSTR pPinName);
     ~CVCamStream();
     CRefTime     m_rtPreviousSampleEndTime;
+
+
+	// IAMBufferNEgotiation -- never gets called...
+	HRESULT STDMETHODCALLTYPE SuggestAllocatorProperties( /* [in] */ const ALLOCATOR_PROPERTIES *pprop) {return NULL;/*TODO*/}
+    HRESULT STDMETHODCALLTYPE GetAllocatorProperties( ALLOCATOR_PROPERTIES *pprop) {return NULL;/*TODO*/}
+
+	// IAMFilterMiscFlags -- never gets called...
+	ULONG STDMETHODCALLTYPE GetMiscFlags() { return AM_FILTER_MISC_FLAGS_IS_SOURCE; }
 
 private:
     CVCam *m_pParent;

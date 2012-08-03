@@ -155,19 +155,19 @@ HRESULT CVCamStream::SetMediaType(const CMediaType *pmt)
 
 #define DECLARE_PTR(type, ptr, expr) type* ptr = (type*)(expr);
 
-HRESULT setupPwfex(WAVEFORMATEX *pwfex, CMediaType *pmt) {
-	    // NB this needs to "match" getScreenCaps
+HRESULT setupPwfex(WAVEFORMATEX *pwfex, AM_MEDIA_TYPE *pmt) {
 	    // a "normal" audio stream...
+	    // TODO match more than just htz...
 		pwfex->wFormatTag = WAVE_FORMAT_PCM;
-		pwfex->cbSize=0; // apparently should be zero if using WAVE_FORMAT_PCM http://msdn.microsoft.com/en-us/library/ff538799(VS.85).aspx
-		pwfex->nChannels = 2;
+		pwfex->cbSize = 0;                  // apparently should be zero if using WAVE_FORMAT_PCM http://msdn.microsoft.com/en-us/library/ff538799(VS.85).aspx
+		pwfex->nChannels = 2;               // 1 for mono, 2 for stereo..
 		pwfex->nSamplesPerSec = getHtzRate();
-		pwfex->wBitsPerSample = 16;
-		pwfex->nAvgBytesPerSec = pwfex->nSamplesPerSec * pwfex->nChannels * pwfex->wBitsPerSample / BITS_PER_BYTE; // it can't calculate this itself? huh?
-		pwfex->nBlockAlign = (WORD)((pwfex->wBitsPerSample * pwfex->nChannels) / BITS_PER_BYTE); // it can't calculate this itself?
-
+		pwfex->wBitsPerSample = 16;          // 16 bit sound
+		pwfex->nBlockAlign = (WORD)((pwfex->wBitsPerSample * pwfex->nChannels) / BITS_PER_BYTE);
+        pwfex->nAvgBytesPerSec = pwfex->nSamplesPerSec * pwfex->nBlockAlign; // it can't calculate this itself? huh?
+		
 		// copy this info into the pmt
-        return CreateAudioMediaType(pwfex, pmt, FALSE); // not ours...
+        return CreateAudioMediaType(pwfex, pmt, FALSE /* dont allocate more memory */); // not ours...
 }
 
 HRESULT CVCamStream::setAsNormal(CMediaType *pmt) {
@@ -205,14 +205,15 @@ HRESULT CVCamStream::GetMediaType(int iPosition, CMediaType *pmt)
 
     WAVEFORMATEX *pwfex = (WAVEFORMATEX *) pmt->AllocFormatBuffer(sizeof(WAVEFORMATEX));
 	
-	pmt->SetType(&MEDIATYPE_Audio);
+	setupPwfex(pwfex, pmt);
+	/*pmt->SetType(&MEDIATYPE_Audio);
 	pmt->SetSubtype(&MEDIASUBTYPE_PCM);
     pmt->SetFormatType(&FORMAT_WaveFormatEx);
     pmt->SetTemporalCompression(FALSE);
-	setupPwfex(pwfex, pmt);	
-
 	// SetSampleSize: If value is zero, the media type uses variable sample sizes. Otherwise, the sample size is fixed at sz bytes.
 	pmt->SetSampleSize(pwfex->nBlockAlign); // see other comment that uses nBlockAlign
+	*/
+	
 
 	return S_OK;
 }
@@ -395,47 +396,52 @@ HRESULT STDMETHODCALLTYPE CVCamStream::GetStreamCaps(int iIndex, AM_MEDIA_TYPE *
 
     DECLARE_PTR(WAVEFORMATEX, pAudioFormat, (*ppMediaType)->pbFormat);
 
-	pAudioFormat->cbSize				= 0;
-	pAudioFormat->wFormatTag			= WAVE_FORMAT_PCM;		// This is the wave format (needed for more than 2 channels)
-	pAudioFormat->nSamplesPerSec		= getHtzRate();
-	pAudioFormat->nChannels				= 2;		// 1 for mono, 2 for stereo, and 4 because the camera puts out dual stereo
-	pAudioFormat->wBitsPerSample		= 16;	// 16-bit sound
-	pAudioFormat->nBlockAlign			= 2*16/8;
-	pAudioFormat->nAvgBytesPerSec		= getHtzRate()*pAudioFormat->nBlockAlign; // TODO match our current audio settings [?]
+
 	
 	AM_MEDIA_TYPE * pm = *ppMediaType;
+	
+	setupPwfex(pAudioFormat, pm);
+	/*
+	pAudioFormat->cbSize				= 0; // apparently should be zero if using WAVE_FORMAT_PCM http://msdn.microsoft.com/en-us/library/ff538799(VS.85).aspx
+	pAudioFormat->wFormatTag			= WAVE_FORMAT_PCM;// This is the wave format (needed for more than 2 channels)
+	pAudioFormat->nSamplesPerSec		= getHtzRate();
+	pAudioFormat->nChannels				= 2;	// 1 for mono, 2 for stereo..
+	pAudioFormat->wBitsPerSample		= 16;	// 16-bit sound
+	pAudioFormat->nBlockAlign			= 2*16/8;
+	pAudioFormat->nAvgBytesPerSec		= getHtzRate()*pAudioFormat->nBlockAlign; 
+	*/
 
-    pm->majortype = MEDIATYPE_Audio;
+    /*pm->majortype = MEDIATYPE_Audio;
     pm->subtype = MEDIASUBTYPE_PCM;
     pm->formattype = FORMAT_WaveFormatEx;
     pm->bTemporalCompression = FALSE;
     pm->bFixedSizeSamples = TRUE;
-    pm->lSampleSize = pAudioFormat->nBlockAlign; // appears reasonable from http://github.com/tap/JamomaDSP/blob/2c80c487c6e560d959dd85e7d2bcca3a19ce9b26/src/os/win/DX/BaseClasses/mtype.cpp
+    pm->lSampleSize = pAudioFormat->nBlockAlign;
     pm->cbFormat = sizeof(WAVEFORMATEX);
-	pm->pUnk = NULL;
+	pm->pUnk = NULL;*/
 
 	AUDIO_STREAM_CONFIG_CAPS* pASCC = (AUDIO_STREAM_CONFIG_CAPS*) pSCC;
 	ZeroMemory(pSCC, sizeof(AUDIO_STREAM_CONFIG_CAPS)); 
 
 	// Set up audio capabilities [one type only, for now]
-	// LODO propagate these better, from our returned type
+	// LODO propagate these better, from our current type
 	pASCC->guid = MEDIATYPE_Audio;
-	pASCC->ChannelsGranularity = 1;
-	pASCC->MaximumChannels = 2;
-	pASCC->MinimumChannels = 2;
+	pASCC->MaximumChannels = pAudioFormat->nChannels;
+	pASCC->MinimumChannels = pAudioFormat->nChannels;
+	pASCC->ChannelsGranularity = 1; // doesn't matter
 	pASCC->MaximumSampleFrequency = getHtzRate();
 	pASCC->MinimumSampleFrequency = getHtzRate();
-	pASCC->BitsPerSampleGranularity = 16;
-	pASCC->MaximumBitsPerSample = 16;
-	pASCC->MinimumBitsPerSample = 16;
-	pASCC->SampleFrequencyGranularity = 11025;
+	pASCC->SampleFrequencyGranularity = 11025; // doesn't matter
+	pASCC->MaximumBitsPerSample = pAudioFormat->wBitsPerSample;
+	pASCC->MinimumBitsPerSample = pAudioFormat->wBitsPerSample;
+	pASCC->BitsPerSampleGranularity = 16; // doesn't matter
 
 	return S_OK;
 }
+
 //////////////////////////////////////////////////////////////////////////
 // IKsPropertySet
 //////////////////////////////////////////////////////////////////////////
-
 
 HRESULT CVCamStream::Set(REFGUID guidPropSet, DWORD dwID, void *pInstanceData, 
                         DWORD cbInstanceData, void *pPropData, DWORD cbPropData)

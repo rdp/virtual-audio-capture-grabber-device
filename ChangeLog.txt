@@ -1,6 +1,10 @@
+0.3.5
+
+bug fixes in recording
+
 0.3.4
 
-can record to ac3/video now
+can also record to ac3/video now
 includes the 64 bit device now, too.
 
 0.3.3 
