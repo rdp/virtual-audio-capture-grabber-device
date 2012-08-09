@@ -157,7 +157,6 @@ HRESULT CVCamStream::SetMediaType(const CMediaType *pmt)
 
 HRESULT setupPwfex(WAVEFORMATEX *pwfex, AM_MEDIA_TYPE *pmt) {
 	    // TODO match more than just htz...
-	    // a "normal" audio stream...
 		pwfex->wFormatTag = WAVE_FORMAT_PCM;
 		pwfex->cbSize = 0;                  // apparently should be zero if using WAVE_FORMAT_PCM http://msdn.microsoft.com/en-us/library/ff538799(VS.85).aspx
 		pwfex->nChannels = 2;               // 1 for mono, 2 for stereo..
@@ -167,7 +166,7 @@ HRESULT setupPwfex(WAVEFORMATEX *pwfex, AM_MEDIA_TYPE *pmt) {
         pwfex->nAvgBytesPerSec = pwfex->nSamplesPerSec * pwfex->nBlockAlign; // it can't calculate this itself? huh?
 		
 		// copy this info into the pmt
-        return CreateAudioMediaType(pwfex, pmt, FALSE /* dont allocate more memory */); // not ours...
+        return ::CreateAudioMediaType(pwfex, pmt, FALSE /* dont allocate more memory */);
 }
 
 HRESULT CVCamStream::setAsNormal(CMediaType *pmt) {
