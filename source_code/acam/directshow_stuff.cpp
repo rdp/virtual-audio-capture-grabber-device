@@ -156,7 +156,7 @@ HRESULT CVCamStream::SetMediaType(const CMediaType *pmt)
 #define DECLARE_PTR(type, ptr, expr) type* ptr = (type*)(expr);
 
 HRESULT setupPwfex(WAVEFORMATEX *pwfex, AM_MEDIA_TYPE *pmt) {
-	    // TODO match more than just htz...
+	    // TODO match more than just htz...maybe that's all we need? :)
 		pwfex->wFormatTag = WAVE_FORMAT_PCM;
 		pwfex->cbSize = 0;                  // apparently should be zero if using WAVE_FORMAT_PCM http://msdn.microsoft.com/en-us/library/ff538799(VS.85).aspx
 		pwfex->nChannels = 2;               // 1 for mono, 2 for stereo..
