@@ -71,7 +71,7 @@ int getHtzRate() {
 		assert(false);
     }
 
-    WAVEFORMATEX *pwfx; // hope this doesn't leak...
+    WAVEFORMATEX *pwfx;
 	hr = pAudioClient->GetMixFormat(&pwfx);
     if (FAILED(hr)) {
         ShowOutput("IAudioClient::GetMixFormat failed: hr = 0x%08x\n", hr);
@@ -83,7 +83,9 @@ int getHtzRate() {
     AvRevertMmThreadCharacteristics(hTask);
     pAudioClient->Release();
     m_pMMDevice->Release();
-	return pwfx->nSamplesPerSec;
+	int samples = pwfx->nSamplesPerSec;
+	CoTaskMemFree(pwfx); 
+	return samples;
 
 }
 
