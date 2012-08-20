@@ -46,7 +46,7 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
 	CRefTime sampleTimeUsed = (REFERENCE_TIME)(UNITS * pms->GetActualDataLength()) / 
                      (REFERENCE_TIME)pwfexCurrent->nAvgBytesPerSec;
     CRefTime rtStart;
-	if(true) { // bFirstPacket or true here...true seemed to help that one guy...
+	if(bFirstPacket) { // bFirstPacket or true here...true seemed to help that one guy...
       m_pParent->StreamTime(rtStart); // gets current graph ref time [now] as its "start", as normal "capture" devices would, just in case that's better...
 	  if(bFirstPacket)
 	    ShowOutput("retrieving a first packet");
@@ -62,6 +62,10 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
         // CRefTime cur_time;
 	    // m_pParent->StreamTime(cur_time);
 	    // rtStart = max(rtStart, cur_time);
+		// hopefully this avoids this message/error:
+		// [libmp3lame @ 00670aa0] Que input is backward in time
+        // Audio timestamp 329016 < 329026 invalid, cliping00:05:29.05 bitrate= 738.6kbits/s
+        // [libmp3lame @ 00670aa0] Que input is backward in time
 	}
 
 	// I once tried to change it to always have monotonicity of timestamps at this point, but it didn't fix any problems, and seems to do all right without it so maybe ok [?]

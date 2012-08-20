@@ -1,3 +1,12 @@
+0.3.6
+
+hopefully fix ffmpeg complaining like:
+
+[libmp3lame @ 00670aa0] Que input is backward in time
+Audio timestamp 329016 < 329026 invalid, cliping00:05:29.05 bitrate= 738.6kbits/s
+[libmp3lame @ 00670aa0] Que input is backward in time
+
+
 0.3.5
 
 bug fixes in recording
