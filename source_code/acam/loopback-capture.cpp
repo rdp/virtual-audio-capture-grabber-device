@@ -26,10 +26,11 @@ UINT32 pnFrames;
 
 CCritSec csMyLock;  // shared critical section. Starts not locked...
 
-int shouldStop = 0;
+int shouldStop = true;
 
 BYTE pBufLocal[1024*1024]; // 1MB is quite awhile I think...
-long pBufLocalSize = 1024*1024; // TODO needed?
+long pBufOriginalSize = 1024*1024;
+long pBufLocalSize = 1024*1024; // used for buffer size negotiation method.
 long pBufLocalCurrentEndLocation = 0;
 
 long expectedMaxBufferSize = 0;
@@ -92,6 +93,7 @@ int getHtzRate() {
 // we only call this once...per hit of the play button :)
 HRESULT LoopbackCaptureSetup()
 {
+	assert(shouldStop); // duplicate starts would be odd...
 	shouldStop = false; // allow graphs to restart, if they so desire...
 	pnFrames = 0;
 	bool bInt16 = true; // makes it actually work, for some reason...LODO
@@ -369,15 +371,7 @@ BYTE *captureData;
 
 
 HRESULT propagateBufferOnce();
-static DWORD WINAPI propagateBufferForever(LPVOID pv) {
-  while(!shouldStop) {
-    HRESULT hr = propagateBufferOnce();
-	if(FAILED(hr)) {
-	 return hr;
-	}
-  }
-  return S_OK;
-}
+
 
 extern CCritSec m_cSharedState;
 
@@ -531,7 +525,7 @@ HRESULT propagateBufferOnce() {
 		return hr;
     } // while !got anything && should continue loop
 
-	return E_UNEXPECTED;
+	return S_OK; // stop was called...
 
 }
 
@@ -581,4 +575,16 @@ void outputStats() {
 	wchar_t output[250];
 	wsprintf(output, L"total reads %d total blips %d total overflows %d", totalSuccessFullyread , totalBlips, totalOverflows);
 	set_config_string_setting(L"last_output", output);
+}
+
+// called via reflection :)
+static DWORD WINAPI propagateBufferForever(LPVOID pv) {
+  int a = 3;
+  while(!shouldStop) {
+    HRESULT hr = propagateBufferOnce();
+	if(FAILED(hr)) {
+	  return hr;
+	}
+  }
+  return S_OK;
 }

@@ -12,13 +12,15 @@ CCritSec m_cSharedState;
 HRESULT CVCamStream::FillBuffer(IMediaSample *pms) 
 {	
 	// I don't expect these...the parent controls this/us and doesn't call us when it is stopped I guess, so we should always be active...
-	assert(m_pParent->IsActive());
-	assert(!m_pParent->IsStopped());
+	ShowOutput("requested audio frame");
+	//assert(m_pParent->IsActive()); // one of these can cause freezing on "stop button" in FME
+	//assert(!m_pParent->IsStopped());
 
     CheckPointer(pms,E_POINTER);
     BYTE *pData;
     HRESULT hr = pms->GetPointer(&pData);
     if (FAILED(hr)) {
+		ShowOutput("fail 1");
 		assert(false);
         return hr;
     }
@@ -29,6 +31,7 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
 	if(FAILED(hr)) {
 		// this one can return false during shutdown, so it's actually ok to just return from here...
 		// assert(false);
+		ShowOutput("shutdown 1");
 		return hr;
 	}
 
@@ -36,7 +39,7 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
 
 	hr = pms->SetActualDataLength(totalWrote);
 	if(FAILED(hr)) {
-		assert(false);
+  	  	assert(false);
 		return hr;
 	}
 
@@ -46,10 +49,10 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
 	CRefTime sampleTimeUsed = (REFERENCE_TIME)(UNITS * pms->GetActualDataLength()) / 
                      (REFERENCE_TIME)pwfexCurrent->nAvgBytesPerSec;
     CRefTime rtStart;
-	if(bFirstPacket) { // bFirstPacket or true here...true seemed to help that one guy...
+	if(bFirstPacket) { // either have bFirstPacket or true here...true seemed to help that one guy...
       m_pParent->StreamTime(rtStart); // gets current graph ref time [now] as its "start", as normal "capture" devices would, just in case that's better...
 	  if(bFirstPacket)
-	    ShowOutput("retrieving a first packet");
+	    ShowOutput("got an audio first packet");
 	} else {
 		// since there hasn't been discontinuity, I think we should be safe to tell it
 		// that this packet starts where the previous packet ended off
@@ -115,7 +118,7 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
 		assert(false);
         return hr;
     }
-
+	ShowOutput("sent audio frame");
 	bFirstPacket = false;
 
     return NOERROR;

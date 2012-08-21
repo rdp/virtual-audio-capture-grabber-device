@@ -123,11 +123,13 @@ HRESULT STDMETHODCALLTYPE CVCamStream::SetMaxStreamOffset(REFERENCE_TIME) {
 
 HRESULT CVCamStream::QueryInterface(REFIID riid, void **ppv)
 {   
-    // Standard OLE stuff
+    // Standard OLE stuff...allow it to query for our interfaces that we implement...
     if(riid == _uuidof(IAMStreamConfig))
         *ppv = (IAMStreamConfig*)this;
     else if(riid == _uuidof(IKsPropertySet))
         *ppv = (IKsPropertySet*)this;
+	else if(riid == _uuidof(IAMBufferNegotiation))
+		 *ppv = (IAMBufferNegotiation*)this;
     else
         return CSourceStream::QueryInterface(riid, ppv);
 
@@ -152,8 +154,6 @@ HRESULT CVCamStream::SetMediaType(const CMediaType *pmt)
     HRESULT hr = CSourceStream::SetMediaType(pmt);
     return hr;
 }
-
-#define DECLARE_PTR(type, ptr, expr) type* ptr = (type*)(expr);
 
 HRESULT setupPwfex(WAVEFORMATEX *pwfex, AM_MEDIA_TYPE *pmt) {
 	    // TODO match more than just htz...maybe that's all we need? :)
@@ -208,7 +208,6 @@ HRESULT CVCamStream::CheckMediaType(const CMediaType *pMediaType)
     if(*pMediaType != m_mt) {
         return E_INVALIDARG;
 	}
-
     return S_OK;
 } // CheckMediaType
 
@@ -337,7 +336,14 @@ HRESULT CVCamStream::OnThreadCreate()
 HRESULT STDMETHODCALLTYPE CVCamStream::SetFormat(AM_MEDIA_TYPE *pmt)
 {
 	// this is them saying you "must" use this type from now on...unless pmt is NULL that "means" reset...LODO handle it someday...
-	assert(pmt);
+	if(!pmt) {
+	  return S_OK; // *sure* we reset..yeah...sure we did...
+	}
+	
+   if(CheckMediaType((CMediaType *) pmt) != S_OK) {
+	return E_FAIL; // just in case :P [FME...]
+   }
+	
 	m_mt = *pmt;
 
 	IPin* pin; 
@@ -378,8 +384,6 @@ HRESULT STDMETHODCALLTYPE CVCamStream::GetStreamCaps(int iIndex, AM_MEDIA_TYPE *
 	if (*ppMediaType == NULL) return E_OUTOFMEMORY;
 
     DECLARE_PTR(WAVEFORMATEX, pAudioFormat, (*ppMediaType)->pbFormat);
-
-
 	
 	AM_MEDIA_TYPE * pm = *ppMediaType;
 	
@@ -393,8 +397,8 @@ HRESULT STDMETHODCALLTYPE CVCamStream::GetStreamCaps(int iIndex, AM_MEDIA_TYPE *
 	pASCC->MaximumChannels = pAudioFormat->nChannels;
 	pASCC->MinimumChannels = pAudioFormat->nChannels;
 	pASCC->ChannelsGranularity = 1; // doesn't matter
-	pASCC->MaximumSampleFrequency = getHtzRate();
-	pASCC->MinimumSampleFrequency = getHtzRate();
+	pASCC->MaximumSampleFrequency = pAudioFormat->nSamplesPerSec;
+	pASCC->MinimumSampleFrequency = pAudioFormat->nSamplesPerSec;
 	pASCC->SampleFrequencyGranularity = 11025; // doesn't matter
 	pASCC->MaximumBitsPerSample = pAudioFormat->wBitsPerSample;
 	pASCC->MinimumBitsPerSample = pAudioFormat->wBitsPerSample;
@@ -446,3 +450,22 @@ HRESULT CVCamStream::QuerySupported(REFGUID guidPropSet, DWORD dwPropID, DWORD *
     return S_OK;
 }
 
+extern long pBufLocalSize;
+extern long pBufOriginalSize; 
+
+HRESULT STDMETHODCALLTYPE CVCamStream::SuggestAllocatorProperties( /* [in] */ const ALLOCATOR_PROPERTIES *pprop) {
+	// maybe we shouldn't even care though...I mean like seriously...only make it bigger never smaller?
+	
+	int requested = pprop->cbBuffer;
+	if(pprop->cBuffers > 0)
+		requested *= pprop->cBuffers;
+	requested += pprop->cbPrefix;
+	
+	if(requested <= pBufOriginalSize) {
+		pBufLocalSize = requested;
+		return S_OK;
+	} else {
+		return E_FAIL;
+	}
+}
+HRESULT STDMETHODCALLTYPE CVCamStream::GetAllocatorProperties( ALLOCATOR_PROPERTIES *pprop) {return NULL;}

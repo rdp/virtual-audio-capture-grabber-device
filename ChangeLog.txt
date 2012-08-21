@@ -1,3 +1,7 @@
+0.3.7
+
+make compatible with FMLE now [hopefully]
+
 0.3.6
 
 hopefully fix ffmpeg complaining like:

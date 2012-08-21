@@ -18,11 +18,7 @@
 #include "common.h"
 #include <assert.h>
 
-HRESULT LoopbackCaptureTakeFromBuffer(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNotNullThenJustSetTypeOnly, LONG* sizeWrote);
-
-#define BITS_PER_BYTE 8
-
-extern CCritSec m_cSharedState;
+//extern CCritSec m_cSharedState;
 
 // This class is exported from the acam.dll
 class ACAM_API Cacam {
@@ -129,9 +125,9 @@ public:
     CRefTime     m_rtPreviousSampleEndTime;
 
 
-	// IAMBufferNEgotiation -- never gets called...
-	HRESULT STDMETHODCALLTYPE SuggestAllocatorProperties( /* [in] */ const ALLOCATOR_PROPERTIES *pprop) {return NULL;/*TODO*/}
-    HRESULT STDMETHODCALLTYPE GetAllocatorProperties( ALLOCATOR_PROPERTIES *pprop) {return NULL;/*TODO*/}
+	// IAMBufferNegotiation -- never gets called...
+	HRESULT STDMETHODCALLTYPE SuggestAllocatorProperties( /* [in] */ const ALLOCATOR_PROPERTIES *pprop);
+    HRESULT STDMETHODCALLTYPE GetAllocatorProperties( ALLOCATOR_PROPERTIES *pprop);
 
 	// IAMFilterMiscFlags -- never gets called...
 	ULONG STDMETHODCALLTYPE GetMiscFlags() { return AM_FILTER_MISC_FLAGS_IS_SOURCE; }
