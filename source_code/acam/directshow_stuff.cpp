@@ -18,6 +18,9 @@
 
 #define DECLARE_PTR(type, ptr, expr) type* ptr = (type*)(expr);
 
+extern long expectedMaxBufferSize;
+extern long pBufOriginalSize; 
+
 //////////////////////////////////////////////////////////////////////////
 //  CVCam is the source filter which masquerades as a capture device
 //////////////////////////////////////////////////////////////////////////
@@ -41,6 +44,7 @@ CVCam::CVCam(LPUNKNOWN lpunk, HRESULT *phr) :
 }
 
 STDMETHODIMP CVCam::Run(REFERENCE_TIME tStart) {
+	ShowOutput("run called");
 	((CVCamStream*) m_paStreams[0])->m_rtPreviousSampleEndTime = 0;
 	return CSource::Run(tStart);
 }
@@ -217,8 +221,6 @@ HRESULT CVCamStream::CheckMediaType(const CMediaType *pMediaType)
 // maybe downstream needs a certain size?
 const int WaveBufferChunkSize = 16*1024;     
 
-void setExpectedMaxBufferSize(long toThis);
-
 // DecideBufferSize
 //
 // This will always be called after the format has been sucessfully
@@ -232,7 +234,8 @@ HRESULT CVCamStream::DecideBufferSize(IMemAllocator *pAlloc,
 
     WAVEFORMATEX *pwfexCurrent = (WAVEFORMATEX*)m_mt.Format();
 
-    int nBitsPerSample = pwfexCurrent->wBitsPerSample;
+
+    /*int nBitsPerSample = pwfexCurrent->wBitsPerSample;
     int nSamplesPerSec = pwfexCurrent->nSamplesPerSec;
     int nChannels = pwfexCurrent->nChannels;
 	
@@ -249,17 +252,18 @@ HRESULT CVCamStream::DecideBufferSize(IMemAllocator *pAlloc,
     if(pProperties->cBuffers < 1)
         pProperties->cBuffers = 1;
     
-
-	// try with 1024B of buffer, just for fun.
-	//pProperties->cbBuffer = 1024;
-	//pProperties->cBuffers = 1;
 	long maxBufferSize = pProperties->cbBuffer * pProperties->cBuffers;
-	setExpectedMaxBufferSize(maxBufferSize);
+	expectedMaxBufferSize = maxBufferSize;
+	*/
 
-    // Ask the allocator to reserve us the memory...
+	// just use our max size (or whatever they specified for us)
+	pProperties->cBuffers = 1;
+	pProperties->cbBuffer = expectedMaxBufferSize;
 
+    // Ask the allocator to reserve us this much memory...
+	
     ALLOCATOR_PROPERTIES Actual;
-    HRESULT hr = pAlloc->SetProperties(pProperties,&Actual);
+    HRESULT hr = pAlloc->SetProperties(pProperties, &Actual);
     if(FAILED(hr))
     {
         return hr;
@@ -450,13 +454,10 @@ HRESULT CVCamStream::QuerySupported(REFGUID guidPropSet, DWORD dwPropID, DWORD *
     return S_OK;
 }
 
-extern long pBufLocalSize;
-extern long pBufOriginalSize; 
 
 HRESULT STDMETHODCALLTYPE CVCamStream::SuggestAllocatorProperties( /* [in] */ const ALLOCATOR_PROPERTIES *pprop) {
 	// maybe we shouldn't even care though...I mean like seriously...why let them make it smaller <sigh>
 	// LODO test it both ways with FME, fast computer/slow computer does it make a difference?
-	
 	int requested = pprop->cbBuffer;
 	if(pprop->cBuffers > 0)
 	    requested *= pprop->cBuffers;
@@ -464,11 +465,11 @@ HRESULT STDMETHODCALLTYPE CVCamStream::SuggestAllocatorProperties( /* [in] */ co
 	    requested += pprop->cbPrefix;
 	
 	if(requested <= pBufOriginalSize) {
-		pBufLocalSize = requested;
-		return S_OK;
+ 		expectedMaxBufferSize = requested;
+		return S_OK; // they requested it? ok you got it! You're requesting possible problems! oh well! you requested it!
 	} else {
 		return E_FAIL;
 	}
 }
 
-HRESULT STDMETHODCALLTYPE CVCamStream::GetAllocatorProperties( ALLOCATOR_PROPERTIES *pprop) {return NULL;}
+HRESULT STDMETHODCALLTYPE CVCamStream::GetAllocatorProperties( ALLOCATOR_PROPERTIES *pprop) {return NULL;} // they never call this...

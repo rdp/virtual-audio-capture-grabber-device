@@ -1,8 +1,9 @@
 #include "stdafx.h"
 #include "acam.h"
 
-CCritSec m_cSharedState;
+CCritSec gSharedState;
 
+extern int totalBlips;
 //
 // FillBuffer
 //
@@ -34,7 +35,7 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
 		return hr;
 	}
 
-	CAutoLock cAutoLockShared(&m_cSharedState); // for the bFirstPacket boolean control, except there's probably still some odd race conditions er other...
+	CAutoLock cAutoLockShared(&gSharedState); // for the bFirstPacket boolean control, except there's probably still some odd race conditions er other...
 
 	hr = pms->SetActualDataLength(totalWrote);
 	if(FAILED(hr)) {
@@ -51,7 +52,7 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
 	if(bFirstPacket) { // either have bFirstPacket or true here...true seemed to help that one guy...
       m_pParent->StreamTime(rtStart); // gets current graph ref time [now] as its "start", as normal "capture" devices would, just in case that's better...
 	  if(bFirstPacket)
-	    ShowOutput("got an audio first packet");
+	    ShowOutput("got an audio first packet or discontinuity detected");
 	} else {
 		// since there hasn't been discontinuity, I think we should be safe to tell it
 		// that this packet starts where the previous packet ended off
@@ -112,14 +113,16 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
     }
     
 	// Set TRUE on every sample for PCM audio http://msdn.microsoft.com/en-us/library/windows/desktop/dd407021%28v=vs.85%29.aspx
-    pms->SetSyncPoint(TRUE);
+    hr = pms->SetSyncPoint(TRUE);
 	if (FAILED(hr)) {
 		assert(false);
         return hr;
     }
-	ShowOutput("sent audio frame");
-	bFirstPacket = false;
+	FILTER_STATE State;
+	m_pParent->GetState(0, &State);
+	ShowOutput("sent audio frame, %d blips, state %d", totalBlips, State);
 
-    return NOERROR;
+	bFirstPacket = false;
+    return S_OK;
 
 } // end FillBuffer

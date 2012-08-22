@@ -49,7 +49,7 @@ public:
     //  IMediaFilter [added]
     //////////////////////////////////////////////////////////////////////////
     STDMETHODIMP Run(REFERENCE_TIME tStart);
-	STDMETHODIMP GetState(DWORD dw, FILTER_STATE *pState);
+    STDMETHODIMP GetState(DWORD dw, FILTER_STATE *pState);
 
 	//protected:
 

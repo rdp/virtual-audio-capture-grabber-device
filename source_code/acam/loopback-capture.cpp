@@ -30,14 +30,10 @@ int shouldStop = true;
 
 BYTE pBufLocal[1024*1024]; // 1MB is quite awhile I think...
 long pBufOriginalSize = 1024*1024;
-long pBufLocalSize = 1024*1024; // used for buffer size negotiation method.
+//long pBufLocalSize = 1024*1024; // used for buffer size negotiation method, use expectedmaxbuffersize instead
 long pBufLocalCurrentEndLocation = 0;
 
-long expectedMaxBufferSize = 0;
-
-void setExpectedMaxBufferSize(long toThis) {
-  expectedMaxBufferSize = toThis;
-}
+long expectedMaxBufferSize = 1024*1024; // TODO make non-global
 
 HANDLE m_hThread;
 
@@ -106,7 +102,7 @@ HRESULT LoopbackCaptureSetup()
 
 	// tell it to not overflow one buffer's worth <sigh> not sure if this is right or not, and thus we don't "cache" or "buffer" more than that much currently...
 	// but a buffer size is a buffer size...hmm...as long as we keep it small though...
-	assert(expectedMaxBufferSize <= pBufLocalSize);
+	assert(expectedMaxBufferSize <= pBufOriginalSize);
     // activate an (the default, for us, since we want loopback) IAudioClient
     hr = m_pMMDevice->Activate(
         __uuidof(IAudioClient),
@@ -372,8 +368,7 @@ BYTE *captureData;
 
 HRESULT propagateBufferOnce();
 
-
-extern CCritSec m_cSharedState;
+extern CCritSec gSharedState;
 
 int totalSuccessFullyread = 0;
 int totalBlips = 0;
@@ -443,10 +438,10 @@ HRESULT propagateBufferOnce() {
         }
 
 		{
-  		  CAutoLock cAutoLockShared(&m_cSharedState);
+  		  CAutoLock cAutoLockShared(&gSharedState);
 
 			if( dwFlags == 0 ) {
-			  // the good case
+			  // the good case, got audio packet
 			  // we'll let fillbuffer set bFirstPacket = false; since it uses it to know if the next packet should restart, etc.
 			} else if (bFirstPacket && AUDCLNT_BUFFERFLAGS_DATA_DISCONTINUITY == dwFlags) {
 				ShowOutput("Probably spurious glitch reported on first packet, or two discontinuity errors occurred before it read from the cached buffer\n");
@@ -579,7 +574,6 @@ void outputStats() {
 
 // called via reflection :)
 static DWORD WINAPI propagateBufferForever(LPVOID pv) {
-  int a = 3;
   while(!shouldStop) {
     HRESULT hr = propagateBufferOnce();
 	if(FAILED(hr)) {
