@@ -238,7 +238,7 @@ HRESULT LoopbackCaptureSetup()
 	
 //IAudioClient *pAudioClient = NULL;
 //IAudioCaptureClient *pCaptureClient = NULL;
-	/*
+	
 IMMDeviceEnumerator *pEnumerator = NULL;
 IMMDevice *pDevice = NULL;
 
@@ -299,8 +299,6 @@ BYTE *captureData;
     // create a new IAudioClient
     hr = pDevice->Activate(IID_IAudioClient, CLSCTX_ALL, NULL, (void**)&pAudioClient);
     EXIT_ON_ERROR(hr)
-	*/
-
 
     // -============================ now the sniffing code initialization stuff, direct from mauritius... ===================================
 
