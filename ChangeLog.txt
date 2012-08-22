@@ -1,6 +1,6 @@
 0.3.7
 
-make compatible with FMLE now [hopefully]
+make compatible with FMLE now [hopefully], minor cleanups, but FMLE still "freezes" a lot I'm not sure why.
 
 0.3.6
 

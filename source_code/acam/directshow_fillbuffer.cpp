@@ -120,6 +120,7 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
     }
 	FILTER_STATE State;
 	m_pParent->GetState(0, &State);
+	
 	ShowOutput("sent audio frame, %d blips, state %d", totalBlips, State);
 
 	bFirstPacket = false;
