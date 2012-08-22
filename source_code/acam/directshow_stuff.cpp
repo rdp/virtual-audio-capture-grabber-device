@@ -40,7 +40,7 @@ CVCam::CVCam(LPUNKNOWN lpunk, HRESULT *phr) :
     ASSERT(phr);
 	//m_pClock is null at this point...
     m_paStreams = (CSourceStream **) new CVCamStream*[1];
-    m_paStreams[0] = new CVCamStream(phr, this, L"Virtual cam5");
+    m_paStreams[0] = new CVCamStream(phr, this, L"Capture Pin");
 }
 
 STDMETHODIMP CVCam::Run(REFERENCE_TIME tStart) {
@@ -163,7 +163,7 @@ HRESULT setupPwfex(WAVEFORMATEX *pwfex, AM_MEDIA_TYPE *pmt) {
 	    // TODO match more than just htz...maybe that's all we need? :)
 		pwfex->wFormatTag = WAVE_FORMAT_PCM;
 		pwfex->cbSize = 0;                  // apparently should be zero if using WAVE_FORMAT_PCM http://msdn.microsoft.com/en-us/library/ff538799(VS.85).aspx
-		pwfex->nChannels = 2;               // 1 for mono, 2 for stereo..
+		pwfex->nChannels = getChannels();               // 1 for mono, 2 for stereo..
 		pwfex->nSamplesPerSec = getHtzRate();
 		pwfex->wBitsPerSample = 16;          // 16 bit sound
 		pwfex->nBlockAlign = (WORD)((pwfex->wBitsPerSample * pwfex->nChannels) / BITS_PER_BYTE);

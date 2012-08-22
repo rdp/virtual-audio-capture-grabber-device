@@ -1,0 +1,3 @@
+C:\Program Files (x86)\Adobe\Flash Media Live Encoder 3.2\FlashMediaLiveEncoder.exe
+C:\Program Files (x86)\VideoLAN\VLC\vlc.exe
+dshow://  :dshow-vdev=none :dshow-adev="virtual-audio-capturer"  :dshow-caching=50

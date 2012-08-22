@@ -50,15 +50,20 @@ const IID IID_IMMDeviceEnumerator = __uuidof(IMMDeviceEnumerator);
 const IID IID_IAudioClient = __uuidof(IAudioClient);
 const IID IID_IAudioRenderClient = __uuidof(IAudioRenderClient);
 
+void propagateWithRawCurrentFormat(WAVEFORMATEX *toThis) {
+	WAVEFORMATEX *pwfx;
+	IMMDevice *pMMDevice;
+	IAudioClient *pAudioClient;
+    HANDLE hTask;
+    DWORD nTaskIndex = 0;
+    hTask = AvSetMmThreadCharacteristics(L"Capture", &nTaskIndex);
 
-int getHtzRate() {
-    HRESULT hr;
-    hr = get_default_device(&m_pMMDevice); // so it can re-place our pointer...
+    HRESULT hr = get_default_device(&pMMDevice);
     if (FAILED(hr)) {
-        return hr;
+        assert(false);
     }
 	// activate an (the default, for us, since we want loopback) IAudioClient
-    hr = m_pMMDevice->Activate(
+    hr = pMMDevice->Activate(
         __uuidof(IAudioClient),
         CLSCTX_ALL, NULL,
         (void**)&pAudioClient
@@ -68,7 +73,6 @@ int getHtzRate() {
 		assert(false);
     }
 
-    WAVEFORMATEX *pwfx;
 	hr = pAudioClient->GetMixFormat(&pwfx);
     if (FAILED(hr)) {
         ShowOutput("IAudioClient::GetMixFormat failed: hr = 0x%08x\n", hr);
@@ -79,11 +83,21 @@ int getHtzRate() {
 	pAudioClient->Stop();
     AvRevertMmThreadCharacteristics(hTask);
     pAudioClient->Release();
-    m_pMMDevice->Release();
-	int samples = pwfx->nSamplesPerSec;
+    pMMDevice->Release();
+	memcpy(toThis, pwfx, sizeof(WAVEFORMATEX));
 	CoTaskMemFree(pwfx); 
-	return samples;
+}
 
+int getHtzRate() {
+	WAVEFORMATEX format;
+	propagateWithRawCurrentFormat(&format);
+	return format.nSamplesPerSec;
+}
+
+int getChannels() {
+	WAVEFORMATEX format;
+	propagateWithRawCurrentFormat(&format);
+	return format.nChannels;
 }
 
 // we only call this once...per hit of the play button :)
@@ -125,7 +139,7 @@ HRESULT LoopbackCaptureSetup()
 
     // get the default device format (incoming...)
     WAVEFORMATEX *pwfx; // incoming wave...
-	// apparently propogated only by GetMixFormat...
+	// apparently propogated by GetMixFormat...
     hr = pAudioClient->GetMixFormat(&pwfx);
     if (FAILED(hr)) {
         ShowOutput("IAudioClient::GetMixFormat failed: hr = 0x%08x\n", hr);
@@ -224,6 +238,7 @@ HRESULT LoopbackCaptureSetup()
 	
 //IAudioClient *pAudioClient = NULL;
 //IAudioCaptureClient *pCaptureClient = NULL;
+	/*
 IMMDeviceEnumerator *pEnumerator = NULL;
 IMMDevice *pDevice = NULL;
 
@@ -284,6 +299,7 @@ BYTE *captureData;
     // create a new IAudioClient
     hr = pDevice->Activate(IID_IAudioClient, CLSCTX_ALL, NULL, (void**)&pAudioClient);
     EXIT_ON_ERROR(hr)
+	*/
 
 
     // -============================ now the sniffing code initialization stuff, direct from mauritius... ===================================
@@ -320,6 +336,7 @@ BYTE *captureData;
     
     // register with MMCSS
     DWORD nTaskIndex = 0;
+
     hTask = AvSetMmThreadCharacteristics(L"Capture", &nTaskIndex);
     if (NULL == hTask) {
         DWORD dwErr = GetLastError();
@@ -401,7 +418,8 @@ HRESULT propagateBufferOnce() {
 			if((current_time - start_time > millis_to_fill)) {
 				// I don't think we ever get to here anymore...thankfully, since it's mostly broken code probably, anyway
 				if(!gotAnyAtAll) {
-				  assert(false); // want to know if this ever happens...
+				  // We get here [?]
+				  assert(false); // want to know if this ever happens...it never should since we are using silence...
 				}
 			} else {
 			  Sleep(1); // doesn't seem to hurt cpu--"sleep x ms"
