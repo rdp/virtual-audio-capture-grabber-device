@@ -454,12 +454,14 @@ extern long pBufLocalSize;
 extern long pBufOriginalSize; 
 
 HRESULT STDMETHODCALLTYPE CVCamStream::SuggestAllocatorProperties( /* [in] */ const ALLOCATOR_PROPERTIES *pprop) {
-	// maybe we shouldn't even care though...I mean like seriously...only make it bigger never smaller?
+	// maybe we shouldn't even care though...I mean like seriously...why let them make it smaller <sigh>
+	// LODO test it both ways with FME, fast computer/slow computer does it make a difference?
 	
 	int requested = pprop->cbBuffer;
 	if(pprop->cBuffers > 0)
-		requested *= pprop->cBuffers;
-	requested += pprop->cbPrefix;
+	    requested *= pprop->cBuffers;
+	if(pprop->cbPrefix > 0)
+	    requested += pprop->cbPrefix;
 	
 	if(requested <= pBufOriginalSize) {
 		pBufLocalSize = requested;
@@ -468,4 +470,5 @@ HRESULT STDMETHODCALLTYPE CVCamStream::SuggestAllocatorProperties( /* [in] */ co
 		return E_FAIL;
 	}
 }
+
 HRESULT STDMETHODCALLTYPE CVCamStream::GetAllocatorProperties( ALLOCATOR_PROPERTIES *pprop) {return NULL;}

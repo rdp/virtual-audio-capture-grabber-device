@@ -1,7 +1,6 @@
 #include "stdafx.h"
 #include "acam.h"
 
-
 CCritSec m_cSharedState;
 
 //
