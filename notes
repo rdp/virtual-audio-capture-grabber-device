@@ -1,4 +1,12 @@
 notes:
+
+= 5.1 =
+
+with "gx" enabled, I could still capture 5.1 when playing a file through WMP (and it could play in 5.1).
+with "gx" disabled, SDL_Audio couldn't create a 5.1 output
+with "right click and test" from control panel, with or without gx enabled, could capture.
+Maybe it's an openSDL bug? :)
+should still report it to ASUS though...in 5.1 with GX enabled, it does not capture wave's played by ffplay (even stereo).
  
 = the need for "true" =
  
