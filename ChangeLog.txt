@@ -1,3 +1,7 @@
+0.3.8
+
+5.1 support now. If you have an ASUS Xonar card you may need to "disable gx" (the little gx green-light-button in the xonar control dock).
+
 0.3.7
 
 make compatible with FMLE now [hopefully], minor cleanups, but FMLE still "freezes" a lot I'm not sure why.
