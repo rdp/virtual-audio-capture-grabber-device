@@ -254,7 +254,7 @@ BYTE *captureData;
            (void**)&pEnumerator);
     EXIT_ON_ERROR(hr)
 
-    hr = pEnumerator->GetDefaultAudioEndpoint(eRender, eConsole, &pDevice);
+    hr = get_default_device(&pDevice);
     EXIT_ON_ERROR(hr)
 
     hr = pDevice->Activate(IID_IAudioClient, CLSCTX_ALL, NULL, (void**)&pAudioClient);
