@@ -140,7 +140,7 @@ HRESULT LoopbackCaptureSetup()
     // get the default device format (incoming...)
     WAVEFORMATEX *pwfx; // incoming wave...
 	// apparently propogated by GetMixFormat...
-    hr = pAudioClient->GetMixFormat(&pwfx);
+    hr = pAudioClient->GetMixFormat(&pwfx); // we free pwfx
     if (FAILED(hr)) {
         ShowOutput("IAudioClient::GetMixFormat failed: hr = 0x%08x\n", hr);
         CoTaskMemFree(pwfx);
@@ -161,7 +161,7 @@ HRESULT LoopbackCaptureSetup()
                 pwfx->nAvgBytesPerSec = pwfx->nBlockAlign * pwfx->nSamplesPerSec;
                 break;
 
-            case WAVE_FORMAT_EXTENSIBLE:
+            case WAVE_FORMAT_EXTENSIBLE: // 65534
                 {
                     // naked scope for case-local variable
                     PWAVEFORMATEXTENSIBLE pEx = reinterpret_cast<PWAVEFORMATEXTENSIBLE>(pwfx);
@@ -324,8 +324,9 @@ BYTE *captureData;
     // activate an IAudioCaptureClient
     hr = pAudioClient->GetService(
         __uuidof(IAudioCaptureClient),
-        (void**)&pAudioCaptureClient // CARE INSTANTIATION
+        (void**)&pAudioCaptureClient
     );
+
     if (FAILED(hr)) {
         ShowOutput("IAudioClient::GetService(IAudioCaptureClient) failed: hr 0x%08x\n", hr);
         pAudioClient->Release();
@@ -370,9 +371,9 @@ BYTE *captureData;
         return HRESULT_FROM_WIN32(dwErr);
     } else {
 		// we...shouldn't need this...maybe?
-		// seems to make no difference...
+		// seems to make no difference anyway, and probably won't hurt...
 		hr = SetThreadPriority(m_hThread, THREAD_PRIORITY_TIME_CRITICAL);
-        if (FAILED(hr)) { // of course we always want to be a high prio thread, right? [we don't use much cpu...]
+        if (FAILED(hr)) {
 		  return hr;
   	    }
 	}
