@@ -170,7 +170,9 @@ HRESULT setupPwfex(WAVEFORMATEX *pwfex, AM_MEDIA_TYPE *pmt) {
 	pwfex->nAvgBytesPerSec = pwfex->nSamplesPerSec * pwfex->nBlockAlign; // it can't calculate this itself? huh?
 		
 	// copy this info into the pmt
-	return ::CreateAudioMediaType(pwfex, pmt, FALSE /* dont allocate more memory */);
+
+	HRESULT hr = ::CreateAudioMediaType(pwfex, pmt, FALSE /* dont allocate more memory */);
+	return hr;
 }
 
 HRESULT CVCamStream::setAsNormal(CMediaType *pmt) {
