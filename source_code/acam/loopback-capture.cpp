@@ -94,6 +94,12 @@ int getHtzRate() {
 	return format.nSamplesPerSec;
 }
 
+int getBitsPerSample() {
+	WAVEFORMATEX format;
+	propagateWithRawCurrentFormat(&format);
+	return format.wBitsPerSample;
+}
+
 int getChannels() {
 	WAVEFORMATEX format;
 	propagateWithRawCurrentFormat(&format);
@@ -106,7 +112,7 @@ HRESULT LoopbackCaptureSetup()
 	assert(shouldStop); // duplicate starts would be odd...
 	shouldStop = false; // allow graphs to restart, if they so desire...
 	pnFrames = 0;
-	bool bInt16 = true; // makes it actually work, for some reason...LODO
+	bool bInt16 = true; // makes it actually work, for some reason...my guess is 
 	
     HRESULT hr;
     hr = get_default_device(&m_pMMDevice); // so it can re-place our pointer...
@@ -149,12 +155,12 @@ HRESULT LoopbackCaptureSetup()
     }
 
     if (true /*bInt16*/) {
-        // coerce int-16 wave format
+        // coerce int-XX wave format (like int-16 or int-32)
         // can do this in-place since we're not changing the size of the format
         // also, the engine will auto-convert from float to int for us
         switch (pwfx->wFormatTag) {
             case WAVE_FORMAT_IEEE_FLOAT:
-				assert(false);// we never get here...I hope...
+				assert(false);// we never get here...I never have anyway...my guess is windows vista+ by default just uses WAVE_FORMAT_EXTENSIBLE
                 pwfx->wFormatTag = WAVE_FORMAT_PCM;
                 pwfx->wBitsPerSample = 16;
                 pwfx->nBlockAlign = pwfx->nChannels * pwfx->wBitsPerSample / 8;
@@ -168,16 +174,12 @@ HRESULT LoopbackCaptureSetup()
                     if (IsEqualGUID(KSDATAFORMAT_SUBTYPE_IEEE_FLOAT, pEx->SubFormat)) {
 						// WE GET HERE!
                         pEx->SubFormat = KSDATAFORMAT_SUBTYPE_PCM;
-                        pEx->Samples.wValidBitsPerSample = 16;
-                        pwfx->wBitsPerSample = 16;
+						// convert it to PCM, but let it keep as many bits of precision as it has initially...though it always seems to be 32
+                        //pwfx->wBitsPerSample = 16;
+						pEx->Samples.wValidBitsPerSample = pwfx->wBitsPerSample;
                         pwfx->nBlockAlign = pwfx->nChannels * pwfx->wBitsPerSample / 8;
                         pwfx->nAvgBytesPerSec = pwfx->nBlockAlign * pwfx->nSamplesPerSec;
-						/* scawah lodo...
-						if(ifNotNullThenJustSetTypeOnly) {
-							PWAVEFORMATEXTENSIBLE pEx2 = reinterpret_cast<PWAVEFORMATEXTENSIBLE>(ifNotNullThenJustSetTypeOnly);
-							pEx2->SubFormat = pEx->SubFormat;
-							pEx2->Samples.wValidBitsPerSample = pEx->Samples.wValidBitsPerSample;
-						} */
+						// see also setupPwfex method
                     } else {
                         ShowOutput("Don't know how to coerce mix format to int-16\n");
                         CoTaskMemFree(pwfx);
@@ -194,38 +196,6 @@ HRESULT LoopbackCaptureSetup()
                 return E_UNEXPECTED;
         }
     }
-	/* scawah setting stream types up to match...didn't seem to work well...
-
-	if(ifNotNullThenJustSetTypeOnly) {
-		// pwfx is set at this point...
-		WAVEFORMATEX* pwfex = ifNotNullThenJustSetTypeOnly;
-		// copy them all out as the possible format...hmm...
-
-
-                pwfx->wFormatTag = WAVE_FORMAT_PCM;
-                pwfx->wBitsPerSample = 16;
-                pwfx->nBlockAlign = pwfx->nChannels * pwfx->wBitsPerSample / 8;
-                pwfx->nAvgBytesPerSec = pwfx->nBlockAlign * pwfx->nSamplesPerSec;
-
-
-		pwfex->wFormatTag = pwfx->wFormatTag;
-		pwfex->nChannels = pwfx->nChannels;
-        pwfex->nSamplesPerSec = pwfx->nSamplesPerSec;
-        pwfex->wBitsPerSample = pwfx->wBitsPerSample;
-        pwfex->nBlockAlign = pwfx->nBlockAlign;
-        pwfex->nAvgBytesPerSec = pwfx->nAvgBytesPerSec;
-        pwfex->cbSize = pwfx->cbSize;
-		//FILE *fp = fopen("/normal2", "w"); // fails on me? maybe juts a VLC thing...
-		//fShowOutput(fp, "hello world %d %d %d %d %d %d %d", pwfex->wFormatTag, pwfex->nChannels, 
-		//	pwfex->nSamplesPerSec, pwfex->wBitsPerSample, pwfex->nBlockAlign, pwfex->nAvgBytesPerSec, pwfex->cbSize );
-		//fclose(fp);
-		// cleanup
-		// I might be leaking here...
-		CoTaskMemFree(pwfx);
-        pAudioClient->Release();
-        //m_pMMDevice->Release();
-		return hr;
-	}*/
 
     MMCKINFO ckRIFF = {0};
     MMCKINFO ckData = {0};
@@ -233,7 +203,7 @@ HRESULT LoopbackCaptureSetup()
     nBlockAlign = pwfx->nBlockAlign;
     
 
-// avoid stuttering on close
+// avoid stuttering on close when using loopback
 // http://social.msdn.microsoft.com/forums/en-US/windowspro-audiodevelopment/thread/c7ba0a04-46ce-43ff-ad15-ce8932c00171/ 
 	
 //IAudioClient *pAudioClient = NULL;
