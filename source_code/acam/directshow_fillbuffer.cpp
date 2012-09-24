@@ -40,7 +40,7 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
 	hr = pms->SetActualDataLength(totalWrote);
 	if(FAILED(hr)) {
   	  	assert(false);
-		return hr;
+		//return hr;
 	}
 
     // Now set the sample's start and end time stamps...
@@ -78,7 +78,7 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
     hr = pms->SetTime((REFERENCE_TIME*) &rtStart, (REFERENCE_TIME*) &m_rtPreviousSampleEndTime);
 	if (FAILED(hr)) {
 		assert(false);
-        return hr;
+        //return hr;
     }
 	// if we do SetTime(NULL, NULL) here then VLC can "play" it with directshows buffers of size 0ms.
 	// however, then VLC cannot then stream it at all.  So we leave it set to some time, and just require you to have VLC buffers of at least 40 or 50 ms
@@ -90,26 +90,26 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
 
 	if (FAILED(hr)) {
 		assert(false);
-        return hr;
+        //return hr;
     }
 
     // Set the sample's properties.
     hr = pms->SetPreroll(FALSE); // tell it that this isn't preroll, so to actually use it...I think.
     if (FAILED(hr)) {
 		assert(false);
-        return hr;
+        //return hr;
     }
 
     hr = pms->SetMediaType(NULL);
     if (FAILED(hr)) {
 		assert(false);
-        return hr;
+        //return hr;
     }
    
     hr = pms->SetDiscontinuity(bFirstPacket); // true for the first
     if (FAILED(hr)) {
 		assert(false);
-        return hr;
+        //return hr;
     }
     
 	// Set TRUE on every sample for PCM audio http://msdn.microsoft.com/en-us/library/windows/desktop/dd407021%28v=vs.85%29.aspx
