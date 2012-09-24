@@ -48,6 +48,8 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
 	WAVEFORMATEX* pwfexCurrent = (WAVEFORMATEX*)m_mt.Format();
 	CRefTime sampleTimeUsed = (REFERENCE_TIME)(UNITS * pms->GetActualDataLength()) / 
                      (REFERENCE_TIME)pwfexCurrent->nAvgBytesPerSec;
+    CRefTime currentGraphTime;
+	m_pParent->StreamTime(currentGraphTime);
     CRefTime rtStart;
 	if(bFirstPacket) { // either have bFirstPacket or true here...true seemed to help that one guy...
       m_pParent->StreamTime(rtStart); // gets current graph ref time [now] as its "start", as normal "capture" devices would, just in case that's better...
@@ -70,6 +72,7 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
         // Audio timestamp 329016 < 329026 invalid, cliping00:05:29.05 bitrate= 738.6kbits/s
         // [libmp3lame @ 00670aa0] Que input is backward in time
 	}
+	ShowOutput("current delta is %ld", rtStart - currentGraphTime);
 
 	// I once tried to change it to always have monotonicity of timestamps at this point, but it didn't fix any problems, and seems to do all right without it so maybe ok [?]
     m_rtPreviousSampleEndTime = rtStart + sampleTimeUsed;
