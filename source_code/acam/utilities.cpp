@@ -31,7 +31,7 @@ HRESULT set_config_string_setting(LPCTSTR szValueName, wchar_t *szToThis ) {
     LPDWORD lpdwDisp = &dwDisp;
 
     i = RegCreateKeyEx(HKEY_CURRENT_USER,
-       L"SOFTWARE\\virtual_audio_capture", 0L, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hKey, lpdwDisp); // fails in flash player...
+       L"SOFTWARE\\virtual_audio_capture", 0L, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS | KEY_WOW64_32KEY, NULL, &hKey, lpdwDisp); // might fail in flash player...?
 
     if (i == ERROR_SUCCESS)
     {

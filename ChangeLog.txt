@@ -1,3 +1,11 @@
+0.3.9
+
+Accomodate for cmd.exe's redirect failures better (I hope).  I.e. let the program start.
+
+Try to write debug outputs to a consistent place now.
+
+TODO build 64 bit...
+
 0.3.8
 
 5.1 support now. If you have an ASUS Xonar card you may need to "disable gx" (the little gx green-light-button in the xonar control dock).

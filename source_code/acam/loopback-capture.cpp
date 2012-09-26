@@ -555,7 +555,7 @@ void loopBackRelease() {
 
 void outputStats() {
 	wchar_t output[250];
-	wsprintf(output, L"total reads %d total blips %d total overflows %d", totalSuccessFullyread , totalBlips, totalOverflows);
+	wsprintf(output, L"total reads %d total discontinuity blips %d,  total overflows %d", totalSuccessFullyread , totalBlips - 1, totalOverflows);
 	set_config_string_setting(L"last_output", output);
 }
 
