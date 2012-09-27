@@ -1,6 +1,5 @@
 == actually do==
   a "real" kernel level receive from driver
-  copy broadcaster here I guess, start menu
 
   new name?
     new web page/real web page
@@ -8,11 +7,11 @@
 == maybe ==
 
 
-== meh ==
+== meh/never ==
 
-figure out pauses in FME when clicking "stop"...huh?
+figure out/debug pauses in FME when clicking "stop"...huh?
 
-faster script start speed?
+faster script startup speeds?
 
 One feature I had thought of would be a "strip trailing silence" option or the like.  I know if I were recording things I might like it :)
 Another option that might be useful/interesting might be to record/merge several audio input streams at a time.  This might be useful for recording skype calls so you can get the microphone as well as the "audio out".

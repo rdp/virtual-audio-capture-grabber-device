@@ -4,7 +4,7 @@ Accomodate for cmd.exe's redirect failures better (I hope).  I.e. let the progra
 
 Try to write debug outputs to a consistent place now.
 
-TODO build 64 bit...
+Allow for spaces in dshow devices.
 
 0.3.8
 
