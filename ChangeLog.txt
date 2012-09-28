@@ -1,3 +1,7 @@
+0.3.10
+
+actually end ffmpeg's now
+
 0.3.9
 
 Accomodate for cmd.exe's redirect failures better (I hope).  I.e. let the program start.

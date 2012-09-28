@@ -1,4 +1,4 @@
-#define AppVer "0.3.9"
+#define AppVer "0.3.10"
 
 #define AppName "Virtual Audio Capture Grabber"
 
