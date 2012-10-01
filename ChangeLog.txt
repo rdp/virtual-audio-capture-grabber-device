@@ -1,3 +1,7 @@
+0.3.11
+
+actually work with ffmpeg
+
 0.3.10
 
 actually end ffmpeg's now
