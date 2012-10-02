@@ -80,6 +80,11 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
 		assert(false);
         //return hr;
     }
+
+	if (bFirstPacket) {
+	  pms->SetActualDataLength(0); // try harder to reset it to match the current graph time
+	}
+
 	// if we do SetTime(NULL, NULL) here then VLC can "play" it with directshows buffers of size 0ms.
 	// however, then VLC cannot then stream it at all.  So we leave it set to some time, and just require you to have VLC buffers of at least 40 or 50 ms
 	// [a possible VLC bug?] http://forum.videolan.org/viewtopic.php?f=14&t=92659&hilit=+50ms
