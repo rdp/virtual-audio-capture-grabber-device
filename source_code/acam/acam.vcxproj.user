@@ -3,7 +3,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LocalDebuggerCommand>C:\installs\ffmpeg-20120903-git-5d55830-win32-static\ffmpeg-20120903-git-5d55830-win32-static\bin\ffmpeg.exe</LocalDebuggerCommand>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerCommandArguments> -f dshow -i audio=virtual-audio-capturer -y yo.mp3</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>-loglevel debug  -f dshow -i audio=virtual-audio-capturer -f dshow -i video=screen-capture-recorder -acodec libmp3lame -vcodec libx264 -ar 44100 -y yo.flv</LocalDebuggerCommandArguments>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LocalDebuggerCommand>C:\Program Files (x86)\VideoLAN\VLC\vlc.exe</LocalDebuggerCommand>
