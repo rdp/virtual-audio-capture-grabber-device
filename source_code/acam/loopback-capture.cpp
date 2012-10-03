@@ -387,8 +387,11 @@ HRESULT propagateBufferOnce() {
 			if((current_time - start_time > millis_to_fill)) {
 				// I don't think we ever get to here anymore...thankfully, since it's mostly broken code probably, anyway
 				if(!gotAnyAtAll) {
-				  // We get here [?]
-				  assert(false); // want to know if this ever happens...it never should since we are using silence...
+				  // We get here under high load...
+			      // ignore for now, but sleep more
+			      ShowOutput("detected high amount of time without receiving a packet from the capturer!");
+				  start_time = timeGetTime();
+				  Sleep(0);
 				}
 			} else {
 			  Sleep(1); // doesn't seem to hurt cpu--"sleep x ms"
