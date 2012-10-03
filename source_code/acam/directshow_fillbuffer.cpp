@@ -12,7 +12,7 @@ extern int totalBlips;
 HRESULT CVCamStream::FillBuffer(IMediaSample *pms) 
 {	
 	// I don't expect these...the parent controls this/us and doesn't call us when it is stopped I guess, so we should always be active...
-	ShowOutput("requested audio frame");
+	ShowOutput("fillBuffer: start a request for an audio frame");
 	//assert(m_pParent->IsActive()); // one of these can cause freezing on "stop button" in FME
 	//assert(!m_pParent->IsStopped());
 
@@ -48,7 +48,7 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
 	WAVEFORMATEX* pwfexCurrent = (WAVEFORMATEX*)m_mt.Format();
 
 	if (bFirstPacket) {
-	  pms->SetActualDataLength(0); // try harder to reset it to match the current graph time
+	  pms->SetActualDataLength(pwfexCurrent->wBitsPerSample/8); // try harder to reset it to match the current graph time, but still give it some data...
 	}
 	CRefTime sampleTimeUsed = (REFERENCE_TIME)(UNITS * pms->GetActualDataLength()) / 
                      (REFERENCE_TIME)pwfexCurrent->nAvgBytesPerSec;
