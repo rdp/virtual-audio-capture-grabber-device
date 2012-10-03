@@ -10,11 +10,13 @@
 #include "common.h"
 #include "assert.h"
 #include <memory.h>
+//#include <endpointvolume.h>
 
 //HRESULT open_file(LPCWSTR szFileName, HMMIO *phFile);
 
 HRESULT get_default_device(IMMDevice **ppMMDevice);
-void outputStats();
+HRESULT get_mic(IMMDevice **ppMMDevice);
+void outputStats();	//not sure what i can do with blip and blops
 
 IAudioCaptureClient *pAudioCaptureClient;
 IAudioClient *pAudioClient;
@@ -50,6 +52,65 @@ const IID IID_IMMDeviceEnumerator = __uuidof(IMMDeviceEnumerator);
 const IID IID_IAudioClient = __uuidof(IAudioClient);
 const IID IID_IAudioRenderClient = __uuidof(IAudioRenderClient);
 
+// =====================================================================================
+HRESULT RegGetDWord(HKEY hKey, LPCTSTR szValueName, DWORD * lpdwResult) {
+
+	// Given a value name and an hKey returns a DWORD from the registry.
+	// eg. RegGetDWord(hKey, TEXT("my dword"), &dwMyValue);
+
+	LONG lResult;
+	DWORD dwDataSize = sizeof(DWORD);
+	DWORD dwType = 0;
+
+	// Check input parameters...
+	if (hKey == NULL || lpdwResult == NULL) return E_INVALIDARG;
+
+	// Get dword value from the registry...
+	lResult = RegQueryValueEx(hKey, szValueName, 0, &dwType, (LPBYTE) lpdwResult, &dwDataSize );
+
+	// Check result and make sure the registry value is a DWORD(REG_DWORD)...
+	if (lResult != ERROR_SUCCESS) return HRESULT_FROM_WIN32(lResult);
+	else if (dwType != REG_DWORD) return DISP_E_TYPEMISMATCH;
+
+	return NOERROR;
+}
+
+ int read_config_setting(LPCTSTR szValueName, int default) {
+	HKEY hKey;
+	LONG i;
+	i = RegOpenKeyEx(HKEY_CURRENT_USER,	L"SOFTWARE\\FFSPLIT Overlay Filter",  0, KEY_READ, &hKey);
+    
+	if ( i != ERROR_SUCCESS)
+	{
+		//printf("%i\n",1);
+		// assume we don't have to close the key
+		return default;
+	} 
+	else 
+	{
+		DWORD dwVal;
+		HRESULT hr = RegGetDWord(hKey, szValueName, &dwVal); // works from flash player, standalone...
+		RegCloseKey(hKey); // done with that
+		if (FAILED(hr)) 
+		{
+			//printf("%i\n",2);
+			return default;
+		} 
+		else 
+		{
+			if(dwVal == 0) 
+			{
+				//printf("%i\n",3);
+				return default;
+			} 
+			else 
+			{
+				return dwVal;
+			}
+		}
+	}
+}
+
 void propagateWithRawCurrentFormat(WAVEFORMATEX *toThis) {
 	WAVEFORMATEX *pwfx;
 	IMMDevice *pMMDevice;
@@ -58,7 +119,7 @@ void propagateWithRawCurrentFormat(WAVEFORMATEX *toThis) {
     DWORD nTaskIndex = 0;
     hTask = AvSetMmThreadCharacteristics(L"Capture", &nTaskIndex);
 
-    HRESULT hr = get_default_device(&pMMDevice);
+    HRESULT hr = get_mic(&pMMDevice);
     if (FAILED(hr)) {
         assert(false);
     }
@@ -102,14 +163,14 @@ int getChannels() {
 
 // we only call this once...per hit of the play button :)
 HRESULT LoopbackCaptureSetup()
-{
+{	
 	assert(shouldStop); // duplicate starts would be odd...
 	shouldStop = false; // allow graphs to restart, if they so desire...
 	pnFrames = 0;
 	bool bInt16 = true; // makes it actually work, for some reason...LODO
 	
     HRESULT hr;
-    hr = get_default_device(&m_pMMDevice); // so it can re-place our pointer...
+    hr = get_mic(&m_pMMDevice); // so it can re-place our pointer...
     if (FAILED(hr)) {
         return hr;
     }
@@ -163,7 +224,7 @@ HRESULT LoopbackCaptureSetup()
 
             case WAVE_FORMAT_EXTENSIBLE:
                 {
-                    // naked scope for case-local variable
+					// naked scope for case-local variable
                     PWAVEFORMATEXTENSIBLE pEx = reinterpret_cast<PWAVEFORMATEXTENSIBLE>(pwfx);
                     if (IsEqualGUID(KSDATAFORMAT_SUBTYPE_IEEE_FLOAT, pEx->SubFormat)) {
 						// WE GET HERE!
@@ -194,38 +255,14 @@ HRESULT LoopbackCaptureSetup()
                 return E_UNEXPECTED;
         }
     }
-	/* scawah setting stream types up to match...didn't seem to work well...
 
-	if(ifNotNullThenJustSetTypeOnly) {
-		// pwfx is set at this point...
-		WAVEFORMATEX* pwfex = ifNotNullThenJustSetTypeOnly;
-		// copy them all out as the possible format...hmm...
-
-
-                pwfx->wFormatTag = WAVE_FORMAT_PCM;
-                pwfx->wBitsPerSample = 16;
-                pwfx->nBlockAlign = pwfx->nChannels * pwfx->wBitsPerSample / 8;
-                pwfx->nAvgBytesPerSec = pwfx->nBlockAlign * pwfx->nSamplesPerSec;
-
-
-		pwfex->wFormatTag = pwfx->wFormatTag;
-		pwfex->nChannels = pwfx->nChannels;
-        pwfex->nSamplesPerSec = pwfx->nSamplesPerSec;
-        pwfex->wBitsPerSample = pwfx->wBitsPerSample;
-        pwfex->nBlockAlign = pwfx->nBlockAlign;
-        pwfex->nAvgBytesPerSec = pwfx->nAvgBytesPerSec;
-        pwfex->cbSize = pwfx->cbSize;
-		//FILE *fp = fopen("/normal2", "w"); // fails on me? maybe juts a VLC thing...
-		//fShowOutput(fp, "hello world %d %d %d %d %d %d %d", pwfex->wFormatTag, pwfex->nChannels, 
-		//	pwfex->nSamplesPerSec, pwfex->wBitsPerSample, pwfex->nBlockAlign, pwfex->nAvgBytesPerSec, pwfex->cbSize );
-		//fclose(fp);
-		// cleanup
-		// I might be leaking here...
-		CoTaskMemFree(pwfx);
-        pAudioClient->Release();
-        //m_pMMDevice->Release();
-		return hr;
-	}*/
+	//printf("Samples per second: %d\n", pwfx->nSamplesPerSec);
+	//printf("Channels: %d\n", pwfx->nChannels);
+	//printf("Size of extra information: %d\n", pwfx->cbSize);
+	//printf("Block alignment in bytes: %d\n", pwfx->nBlockAlign);
+	//printf("Format type code: %d\n", pwfx->wFormatTag);
+	//printf("Bits per sample: %d\n", pwfx->wBitsPerSample);
+	//printf("Required average data tranfer rate: %d\n", pwfx->nAvgBytesPerSec);
 
     MMCKINFO ckRIFF = {0};
     MMCKINFO ckData = {0};
@@ -236,65 +273,64 @@ HRESULT LoopbackCaptureSetup()
 // avoid stuttering on close
 // http://social.msdn.microsoft.com/forums/en-US/windowspro-audiodevelopment/thread/c7ba0a04-46ce-43ff-ad15-ce8932c00171/ 
 	
-//IAudioClient *pAudioClient = NULL;
-//IAudioCaptureClient *pCaptureClient = NULL;
-	
-IMMDeviceEnumerator *pEnumerator = NULL;
+////IAudioClient *pAudioClient = NULL;
+////IAudioCaptureClient *pCaptureClient = NULL;
+//	
+//IMMDeviceEnumerator *pEnumerator = NULL;
 IMMDevice *pDevice = NULL;
-
-IAudioRenderClient *pRenderClient = NULL;
-WAVEFORMATEXTENSIBLE *captureDataFormat = NULL;
-BYTE *captureData;
-
-    REFERENCE_TIME hnsRequestedDuration = REFTIMES_PER_SEC;
-
-    hr = CoCreateInstance(
-           CLSID_MMDeviceEnumerator, NULL,
-           CLSCTX_ALL, IID_IMMDeviceEnumerator,
-           (void**)&pEnumerator);
+//
+//IAudioRenderClient *pRenderClient = NULL;
+//WAVEFORMATEXTENSIBLE *captureDataFormat = NULL;
+//BYTE *captureData;
+//
+//    REFERENCE_TIME hnsRequestedDuration = REFTIMES_PER_SEC;
+//
+//    hr = CoCreateInstance(
+//           CLSID_MMDeviceEnumerator, NULL,
+//           CLSCTX_ALL, IID_IMMDeviceEnumerator,
+//           (void**)&pEnumerator);
+//    EXIT_ON_ERROR(hr)
+//
+	hr = get_mic(&pDevice);
     EXIT_ON_ERROR(hr)
-
-    hr = get_default_device(&pDevice);
-    EXIT_ON_ERROR(hr)
-
-    hr = pDevice->Activate(IID_IAudioClient, CLSCTX_ALL, NULL, (void**)&pAudioClient);
-    EXIT_ON_ERROR(hr)
-
-    hr = pAudioClient->GetMixFormat((WAVEFORMATEX **)&captureDataFormat);
-    EXIT_ON_ERROR(hr)
-
-	
-    // Silence: initialise in sharedmode [this is the "silence" bug overwriter, so buffer doesn't matter as much...]
-    hr = pAudioClient->Initialize(
-                         AUDCLNT_SHAREMODE_SHARED,
-                         0,
-					     REFTIMES_PER_SEC, // buffer size a full 1.0s, though prolly doesn't matter here.
-                         0,
-                         pwfx,
-                         NULL);
-    EXIT_ON_ERROR(hr)
-
-    // get the frame count
-    UINT32  bufferFrameCount;
-    hr = pAudioClient->GetBufferSize(&bufferFrameCount);
-    EXIT_ON_ERROR(hr)
-
-    // create a render client
-    hr = pAudioClient->GetService(IID_IAudioRenderClient, (void**)&pRenderClient);
-    EXIT_ON_ERROR(hr)
-
-    // get the buffer
-    hr = pRenderClient->GetBuffer(bufferFrameCount, &captureData);
-    EXIT_ON_ERROR(hr)
-
-    // release it
-    hr = pRenderClient->ReleaseBuffer(bufferFrameCount, AUDCLNT_BUFFERFLAGS_SILENT);
-    EXIT_ON_ERROR(hr)
-
-    // release the audio client
-    pAudioClient->Release();
-    EXIT_ON_ERROR(hr)
-
+//
+//    hr = pDevice->Activate(IID_IAudioClient, CLSCTX_ALL, NULL, (void**)&pAudioClient);
+//    EXIT_ON_ERROR(hr)
+//
+//    hr = pAudioClient->GetMixFormat((WAVEFORMATEX **)&captureDataFormat);
+//    EXIT_ON_ERROR(hr)
+//
+//	
+//    // Silence: initialise in sharedmode [this is the "silence" bug overwriter, so buffer doesn't matter as much...]
+//    hr = pAudioClient->Initialize(
+//                         AUDCLNT_SHAREMODE_SHARED,
+//                         0,
+//					     REFTIMES_PER_SEC, // buffer size a full 1.0s, though prolly doesn't matter here.
+//                         0,
+//                         pwfx,
+//                         NULL);
+//    EXIT_ON_ERROR(hr)
+//
+//    // get the frame count
+//    UINT32  bufferFrameCount;
+//    hr = pAudioClient->GetBufferSize(&bufferFrameCount);
+//    EXIT_ON_ERROR(hr)
+//
+//    // create a render client
+//    hr = pAudioClient->GetService(IID_IAudioRenderClient, (void**)&pRenderClient);
+//    EXIT_ON_ERROR(hr)
+//
+//    // get the buffer
+//    hr = pRenderClient->GetBuffer(bufferFrameCount, &captureData);
+//    EXIT_ON_ERROR(hr)
+//
+//    // release it
+//    hr = pRenderClient->ReleaseBuffer(bufferFrameCount, AUDCLNT_BUFFERFLAGS_SILENT);
+//    EXIT_ON_ERROR(hr)
+//
+//    // release the audio client
+//    pAudioClient->Release();
+//    EXIT_ON_ERROR(hr)
 
     // create a new IAudioClient
     hr = pDevice->Activate(IID_IAudioClient, CLSCTX_ALL, NULL, (void**)&pAudioClient);
@@ -310,7 +346,7 @@ BYTE *captureData;
 
     hr = pAudioClient->Initialize(
         AUDCLNT_SHAREMODE_SHARED,
-        AUDCLNT_STREAMFLAGS_LOOPBACK,
+        0,
         REFTIMES_PER_SEC, // buffer size a full 1.0s, seems ok VLC
 		0, pwfx, 0
     );
@@ -507,7 +543,7 @@ HRESULT propagateBufferOnce() {
 			  if(pBufLocalCurrentEndLocation > expectedMaxBufferSize) { 
 				// this happens during VLC pauses...
 				// I have no idea what I'm doing here... this doesn't fix it, but helps a bit... TODO FINISH THIS
-				// it seems like if you're just straight recording then you want this big...otherwise you want it like size 0 and non-threaded [pausing with graphedit, for example]... [?]
+				// it seems like if you're just straight recordinget_default_deviceg then you want this big...otherwise you want it like size 0 and non-threaded [pausing with graphedit, for example]... [?]
 				// if you were recording skype, you'd want it non realtime...hmm...
 				// it seems that if the cpu is loaded, we run into this if it's for the next packet...hmm...
 				// so basically we don't accomodate realtime at all currently...hmmm...
@@ -517,8 +553,10 @@ HRESULT propagateBufferOnce() {
 				bFirstPacket = true;
 			  }
 
-			  for(INT i = 0; i < lBytesToWrite && pBufLocalCurrentEndLocation < expectedMaxBufferSize; i++) {
+			  //printf("%i, %i, %i, %i\n",pData[0],pData[1],pData[0],(pData[1] << 8));
+			  for(INT i = 0; i < lBytesToWrite && pBufLocalCurrentEndLocation < expectedMaxBufferSize; i+=2) {
 				pBufLocal[pBufLocalCurrentEndLocation++] = pData[i];
+				pBufLocal[pBufLocalCurrentEndLocation++] = pData[i+1];
 			  }
 			}
 		}
@@ -543,10 +581,21 @@ HRESULT propagateBufferOnce() {
 // iSize is max size of the BYTE buffer...so maybe...we should just drop it if we have past that size? hmm...we're probably
 HRESULT LoopbackCaptureTakeFromBuffer(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNotNullThenJustSetTypeOnly, LONG* totalBytesWrote)
  {
+	//HRESULT hr;
+	//ISimpleAudioVolume *pVolume;
+	//float *pVol = NULL;
+
+	//// get volume
+ //   hr = pAudioClient->GetService(__uuidof(ISimpleAudioVolume), (void**)&pVolume);
+ //   EXIT_ON_ERROR(hr)
+	//pVolume->GetMasterVolume(pVol);
+	//printf("Volume is %f\n", pVol);
+
 	while(!shouldStop) { // allow this to exit, too, at shutdown.
        {
         CAutoLock cObjectLock(&csMyLock);  // Lock the critical section, releases scope after block is done...
 		if(pBufLocalCurrentEndLocation > 0) {
+
 		  // fails lodo is that ok? 
 		  // assert(pBufLocalCurrentEndLocation <= expectedMaxBufferSize);
 		  int totalToWrite = MIN(pBufLocalCurrentEndLocation, expectedMaxBufferSize);
@@ -554,6 +603,7 @@ HRESULT LoopbackCaptureTakeFromBuffer(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNo
 		  memcpy(pBuf, pBufLocal, totalToWrite);
           *totalBytesWrote = totalToWrite;
 		  pBufLocalCurrentEndLocation = 0;
+
           return S_OK;
 		} // else fall through to sleep outside the lock...
 	  }
