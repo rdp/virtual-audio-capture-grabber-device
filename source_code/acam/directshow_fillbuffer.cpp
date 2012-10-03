@@ -46,6 +46,10 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
     // Now set the sample's start and end time stamps...
 
 	WAVEFORMATEX* pwfexCurrent = (WAVEFORMATEX*)m_mt.Format();
+
+	if (bFirstPacket) {
+	  pms->SetActualDataLength(0); // try harder to reset it to match the current graph time
+	}
 	CRefTime sampleTimeUsed = (REFERENCE_TIME)(UNITS * pms->GetActualDataLength()) / 
                      (REFERENCE_TIME)pwfexCurrent->nAvgBytesPerSec;
     CRefTime currentGraphTime;
@@ -83,10 +87,6 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
 		assert(false);
         //return hr;
     }
-
-	if (bFirstPacket) {
-	  pms->SetActualDataLength(0); // try harder to reset it to match the current graph time
-	}
 
 	// if we do SetTime(NULL, NULL) here then VLC can "play" it with directshows buffers of size 0ms.
 	// however, then VLC cannot then stream it at all.  So we leave it set to some time, and just require you to have VLC buffers of at least 40 or 50 ms
