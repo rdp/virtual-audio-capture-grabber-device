@@ -12,7 +12,7 @@ extern int totalBlips;
 HRESULT CVCamStream::FillBuffer(IMediaSample *pms) 
 {	
 	// I don't expect these...the parent controls this/us and doesn't call us when it is stopped I guess, so we should always be active...
-	ShowOutput("requested audio frame");
+	ShowOutput("fillBuffer: start a request for an audio frame");
 	//assert(m_pParent->IsActive()); // one of these can cause freezing on "stop button" in FME
 	//assert(!m_pParent->IsStopped());
 
@@ -46,10 +46,16 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
     // Now set the sample's start and end time stamps...
 
 	WAVEFORMATEX* pwfexCurrent = (WAVEFORMATEX*)m_mt.Format();
+
+	if (bFirstPacket) {
+	  pms->SetActualDataLength(pwfexCurrent->wBitsPerSample/8); // try harder to reset it to match the current graph time, but still give it some data...
+	}
 	CRefTime sampleTimeUsed = (REFERENCE_TIME)(UNITS * pms->GetActualDataLength()) / 
                      (REFERENCE_TIME)pwfexCurrent->nAvgBytesPerSec;
+    CRefTime currentGraphTime;
+	m_pParent->StreamTime(currentGraphTime);
     CRefTime rtStart;
-	if(bFirstPacket) { // either have bFirstPacket or true here...true seemed to help that one guy...
+	if(true) { // either have bFirstPacket or true here...true seemed to help that one guy...
       m_pParent->StreamTime(rtStart); // gets current graph ref time [now] as its "start", as normal "capture" devices would, just in case that's better...
 	  if(bFirstPacket)
 	    ShowOutput("got an audio first packet or discontinuity detected");
@@ -70,6 +76,7 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
         // Audio timestamp 329016 < 329026 invalid, cliping00:05:29.05 bitrate= 738.6kbits/s
         // [libmp3lame @ 00670aa0] Que input is backward in time
 	}
+	ShowOutput("current delta is %ld", rtStart - currentGraphTime);
 
 	// I once tried to change it to always have monotonicity of timestamps at this point, but it didn't fix any problems, and seems to do all right without it so maybe ok [?]
     m_rtPreviousSampleEndTime = rtStart + sampleTimeUsed;
@@ -80,10 +87,6 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
 		assert(false);
         //return hr;
     }
-
-	if (bFirstPacket) {
-	  pms->SetActualDataLength(0); // try harder to reset it to match the current graph time
-	}
 
 	// if we do SetTime(NULL, NULL) here then VLC can "play" it with directshows buffers of size 0ms.
 	// however, then VLC cannot then stream it at all.  So we leave it set to some time, and just require you to have VLC buffers of at least 40 or 50 ms
