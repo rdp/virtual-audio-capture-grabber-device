@@ -35,12 +35,12 @@ CUnknown * WINAPI CVCam::CreateInstance(LPUNKNOWN lpunk, HRESULT *phr)
 IReferenceClock *globalClock;
 
 CVCam::CVCam(LPUNKNOWN lpunk, HRESULT *phr) : 
-    CSource(NAME("Virtual cam5"), lpunk, CLSID_VirtualCam)
+    CSource(NAME("Audio Out"), lpunk, CLSID_VirtualCam)
 {
     ASSERT(phr);
 	//m_pClock is null at this point...
     m_paStreams = (CSourceStream **) new CVCamStream*[1];
-    m_paStreams[0] = new CVCamStream(phr, this, L"Capture Pin");
+    m_paStreams[0] = new CVCamStream(phr, this, L"Audio Out");
 }
 
 STDMETHODIMP CVCam::Run(REFERENCE_TIME tStart) {
@@ -79,7 +79,7 @@ STDMETHODIMP CVCam::GetState(DWORD dw, FILTER_STATE *pState)
 // all the stuff.
 //////////////////////////////////////////////////////////////////////////
 CVCamStream::CVCamStream(HRESULT *phr, CVCam *pParent, LPCWSTR pPinName) :
-    CSourceStream(NAME("Virtual cam5"),phr, pParent, pPinName), m_pParent(pParent)
+    CSourceStream(NAME("Audio Out"),phr, pParent, pPinName), m_pParent(pParent)
 {
     // Set the media type...
 	GetMediaType(0, &m_mt);
