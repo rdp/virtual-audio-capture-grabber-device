@@ -25,6 +25,7 @@ bool bFirstPacket = true;
 IMMDevice *m_pMMDevice;
 UINT32 nBlockAlign;
 UINT32 pnFrames;
+UINT32 pnBuffersCaptured;
 
 CCritSec csMyLock;  // shared critical section. Starts not locked...
 
@@ -167,6 +168,7 @@ HRESULT LoopbackCaptureSetup()
 	assert(shouldStop); // duplicate starts would be odd...
 	shouldStop = false; // allow graphs to restart, if they so desire...
 	pnFrames = 0;
+	pnBuffersCaptured = 0;
 	bool bInt16 = true; // makes it actually work, for some reason...LODO
 	
     HRESULT hr;
@@ -391,6 +393,7 @@ IMMDevice *pDevice = NULL;
     }
     
     bFirstPacket = true;
+		ShowOutput("set bfirstPacket to true once");
 
 	// start the forever grabbing thread...
 	DWORD dwThreadID;
@@ -432,6 +435,7 @@ HRESULT propagateBufferOnce() {
 	int gotAnyAtAll = FALSE;
 	DWORD start_time = timeGetTime();
     while (!shouldStop) {
+	    bool shouldSetFirstPacket = false;
         UINT32 nNextPacketSize;
         hr = pAudioCaptureClient->GetNextPacketSize(&nNextPacketSize); // get next packet, if one is ready...
         if (FAILED(hr)) {
@@ -439,7 +443,8 @@ HRESULT propagateBufferOnce() {
             pAudioClient->Stop();
             AvRevertMmThreadCharacteristics(hTask);
             pAudioCaptureClient->Release();
-            pAudioClient->Release();            
+            pAudioClient->Release();
+			assert(false);
             return hr;
         }
 
@@ -485,7 +490,8 @@ HRESULT propagateBufferOnce() {
             pAudioClient->Stop();
             AvRevertMmThreadCharacteristics(hTask);
             pAudioCaptureClient->Release();
-            pAudioClient->Release();            
+            pAudioClient->Release();
+			assert(false);
             return hr;            
         }
 
@@ -495,33 +501,38 @@ HRESULT propagateBufferOnce() {
 			if( dwFlags == 0 ) {
 			  // the good case, got audio packet
 			  // we'll let fillbuffer set bFirstPacket = false; since it uses it to know if the next packet should restart, etc.
-			} else if (bFirstPacket && AUDCLNT_BUFFERFLAGS_DATA_DISCONTINUITY == dwFlags) {
+			} else if (bFirstPacket && (AUDCLNT_BUFFERFLAGS_DATA_DISCONTINUITY == dwFlags)) {
 				ShowOutput("Probably spurious glitch reported on first packet, or two discontinuity errors occurred before it read from the cached buffer\n");
-				bFirstPacket = true; // won't hurt, even if it is a real first packet :)
+				shouldSetFirstPacket  = true; // won't hurt, even if it is a real first packet :)
+					ShowOutput("set bfirstPacket to true1");
+
 				// LODO it should probably clear the buffers if it ever gets discontinuity
 				// or "let" it clear the buffers then send the new data on
 				// as we have any left-over data that will be assigned a wrong timestamp
 				// but it won't be too far wrong, compared to what it would otherwise be with always
 				// assigning it the current graph timestamp, like we used to...
 			} else if (AUDCLNT_BUFFERFLAGS_DATA_DISCONTINUITY == dwFlags) {
-				  ShowOutput("IAudioCaptureClient::discontinuity GetBuffer set flags to 0x%08x after %u frames\n", dwFlags, pnFrames);
+				  ShowOutput("IAudioCaptureClient::discontinuity GetBuffer set flags to 0x%08x after %u frames, %u samples\n", dwFlags, pnFrames, pnBuffersCaptured);
 				  // expected your CPU gets behind or what not. I guess.
 				  /*pAudioClient->Stop();
 				  AvRevertMmThreadCharacteristics(hTask);
 				  pAudioCaptureClient->Release();		  
 				  pAudioClient->Release();            
 				  return E_UNEXPECTED;*/
-				  bFirstPacket = true;
+				  shouldSetFirstPacket  = true;
+				  	ShowOutput("set bfirstPacket to true2");
+
 			} else if (AUDCLNT_BUFFERFLAGS_SILENT == dwFlags) {
      		  // ShowOutput("IAudioCaptureClient::silence (just) from GetBuffer after %u frames\n", pnFrames);
 			  // expected if there's silence (i.e. nothing playing), since we now include the "silence generator" work-around...
 			} else {
 			  // probably silence + discontinuity
      		  ShowOutput("IAudioCaptureClient::unknown discontinuity GetBuffer set flags to 0x%08x after %u frames\n", dwFlags, pnFrames);
-			  bFirstPacket = true; // probably is some type of discontinuity :P
+			  shouldSetFirstPacket  = true; // probably is some type of discontinuity :P
+				  	ShowOutput("set bfirstPacket to true3");
 			}
 
-			if(bFirstPacket)
+			if(shouldSetFirstPacket )
 				totalBlips++;
 
 			if (0 == nNumFramesToRead) {
@@ -534,12 +545,13 @@ HRESULT propagateBufferOnce() {
 			}
 
 			pnFrames += nNumFramesToRead; // increment total count...		
-
+			pnBuffersCaptured++;
 			// lBytesToWrite typically 1792 bytes...
 			LONG lBytesToWrite = nNumFramesToRead * nBlockAlign; // nBlockAlign is "audio block size" or frame size, for one audio segment...
 			{
 			  CAutoLock cObjectLock(&csMyLock);  // Lock the critical section, releases scope after block is over...
-
+			  if(shouldSetFirstPacket)
+				  bFirstPacket = true;
 			  if(pBufLocalCurrentEndLocation > expectedMaxBufferSize) { 
 				// this happens during VLC pauses...
 				// I have no idea what I'm doing here... this doesn't fix it, but helps a bit... TODO FINISH THIS

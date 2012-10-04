@@ -28,6 +28,7 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
 	LONG totalWrote = -1;
 	// the real meat -- get all the incoming data
 	hr = LoopbackCaptureTakeFromBuffer(pData, pms->GetSize(), NULL, &totalWrote);
+	ShowOutput("got total back %d", totalWrote);
 	if(FAILED(hr)) {
 		// this one can return false during shutdown, so it's actually ok to just return from here...
 		// assert(false);
@@ -48,17 +49,18 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
 	WAVEFORMATEX* pwfexCurrent = (WAVEFORMATEX*)m_mt.Format();
 
 	if (bFirstPacket) {
-	  pms->SetActualDataLength(pwfexCurrent->wBitsPerSample/8); // try harder to reset it to match the current graph time, but still give it some data...
+	 // pms->SetActualDataLength(pwfexCurrent->wBitsPerSample/8); // try harder to reset it to match the current graph time, but still give it some data...
 	}
 	CRefTime sampleTimeUsed = (REFERENCE_TIME)(UNITS * pms->GetActualDataLength()) / 
                      (REFERENCE_TIME)pwfexCurrent->nAvgBytesPerSec;
     CRefTime currentGraphTime;
 	m_pParent->StreamTime(currentGraphTime);
     CRefTime rtStart;
-	if(true) { // either have bFirstPacket or true here...true seemed to help that one guy...
+	if(bFirstPacket) { // either have bFirstPacket or true here...true seemed to help that one guy...
       m_pParent->StreamTime(rtStart); // gets current graph ref time [now] as its "start", as normal "capture" devices would, just in case that's better...
 	  if(bFirstPacket)
 	    ShowOutput("got an audio first packet or discontinuity detected");
+	  ShowOutput("just took a delta hit %f",((float)rtStart - m_rtPreviousSampleEndTime)/UNITS);
 	} else {
 		// since there hasn't been discontinuity, I think we should be safe to tell it
 		// that this packet starts where the previous packet ended off
@@ -76,7 +78,7 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
         // Audio timestamp 329016 < 329026 invalid, cliping00:05:29.05 bitrate= 738.6kbits/s
         // [libmp3lame @ 00670aa0] Que input is backward in time
 	}
-	ShowOutput("current delta is %ld", rtStart - currentGraphTime);
+	ShowOutput("current time is %f", ((float)rtStart)/UNITS, rtStart - currentGraphTime);
 
 	// I once tried to change it to always have monotonicity of timestamps at this point, but it didn't fix any problems, and seems to do all right without it so maybe ok [?]
     m_rtPreviousSampleEndTime = rtStart + sampleTimeUsed;
@@ -132,6 +134,7 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
 	ShowOutput("sent audio frame, %d blips, state %d", totalBlips, State);
 
 	bFirstPacket = false;
+	ShowOutput("set bfirstPacket to false");
     return S_OK;
 
 } // end FillBuffer
