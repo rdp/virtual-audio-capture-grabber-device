@@ -1,5 +1,6 @@
 == actually do==
   a "real" kernel level receive from driver
+    esp. if I ever need buffering in dshow, intead...
 
   new name?
     new web page/real web page
