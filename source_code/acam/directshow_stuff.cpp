@@ -167,7 +167,7 @@ HRESULT setupPwfex(WAVEFORMATEX *pwfex, AM_MEDIA_TYPE *pmt) {
 	pwfex->cbSize = 0;                  // apparently should be zero if using WAVE_FORMAT_PCM http://msdn.microsoft.com/en-us/library/ff538799(VS.85).aspx
 	pwfex->nChannels = getChannels();               // 1 for mono, 2 for stereo..
 	pwfex->nSamplesPerSec = getHtzRate();
-	pwfex->wBitsPerSample = getBitsPerSample();          // 16 bit sound
+	pwfex->wBitsPerSample = 16;          // 16 bit sound
 	pwfex->nBlockAlign = (WORD)((pwfex->wBitsPerSample * pwfex->nChannels) / BITS_PER_BYTE);
 	pwfex->nAvgBytesPerSec = pwfex->nSamplesPerSec * pwfex->nBlockAlign; // it can't calculate this itself? huh?
 		
@@ -238,29 +238,7 @@ HRESULT CVCamStream::DecideBufferSize(IMemAllocator *pAlloc,
 
     WAVEFORMATEX *pwfexCurrent = (WAVEFORMATEX*)m_mt.Format();
 
-
-    /*int nBitsPerSample = pwfexCurrent->wBitsPerSample;
-    int nSamplesPerSec = pwfexCurrent->nSamplesPerSec;
-    int nChannels = pwfexCurrent->nChannels;
-	
-    pProperties->cbBuffer = WaveBufferChunkSize;
-
-    pProperties->cBuffers = (nChannels * nSamplesPerSec * nBitsPerSample) / 
-                            (pProperties->cbBuffer * BITS_PER_BYTE);
-
-	// Get 1/?? second worth of buffers, rounded to WaveBufferSize
-
-    pProperties->cBuffers /= SECOND_FRACTIONS_TO_GRAB;
-
-	// double check for underflow...
-    if(pProperties->cBuffers < 1)
-        pProperties->cBuffers = 1;
-    
-	long maxBufferSize = pProperties->cbBuffer * pProperties->cBuffers;
-	expectedMaxBufferSize = maxBufferSize;
-	*/
-
-	// just use our max size (or whatever they specified for us)
+	// just use our max size for the buffer size (or whatever they specified for us, if they did)
 	pProperties->cBuffers = 1;
 	pProperties->cbBuffer = expectedMaxBufferSize;
 

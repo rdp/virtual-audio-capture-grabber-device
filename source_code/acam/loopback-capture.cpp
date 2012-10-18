@@ -93,13 +93,13 @@ int getHtzRate() {
 	propagateWithRawCurrentFormat(&format);
 	return format.nSamplesPerSec;
 }
-
+/*
 int getBitsPerSample() {
 	WAVEFORMATEX format;
 	propagateWithRawCurrentFormat(&format);
 	return format.wBitsPerSample;
 }
-
+*/
 int getChannels() {
 	WAVEFORMATEX format;
 	propagateWithRawCurrentFormat(&format);
@@ -112,7 +112,7 @@ HRESULT LoopbackCaptureSetup()
 	assert(shouldStop); // duplicate starts would be odd...
 	shouldStop = false; // allow graphs to restart, if they so desire...
 	pnFrames = 0;
-	bool bInt16 = true; // makes it actually work, for some reason...my guess is 
+	bool bInt16 = true; // makes it actually work, for some reason...my guess is it's a more common format
 	
     HRESULT hr;
     hr = get_default_device(&m_pMMDevice); // so it can re-place our pointer...
@@ -175,7 +175,9 @@ HRESULT LoopbackCaptureSetup()
 						// WE GET HERE!
                         pEx->SubFormat = KSDATAFORMAT_SUBTYPE_PCM;
 						// convert it to PCM, but let it keep as many bits of precision as it has initially...though it always seems to be 32
-                        //pwfx->wBitsPerSample = 16;
+						// comment this out and set wBitsPerSample to  pwfex->wBitsPerSample = getBitsPerSample(); to get an arguably "better" quality 32 bit pcm
+						// unfortunately flash media live encoder basically rejects 32 bit pcm, and it's not a huge gain sound quality-wise, so disabled for now.
+                        pwfx->wBitsPerSample = 16;
 						pEx->Samples.wValidBitsPerSample = pwfx->wBitsPerSample;
                         pwfx->nBlockAlign = pwfx->nChannels * pwfx->wBitsPerSample / 8;
                         pwfx->nAvgBytesPerSec = pwfx->nBlockAlign * pwfx->nSamplesPerSec;

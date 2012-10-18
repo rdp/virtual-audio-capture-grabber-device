@@ -1,6 +1,10 @@
+0.3.13
+
+  work with FMLE again <sigh>
+
 0.3.11
 
-actually work with ffmpeg
+actually work with ffmpeg (scripts)
 
 0.3.10
 
