@@ -278,61 +278,61 @@ HRESULT LoopbackCaptureSetup()
 ////IAudioClient *pAudioClient = NULL;
 ////IAudioCaptureClient *pCaptureClient = NULL;
 //	
-//IMMDeviceEnumerator *pEnumerator = NULL;
+IMMDeviceEnumerator *pEnumerator = NULL;
 IMMDevice *pDevice = NULL;
 //
-//IAudioRenderClient *pRenderClient = NULL;
-//WAVEFORMATEXTENSIBLE *captureDataFormat = NULL;
-//BYTE *captureData;
-//
-//    REFERENCE_TIME hnsRequestedDuration = REFTIMES_PER_SEC;
-//
-//    hr = CoCreateInstance(
-//           CLSID_MMDeviceEnumerator, NULL,
-//           CLSCTX_ALL, IID_IMMDeviceEnumerator,
-//           (void**)&pEnumerator);
-//    EXIT_ON_ERROR(hr)
-//
+IAudioRenderClient *pRenderClient = NULL;
+WAVEFORMATEXTENSIBLE *captureDataFormat = NULL;
+BYTE *captureData;
+
+    REFERENCE_TIME hnsRequestedDuration = REFTIMES_PER_SEC;
+
+    hr = CoCreateInstance(
+           CLSID_MMDeviceEnumerator, NULL,
+           CLSCTX_ALL, IID_IMMDeviceEnumerator,
+           (void**)&pEnumerator);
+    EXIT_ON_ERROR(hr)
+
 	hr = get_mic(&pDevice);
     EXIT_ON_ERROR(hr)
-//
-//    hr = pDevice->Activate(IID_IAudioClient, CLSCTX_ALL, NULL, (void**)&pAudioClient);
-//    EXIT_ON_ERROR(hr)
-//
-//    hr = pAudioClient->GetMixFormat((WAVEFORMATEX **)&captureDataFormat);
-//    EXIT_ON_ERROR(hr)
-//
-//	
-//    // Silence: initialise in sharedmode [this is the "silence" bug overwriter, so buffer doesn't matter as much...]
-//    hr = pAudioClient->Initialize(
-//                         AUDCLNT_SHAREMODE_SHARED,
-//                         0,
-//					     REFTIMES_PER_SEC, // buffer size a full 1.0s, though prolly doesn't matter here.
-//                         0,
-//                         pwfx,
-//                         NULL);
-//    EXIT_ON_ERROR(hr)
-//
-//    // get the frame count
-//    UINT32  bufferFrameCount;
-//    hr = pAudioClient->GetBufferSize(&bufferFrameCount);
-//    EXIT_ON_ERROR(hr)
-//
-//    // create a render client
-//    hr = pAudioClient->GetService(IID_IAudioRenderClient, (void**)&pRenderClient);
-//    EXIT_ON_ERROR(hr)
-//
-//    // get the buffer
-//    hr = pRenderClient->GetBuffer(bufferFrameCount, &captureData);
-//    EXIT_ON_ERROR(hr)
-//
-//    // release it
-//    hr = pRenderClient->ReleaseBuffer(bufferFrameCount, AUDCLNT_BUFFERFLAGS_SILENT);
-//    EXIT_ON_ERROR(hr)
-//
-//    // release the audio client
-//    pAudioClient->Release();
-//    EXIT_ON_ERROR(hr)
+
+    hr = pDevice->Activate(IID_IAudioClient, CLSCTX_ALL, NULL, (void**)&pAudioClient);
+    EXIT_ON_ERROR(hr)
+
+    hr = pAudioClient->GetMixFormat((WAVEFORMATEX **)&captureDataFormat);
+    EXIT_ON_ERROR(hr)
+
+	
+    // Silence: initialise in sharedmode [this is the "silence" bug overwriter, so buffer doesn't matter as much...]
+    hr = pAudioClient->Initialize(
+                         AUDCLNT_SHAREMODE_SHARED,
+                         0,
+					     REFTIMES_PER_SEC, // buffer size a full 1.0s, though prolly doesn't matter here.
+                         0,
+                         pwfx,
+                         NULL);
+    EXIT_ON_ERROR(hr)
+
+    // get the frame count
+    UINT32  bufferFrameCount;
+    hr = pAudioClient->GetBufferSize(&bufferFrameCount);
+    EXIT_ON_ERROR(hr)
+// CAREFUL
+    // create a render client
+    hr = pAudioClient->GetService(IID_IAudioRenderClient, (void**)&pRenderClient);
+    EXIT_ON_ERROR(hr)
+
+    // get the buffer
+    hr = pRenderClient->GetBuffer(bufferFrameCount, &captureData);
+    EXIT_ON_ERROR(hr)
+
+    // release it
+    hr = pRenderClient->ReleaseBuffer(bufferFrameCount, AUDCLNT_BUFFERFLAGS_SILENT);
+    EXIT_ON_ERROR(hr)
+
+    // release the audio client
+    pAudioClient->Release();
+    EXIT_ON_ERROR(hr)
 
     // create a new IAudioClient
     hr = pDevice->Activate(IID_IAudioClient, CLSCTX_ALL, NULL, (void**)&pAudioClient);
@@ -523,7 +523,7 @@ HRESULT propagateBufferOnce() {
 				  	ShowOutput("set bfirstPacket to true2");
 
 			} else if (AUDCLNT_BUFFERFLAGS_SILENT == dwFlags) {
-     		  // ShowOutput("IAudioCaptureClient::silence (just) from GetBuffer after %u frames\n", pnFrames);
+     		  ShowOutput("IAudioCaptureClient::silence (just) from GetBuffer after %u frames\n", pnFrames);
 			  // expected if there's silence (i.e. nothing playing), since we now include the "silence generator" work-around...
 			} else {
 			  // probably silence + discontinuity
