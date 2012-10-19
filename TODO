@@ -12,6 +12,8 @@
 
 == meh/never ==
 
+VAC: use real mutex no sleep(1)
+
 2 pins, one with 32 bit audio :)
 
 some thing that shows the current "bars" of how much it could/would be capturing...
