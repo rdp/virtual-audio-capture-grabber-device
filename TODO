@@ -2,15 +2,17 @@
   a "real" kernel level receive from driver
     esp. if I ever need buffering in dshow, intead...
 
-  new name?
-    new web page/real web page
-  
-
 == maybe ==
 
-  simpler/easier "just audio straight" recorder...
+  simpler/easier "just audio straight" GUI recorder...
 
 == meh/never ==
+
+new name?
+  new web page/real web page
+
+provide a "straight -> 2" pin always, for those 5.1'ers
+  provide a "32 bit" pin
 
 VAC: use real mutex no sleep(1)
 
