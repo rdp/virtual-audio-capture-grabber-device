@@ -1,3 +1,6 @@
+0.3.14
+  icons hopefully work after poor previous distro
+
 0.3.13
 
   work with FMLE again <sigh>
