@@ -381,8 +381,11 @@ HRESULT propagateBufferOnce() {
         }
 
         if (0 == nNextPacketSize) {
-            // no data yet, we're waiting, between incoming chunks of audio. [occurs even with silence on the line--it just means no new data yet]
+            // (CA) - this condition appears on Win8 when there is "silence" in the audio stream 
+			// (CA) - we don't appear to hit this condition in Win7 .. so I have eliminated the logic in here for right now...
 
+			/*
+			// no data yet, we're waiting, between incoming chunks of audio. [occurs even with silence on the line--it just means no new data yet]
 			DWORD millis_to_fill = (DWORD) (1.0/SECOND_FRACTIONS_TO_GRAB*1000); // truncate is ok :) -- 1s
 			assert(millis_to_fill > 1); // sanity
 			DWORD current_time = timeGetTime();
@@ -399,6 +402,8 @@ HRESULT propagateBufferOnce() {
 			  Sleep(1); // doesn't seem to hurt cpu--"sleep x ms"
 			  continue;
 			}
+			*/
+			continue;
         } else {
 		  gotAnyAtAll = TRUE;
 		  totalSuccessFullyread++;
@@ -437,7 +442,11 @@ HRESULT propagateBufferOnce() {
 			  // we'll let fillbuffer set bFirstPacket = false; since it uses it to know if the next packet should restart, etc.
 			} else if (bFirstPacket && AUDCLNT_BUFFERFLAGS_DATA_DISCONTINUITY == dwFlags) {
 				ShowOutput("Probably spurious glitch reported on first packet, or two discontinuity errors occurred before it read from the cached buffer\n");
-				bFirstPacket = true; // won't hurt, even if it is a real first packet :)
+				
+				// (CA) - we take this out as it causes problems in Win8 and does not seem to cause issues for win7
+				//bFirstPacket = true; // won't hurt, even if it is a real first packet :)
+				
+				
 				// LODO it should probably clear the buffers if it ever gets discontinuity
 				// or "let" it clear the buffers then send the new data on
 				// as we have any left-over data that will be assigned a wrong timestamp
@@ -451,26 +460,34 @@ HRESULT propagateBufferOnce() {
 				  pAudioCaptureClient->Release();		  
 				  pAudioClient->Release();            
 				  return E_UNEXPECTED;*/
-				  bFirstPacket = true;
+				  
+				  // (CA) - we take this out as it causes problems in Win8 and does not seem to cause issues for win7
+				  //bFirstPacket = true;
 			} else if (AUDCLNT_BUFFERFLAGS_SILENT == dwFlags) {
      		  // ShowOutput("IAudioCaptureClient::silence (just) from GetBuffer after %u frames\n", pnFrames);
 			  // expected if there's silence (i.e. nothing playing), since we now include the "silence generator" work-around...
 			} else {
 			  // probably silence + discontinuity
      		  ShowOutput("IAudioCaptureClient::unknown discontinuity GetBuffer set flags to 0x%08x after %u frames\n", dwFlags, pnFrames);
-			  bFirstPacket = true; // probably is some type of discontinuity :P
+			  
+			   // (CA) - we take this out as it causes problems in Win8 and does not seem to cause issues for win7
+			  //bFirstPacket = true; // probably is some type of discontinuity :P
 			}
 
 			if(bFirstPacket)
 				totalBlips++;
 
 			if (0 == nNumFramesToRead) {
+				
+				// (CA) - This condition happens in Win8 with silence on the line... Again we don't seem to fall into this condition on Win7
+				/*
 				ShowOutput("death failure: IAudioCaptureClient::GetBuffer said to read 0 frames after %u frames\n", pnFrames);
 				pAudioClient->Stop();
 				AvRevertMmThreadCharacteristics(hTask);
 				pAudioCaptureClient->Release();
 				pAudioClient->Release();
-				return E_UNEXPECTED;            
+				return E_UNEXPECTED;  
+				*/
 			}
 
 			pnFrames += nNumFramesToRead; // increment total count...		
