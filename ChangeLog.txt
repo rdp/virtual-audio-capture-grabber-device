@@ -1,3 +1,6 @@
+0.4.0
+  hopefully windows 8 friendlier...
+
 0.3.14
   icons hopefully work after poor previous distro
 

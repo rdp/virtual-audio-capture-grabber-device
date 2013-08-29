@@ -1,4 +1,4 @@
-#define AppVer "0.3.14"
+#define AppVer "0.4.0"
 
 #define AppName "Virtual Audio Capture Grabber"
 
@@ -33,6 +33,7 @@ OutputBaseFilename=setup {#AppName} v{#AppVer}
 OutputDir=releases
 
 [Icons]
+Name: {group}\ChangeLog.txt; Filename: {app}\ChangeLog.txt
 Name: {group}\Readme; Filename: {app}\README.TXT
 Name: {group}\Uninstall {#AppName}; Filename: {uninstallexe}
 Name: {group}\Record\Record by clicking a start button; Filename: {app}\screen-capture-recorder-to-video-windows-free\configuration_setup_utility\generic_run_rb.bat; WorkingDir: {app}\screen-capture-recorder-to-video-windows-free\configuration_setup_utility; Parameters: record_with_buttons.rb --just-audio-default; Flags: runminimized
