@@ -403,6 +403,7 @@ HRESULT propagateBufferOnce() {
 			  continue;
 			}
 			*/
+			Sleep(1);
 			continue;
         } else {
 		  gotAnyAtAll = TRUE;
