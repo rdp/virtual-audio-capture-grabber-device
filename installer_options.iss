@@ -1,4 +1,4 @@
-#define AppVer "0.4.1"
+#define AppVer "0.4.2"
 
 #define AppName "Virtual Audio Capture Grabber"
 
@@ -33,9 +33,10 @@ OutputBaseFilename=setup {#AppName} v{#AppVer}
 OutputDir=releases
 
 [Icons]
-Name: {group}\ChangeLog.txt; Filename: {app}\ChangeLog.txt
+Name: {group}\Release Notes; Filename: {app}\ChangeLog.txt
 Name: {group}\Readme; Filename: {app}\README.TXT
 Name: {group}\Uninstall {#AppName}; Filename: {uninstallexe}
-Name: {group}\Record\Record by clicking a start button; Filename: {app}\screen-capture-recorder-to-video-windows-free\configuration_setup_utility\generic_run_rb.bat; WorkingDir: {app}\screen-capture-recorder-to-video-windows-free\configuration_setup_utility; Parameters: record_with_buttons.rb --just-audio-default; Flags: runminimized
+Name: {group}\Install additional software like screen capturer as; Filename:  "https://github.com/rdp/screen-capture-recorder-to-video-windows-free"
+Name: {group}\Record by clicking a start button; Filename: {app}\screen-capture-recorder-to-video-windows-free\configuration_setup_utility\generic_run_rb.bat; WorkingDir: {app}\screen-capture-recorder-to-video-windows-free\configuration_setup_utility; Parameters: record_with_buttons.rb --just-audio-default; Flags: runminimized
 Name: {group}\Broadcast\setup local audio streaming server; Filename: {app}\screen-capture-recorder-to-video-windows-free\configuration_setup_utility\generic_run_rb.bat; WorkingDir: {app}\screen-capture-recorder-to-video-windows-free\configuration_setup_utility; Parameters: broadcast_server_setup.rb; Flags: runminimized
 Name: {group}\Broadcast\restart local audio streaming server with same setup as was run previous; Filename: {app}\screen-capture-recorder-to-video-windows-free\configuration_setup_utility\generic_run_rb.bat; WorkingDir: {app}\screen-capture-recorder-to-video-windows-free\configuration_setup_utility; Parameters: broadcast_server_setup.rb --redo-with-last-run; Flags: runminimized

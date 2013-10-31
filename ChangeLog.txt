@@ -1,3 +1,6 @@
+0.4.2:
+  updated to latest shortcuts
+
 0.4.1:
   fix it to not use as much cpu win. 8 [untested]
 
