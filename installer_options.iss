@@ -23,7 +23,7 @@ Source: screen-capture-recorder-to-video-windows-free\vendor\vcredist_x86.exe; D
 Source: screen-capture-recorder-to-video-windows-free\vendor\vcredist_x64.exe; DestDir: {app}\vendor
 
 [Setup]
-; disabled ; MinVersion=,6.0.6000
+; disabled XXX why? ; MinVersion=,6.0.6000
 AppName={#AppName}
 AppVerName={#AppVer}
 DefaultDirName={pf}\{#AppName}
