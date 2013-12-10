@@ -94,6 +94,10 @@ and disabling mic boost if you use a microphone input)."
 
 But that's hardware and this is a software answer :)
 
+== related ==
+
+There are a handful of (mostly closed source) related projects, see http://superuser.com/questions/98720/is-there-a-free-or-open-source-equivalent-to-vac
+
 == attribution ==
 
 Some source code originally from the windows SDK samples, some taken from [1]
