@@ -1,4 +1,4 @@
-#define AppVer "0.4.3beta"
+#define AppVer "0.4.3"
 
 #define AppName "Virtual Audio Capture Grabber"
 
@@ -18,7 +18,7 @@ Filename: regsvr32; WorkingDir: {app}; Parameters: /s /u audio_sniffer-x64.dll; 
 Source: source_code\Release\audio_sniffer.dll; DestDir: {app}
 Source: source_code\x64\Release\audio_sniffer-x64.dll; DestDir: {app}
 Source: README.TXT; DestDir: {app}; Flags: isreadme
-Source: screen-capture-recorder-to-video-windows-free\configuration_setup_utility\*.*; DestDir: {app}\screen-capture-recorder-to-video-windows-free\configuration_setup_utility; Flags: recursesubdirs
+Source: screen-capture-recorder-to-video-windows-free\configuration_setup_utility\*.*; DestDir: {app}\screen-capture-recorder-to-video-windows-free\configuration_setup_utility;  Excludes: 'mplayer.exe'; Flags: recursesubdirs;
 Source: screen-capture-recorder-to-video-windows-free\vendor\vcredist_x86.exe; DestDir: {app}\vendor
 Source: screen-capture-recorder-to-video-windows-free\vendor\vcredist_x64.exe; DestDir: {app}\vendor
 
