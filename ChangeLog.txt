@@ -1,3 +1,6 @@
+0.4.4:
+  UI fix for selecting devices
+
 0.4.3:
   cleanup UI
 
