@@ -23,7 +23,8 @@ Source: screen-capture-recorder-to-video-windows-free\vendor\vcredist_x86.exe; D
 Source: screen-capture-recorder-to-video-windows-free\vendor\vcredist_x64.exe; DestDir: {app}\vendor
 
 [Setup]
-; disabled XXX why? ; MinVersion=,6.0.6000
+; disabled XXX why? 
+; MinVersion=,6.0.6000
 AppName={#AppName}
 AppVerName={#AppVer}
 DefaultDirName={pf}\{#AppName}
@@ -32,8 +33,12 @@ UninstallDisplayName={#AppName} uninstall
 OutputBaseFilename=setup {#AppName} v{#AppVer}
 OutputDir=releases
 
+; remove previous versions' icons [lame innosetup, lame]
+[InstallDelete]
+ Type: filesandordirs; Name: {group}; 
+
 [Icons]
-Name: {group}\Release Notes; Filename: {app}\ChangeLog.txt
+Name: {group}\Release Notes Change Log; Filename: {app}\ChangeLog.txt
 Name: {group}\Readme; Filename: {app}\README.TXT
 Name: {group}\Uninstall {#AppName}; Filename: {uninstallexe}
 Name: {group}\Install additional software like screen capturer as; Filename:  "https://github.com/rdp/screen-capture-recorder-to-video-windows-free"
