@@ -444,11 +444,9 @@ HRESULT propagateBufferOnce() {
 			} else if (bFirstPacket && AUDCLNT_BUFFERFLAGS_DATA_DISCONTINUITY == dwFlags) {
 				ShowOutput("Probably spurious glitch reported on first packet, or two discontinuity errors occurred before it read from the cached buffer\n");
 				
-				// (CA) - we take this out as it causes problems in Win8 and does not seem to cause issues for win7
-				//bFirstPacket = true; // won't hurt, even if it is a real first packet :)
+				bFirstPacket = true; // won't hurt, even if it is a real first packet :)
 				
-				
-				// LODO it should probably clear the buffers if it ever gets discontinuity
+				// XXXX it should probably clear the buffers if it ever gets discontinuity
 				// or "let" it clear the buffers then send the new data on
 				// as we have any left-over data that will be assigned a wrong timestamp
 				// but it won't be too far wrong, compared to what it would otherwise be with always
@@ -462,25 +460,24 @@ HRESULT propagateBufferOnce() {
 				  pAudioClient->Release();            
 				  return E_UNEXPECTED;*/
 				  
-				  // (CA) - we take this out as it causes problems in Win8 and does not seem to cause issues for win7
-				  //bFirstPacket = true;
+				  bFirstPacket = true;
 			} else if (AUDCLNT_BUFFERFLAGS_SILENT == dwFlags) {
      		  // ShowOutput("IAudioCaptureClient::silence (just) from GetBuffer after %u frames\n", pnFrames);
 			  // expected if there's silence (i.e. nothing playing), since we now include the "silence generator" work-around...
+		      // at least in windows 7, we get here...
 			} else {
 			  // probably silence + discontinuity
-     		  ShowOutput("IAudioCaptureClient::unknown discontinuity GetBuffer set flags to 0x%08x after %u frames\n", dwFlags, pnFrames);
-			  
-			   // (CA) - we take this out as it causes problems in Win8 and does not seem to cause issues for win7
-			  //bFirstPacket = true; // probably is some type of discontinuity :P
+     		  ShowOutput("IAudioCaptureClient::unknown discontinuity GetBuffer set flags to 0x%08x after %u frames\n", dwFlags, pnFrames);			  
+			  bFirstPacket = true; // probably is some type of discontinuity :P
 			}
 
 			if(bFirstPacket)
 				totalBlips++;
 
 			if (0 == nNumFramesToRead) {
-				
-				// (CA) - This condition happens in Win8 with silence on the line... Again we don't seem to fall into this condition on Win7
+			  // we should probably never get here, right?
+				// my guess is that we don't, even in win8?
+				// I mean, this is probably really messed up it told us it had some data to grab, we try to grab it, it returns us nothing?
 				/*
 				ShowOutput("death failure: IAudioCaptureClient::GetBuffer said to read 0 frames after %u frames\n", pnFrames);
 				pAudioClient->Stop();
