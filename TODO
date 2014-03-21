@@ -2,8 +2,11 @@
   a "real" kernel level receive from driver
     esp. if I ever need buffering in dshow, intead...
 
-	it does not record right?!
+	it does not record wav right?!
 	
+	
+if no audio device, return -1 or what not...
+
 == maybe ==
 
   simpler/easier "just audio straight" GUI recorder...

@@ -3,7 +3,8 @@
 for something else you can try in its place.
 
 NB THAT IF YOU WANT TO USE WITH SCREEN RECORDING THEN PLEASE INSTALL
-THE MORE FULL FEATURED https://github.com/rdp/screen-capture-recorder-to-video-windows-free
+THE MORE FULL FEATURED 
+https://github.com/rdp/screen-capture-recorder-to-video-windows-free
 
 == Installation ==
 
@@ -28,6 +29,7 @@ NB that you'll need java JRE previously installed to use the included helper app
 Basically, if you have a problem/feature request (ex: recording multiple audio at the same time, adding ability to strip silence, etc.), ask!
 
 rogerdpack@gmail.com or mailing list http://groups.google.com/group/roger-projects
+Or submit an idea/feature request to our uservoice: http://rdp.uservoice.com
 
 Also note that VLC directshow input might need buffers of at least 40 or 50 ms or it fails for some reason.  But trying even higher might help.
 
