@@ -25,8 +25,8 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
         return hr;
     }
     
-	LONG totalWrote = -1;
 	// the real meat -- get all the incoming data
+	LONG totalWrote = -1;
 	hr = LoopbackCaptureTakeFromBuffer(pData, pms->GetSize(), NULL, &totalWrote);
 	if(FAILED(hr)) {
 		// this one can return false during shutdown, so it's actually ok to just return from here...
@@ -57,6 +57,10 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
 		  // my theory is that sometimes the very first packet is "big" and there's tons there [slow ffmpeg startup for instance, or something like that] and it would mess up our timing to say that it "starts" now and goes "until" its end
 		  rtStart -= sampleTimeUsed; // so instruct it to think this frame started slightly in the past...
 		  // in an effort to try and avoid some async issues
+		  ShowOutput("initial very first packet size %I64d", sampleTimeUsed);
+	  } else if (bDiscontinuityDetected) {
+		  // same deal [as if I knew what I were doing here LOL]
+		  rtStart = MAX(m_rtPreviousSampleEndTime, rtStart - sampleTimeUsed);
 	  }
 	} else {
 		// since there hasn't been discontinuity, I think we should be safe to tell it
@@ -111,7 +115,7 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
         //return hr;
     }
    
-    hr = pms->SetDiscontinuity(bDiscontinuityDetected);
+    hr = pms->SetDiscontinuity(bDiscontinuityDetected || bVeryFirstPacket);
     if (FAILED(hr)) {
 		assert(false);
         //return hr;
@@ -126,10 +130,10 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
 	FILTER_STATE State;
 	m_pParent->GetState(0, &State);
 	
-	ShowOutput("sent audio frame, %d blips, state %d", totalBlips, State);
-
-	bDiscontinuityDetected = false;
+    bDiscontinuityDetected = false; // reset late since I use it for the SetDiscontinuity method
 	bVeryFirstPacket = false;
+
+	ShowOutput("sent audio frame, %d blips, filter state %d", totalBlips, State);
     return S_OK;
 
 } // end FillBuffer
