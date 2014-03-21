@@ -36,7 +36,6 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
 	}
 
 	CAutoLock cAutoLockShared(&gSharedState); // for the bFirstPacket boolean control, except there's probably still some odd race conditions er other...
-
 	hr = pms->SetActualDataLength(totalWrote);
 	if(FAILED(hr)) {
   	  	assert(false);
@@ -46,13 +45,19 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
     // Now set the sample's start and end time stamps...
 
 	WAVEFORMATEX* pwfexCurrent = (WAVEFORMATEX*)m_mt.Format();
-	CRefTime sampleTimeUsed = (REFERENCE_TIME)(UNITS * pms->GetActualDataLength()) / 
+	CRefTime sampleTimeUsed = (REFERENCE_TIME)(UNITS * totalWrote) / 
                      (REFERENCE_TIME)pwfexCurrent->nAvgBytesPerSec;
     CRefTime rtStart;
-	if(bFirstPacket) { // either have bFirstPacket or true here...true seemed to help that one guy...
+	if(bDiscontinuityDetected || bVeryFirstPacket) { // could either use bFirstPacket or true here...true seemed to help that one guy...
       m_pParent->StreamTime(rtStart); // gets current graph ref time [now] as its "start", as normal "capture" devices would, just in case that's better...
-	  if(bFirstPacket)
-	    ShowOutput("got an audio first packet or discontinuity detected");
+	  if(bDiscontinuityDetected && !bVeryFirstPacket) {
+	    ShowOutput("audio discontinuity detected");
+	  }
+	  if(bVeryFirstPacket) {
+		  // my theory is that sometimes the very first packet is "big" and there's tons there [slow ffmpeg startup for instance, or something like that] and it would mess up our timing to say that it "starts" now and goes "until" its end
+		  rtStart -= sampleTimeUsed; // so instruct it to think this frame started slightly in the past...
+		  // in an effort to try and avoid some async issues
+	  }
 	} else {
 		// since there hasn't been discontinuity, I think we should be safe to tell it
 		// that this packet starts where the previous packet ended off
@@ -65,9 +70,9 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
         // CRefTime cur_time;
 	    // m_pParent->StreamTime(cur_time);
 	    // rtStart = max(rtStart, cur_time);
-		// hopefully this avoids this message/error:
+		// hopefully this being commented out avoids this message/error:
 		// [libmp3lame @ 00670aa0] Que input is backward in time
-        // Audio timestamp 329016 < 329026 invalid, cliping00:05:29.05 bitrate= 738.6kbits/s
+        // Audio timestamp 329016 < 329026 invalid, cliping 00:05:29.05 bitrate= 738.6kbits/s
         // [libmp3lame @ 00670aa0] Que input is backward in time
 	}
 
@@ -106,7 +111,7 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
         //return hr;
     }
    
-    hr = pms->SetDiscontinuity(bFirstPacket); // true for the first
+    hr = pms->SetDiscontinuity(bDiscontinuityDetected);
     if (FAILED(hr)) {
 		assert(false);
         //return hr;
@@ -123,7 +128,8 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
 	
 	ShowOutput("sent audio frame, %d blips, state %d", totalBlips, State);
 
-	bFirstPacket = false;
+	bDiscontinuityDetected = false;
+	bVeryFirstPacket = false;
     return S_OK;
 
 } // end FillBuffer

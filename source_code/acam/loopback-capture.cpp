@@ -19,7 +19,8 @@ void outputStats();
 IAudioCaptureClient *pAudioCaptureClient;
 IAudioClient *pAudioClient;
 HANDLE hTask;
-bool bFirstPacket = true;
+bool bDiscontinuityDetected; // init'd eleswhere
+bool bVeryFirstPacket; // init'd elsewhere
 IMMDevice *m_pMMDevice;
 UINT32 nBlockAlign;
 UINT32 pnFrames;
@@ -327,7 +328,9 @@ BYTE *captureData;
         return hr;
     }
     
-    bFirstPacket = true;
+	// init some var's [XXXX using global vars doesn't work if I had 2 of these at the same time in the same process [?]]
+    bDiscontinuityDetected = true;
+	bVeryFirstPacket = true;
 
 	// start the forever grabbing thread...
 	DWORD dwThreadID;
@@ -440,11 +443,11 @@ HRESULT propagateBufferOnce() {
 
 			if( dwFlags == 0 ) {
 			  // the good case, got audio packet
-			  // we'll let fillbuffer set bFirstPacket = false; since it uses it to know if the next packet should restart, etc.
-			} else if (bFirstPacket && AUDCLNT_BUFFERFLAGS_DATA_DISCONTINUITY == dwFlags) {
+			  // we'll let fillbuffer set bDiscontinuityDetected = false; since it uses it to know if the next packet should restart, etc.
+			} else if (bDiscontinuityDetected && AUDCLNT_BUFFERFLAGS_DATA_DISCONTINUITY == dwFlags) {
 				ShowOutput("Probably spurious glitch reported on first packet, or two discontinuity errors occurred before it read from the cached buffer\n");
 				
-				bFirstPacket = true; // won't hurt, even if it is a real first packet :)
+				bDiscontinuityDetected = true; // won't hurt, even if it is a real first packet :)
 				
 				// XXXX it should probably clear the buffers if it ever gets discontinuity
 				// or "let" it clear the buffers then send the new data on
@@ -460,7 +463,7 @@ HRESULT propagateBufferOnce() {
 				  pAudioClient->Release();            
 				  return E_UNEXPECTED;*/
 				  
-				  bFirstPacket = true;
+				  bDiscontinuityDetected = true;
 			} else if (AUDCLNT_BUFFERFLAGS_SILENT == dwFlags) {
      		  // ShowOutput("IAudioCaptureClient::silence (just) from GetBuffer after %u frames\n", pnFrames);
 			  // expected if there's silence (i.e. nothing playing), since we now include the "silence generator" work-around...
@@ -468,10 +471,10 @@ HRESULT propagateBufferOnce() {
 			} else {
 			  // probably silence + discontinuity
      		  ShowOutput("IAudioCaptureClient::unknown discontinuity GetBuffer set flags to 0x%08x after %u frames\n", dwFlags, pnFrames);			  
-			  bFirstPacket = true; // probably is some type of discontinuity :P
+			  bDiscontinuityDetected = true; // probably is some type of discontinuity :P
 			}
 
-			if(bFirstPacket)
+			if(bDiscontinuityDetected)
 				totalBlips++;
 
 			if (0 == nNumFramesToRead) {
@@ -505,7 +508,7 @@ HRESULT propagateBufferOnce() {
 	  			ShowOutput("overfilled buffer, cancelling/flushing."); //over flow overflow appears VLC just keeps reading though, when paused [?] but not graphedit...or does it?
 				pBufLocalCurrentEndLocation = 0;
 				totalOverflows++;
-				bFirstPacket = true;
+				bDiscontinuityDetected = true;
 			  }
 
 			  for(INT i = 0; i < lBytesToWrite && pBufLocalCurrentEndLocation < expectedMaxBufferSize; i++) {
