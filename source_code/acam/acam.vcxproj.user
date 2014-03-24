@@ -1,12 +1,23 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <LocalDebuggerCommand>C:\installs\ffmpeg-20120903-git-5d55830-win32-static\ffmpeg-20120903-git-5d55830-win32-static\bin\ffmpeg.exe</LocalDebuggerCommand>
+    <LocalDebuggerCommand>c:\vids\ffmpeg.exe</LocalDebuggerCommand>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerCommandArguments> -threads  0 -y  -f dshow -i audio=virtual-audio-capturer   -y yo.wav</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>-f dshow -r 4 -i video=screen-capture-recorder:audio=virtual-audio-capturer -y yo.mp4</LocalDebuggerCommandArguments>
+    <LocalDebuggerWorkingDirectory>c:\vids</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LocalDebuggerCommand>C:\Program Files (x86)\VideoLAN\VLC\vlc.exe</LocalDebuggerCommand>
+    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LocalDebuggerCommand>c:\vids\ffmpeg.exe</LocalDebuggerCommand>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LocalDebuggerCommandArguments>-f dshow -r 4 -i video=screen-capture-recorder:audio=virtual-audio-capturer -y yo.mp4</LocalDebuggerCommandArguments>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LocalDebuggerWorkingDirectory>c:\vids</LocalDebuggerWorkingDirectory>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
 </Project>
