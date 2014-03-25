@@ -45,8 +45,14 @@ CVCam::CVCam(LPUNKNOWN lpunk, HRESULT *phr) :
 
 STDMETHODIMP CVCam::Run(REFERENCE_TIME tStart) {
 	ShowOutput("run called");
-	((CVCamStream*) m_paStreams[0])->m_rtPreviousSampleEndTime = 0;
-	return CSource::Run(tStart);
+	// LODO why is this called seemingly *way* later than packets are already collected?
+	// ((CVCamStream*) m_paStreams[0])->m_rtPreviousSampleEndTime = 0;
+	// looks like we accomodate for "resetting" within our own discontinuity stuff...
+	
+	// LODO should we...umm...not give any samples before second one or not here?
+	return CBaseFilter::Run(tStart); // setup this->m_tStart
+	// we have two ancestor Run's to choose from? huh wuh?
+	// CSource::Run(tStart); // save away this as meaning "second zero" FWIW...hmm...
 }
 
 HRESULT CVCam::QueryInterface(REFIID riid, void **ppv)

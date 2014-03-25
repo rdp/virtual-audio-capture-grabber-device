@@ -59,7 +59,7 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
 		  // in an effort to try and avoid some async issues
 		  ShowOutput("initial very first packet size %I64d", sampleTimeUsed);
 	  } else if (bDiscontinuityDetected) {
-		  // same deal [as if I knew what I were doing here LOL]
+		  // same deal [as if I knew what I were doing...LOL]
 		  rtStart = MAX(m_rtPreviousSampleEndTime, rtStart - sampleTimeUsed);
 	  }
 	} else {
@@ -84,6 +84,7 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
     m_rtPreviousSampleEndTime = rtStart + sampleTimeUsed;
 
 	// NB that this *can* set it to a negative start time...hmm...which apparently is "ok" when a graph is just starting up it's expected...
+	ShowOutput("timestamping audio as %lld -> %lld", rtStart, m_rtPreviousSampleEndTime);
     hr = pms->SetTime((REFERENCE_TIME*) &rtStart, (REFERENCE_TIME*) &m_rtPreviousSampleEndTime);
 	if (FAILED(hr)) {
 		assert(false);
