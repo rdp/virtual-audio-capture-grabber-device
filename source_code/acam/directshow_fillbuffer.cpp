@@ -97,7 +97,7 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
     m_rtPreviousSampleEndTime = rtStart + sampleTimeUsed;
 
 	// NB that this *can* set it to a negative start time...hmm...which apparently is "ok" when a graph is just starting up it's expected...
-	ShowOutput("\ntimestamping audio packet as %lld -> %lld\n", rtStart, m_rtPreviousSampleEndTime);
+	ShowOutput("timestamping audio packet as %lld -> %lld", rtStart, m_rtPreviousSampleEndTime);
     hr = pms->SetTime((REFERENCE_TIME*) &rtStart, (REFERENCE_TIME*) &m_rtPreviousSampleEndTime);
 	if (FAILED(hr)) {
 		assert(false);
