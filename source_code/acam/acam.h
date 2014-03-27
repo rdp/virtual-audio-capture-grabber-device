@@ -34,7 +34,7 @@ ACAM_API int fnacam(void);
 EXTERN_C const GUID CLSID_VirtualCam; // reuse it...
 
 
-class CVCam : public CSource // not needed -> public IMediaFilter
+class CVCam : public CSource // not needed -> public IMediaFilter [?]
 {
 public:
     //////////////////////////////////////////////////////////////////////////
@@ -48,7 +48,7 @@ public:
     //////////////////////////////////////////////////////////////////////////
     //  IMediaFilter [added]
     //////////////////////////////////////////////////////////////////////////
-    STDMETHODIMP Run(REFERENCE_TIME tStart);
+    STDMETHODIMP Run(REFERENCE_TIME tStart); // it does call this...
     STDMETHODIMP GetState(DWORD dw, FILTER_STATE *pState);
 
 	//protected:
@@ -136,7 +136,7 @@ private:
     CVCam *m_pParent;
     // unused now? REFERENCE_TIME m_rtLastTime;
     HBITMAP m_hLogoBmp;
-    IReferenceClock *m_pClock;
+    // IReferenceClock *m_pClock; // did we ever used to set this up?
 
 	HRESULT setAsNormal(CMediaType *pmt);
 

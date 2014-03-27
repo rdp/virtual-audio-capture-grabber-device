@@ -4,6 +4,7 @@
 CCritSec gSharedState;
 
 extern int totalBlips;
+bool ever_started = false;
 //
 // FillBuffer
 //
@@ -15,16 +16,28 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
 	ShowOutput("requested audio frame");
 	//assert(m_pParent->IsActive()); // one of these can cause freezing on "stop button" in FME
 	//assert(!m_pParent->IsStopped());
-
-    CheckPointer(pms,E_POINTER);
+	
+    CheckPointer(pms, E_POINTER);
     BYTE *pData;
     HRESULT hr = pms->GetPointer(&pData);
     if (FAILED(hr)) {
-		ShowOutput("fail 1");
 		assert(false);
         return hr;
     }
-    
+
+	if(!ever_started) {
+		// allow it to startup until Run is called...so StreamTime can work see http://stackoverflow.com/questions/2469855/how-to-get-imediacontrol-run-to-start-a-file-playing-with-no-delay/2470548#2470548
+		FILTER_STATE myState;
+		CSourceStream::m_pFilter->GetState(INFINITE, &myState);
+		while(myState != State_Running) {
+		  // TODO accomodate for pausing better, we're single run only currently [does VLC do pausing even?]
+		  Sleep(1);
+		  ShowOutput("sleeping till graph running for audio...");
+		  m_pParent->GetState(INFINITE, &myState);	  
+		}
+		ever_started = true;
+	}
+
 	// the real meat -- get all the incoming data
 	LONG totalWrote = -1;
 	hr = LoopbackCaptureTakeFromBuffer(pData, pms->GetSize(), NULL, &totalWrote);
@@ -43,13 +56,13 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
 	}
 
     // Now set the sample's start and end time stamps...
-
+	
 	WAVEFORMATEX* pwfexCurrent = (WAVEFORMATEX*)m_mt.Format();
 	CRefTime sampleTimeUsed = (REFERENCE_TIME)(UNITS * totalWrote) / 
                      (REFERENCE_TIME)pwfexCurrent->nAvgBytesPerSec;
     CRefTime rtStart;
 	if(bDiscontinuityDetected || bVeryFirstPacket) { // could either use bFirstPacket or true here...true seemed to help that one guy...
-      m_pParent->StreamTime(rtStart); // gets current graph ref time [now] as its "start", as normal "capture" devices would, just in case that's better...
+      CSourceStream::m_pFilter->StreamTime(rtStart); // this is (zero based clock_time if Run already called) but we don't have access to start_offset, and want (just clock time) so don't use it... :|	  
 	  if(bDiscontinuityDetected && !bVeryFirstPacket) {
 	    ShowOutput("audio discontinuity detected");
 	  }
@@ -84,7 +97,7 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
     m_rtPreviousSampleEndTime = rtStart + sampleTimeUsed;
 
 	// NB that this *can* set it to a negative start time...hmm...which apparently is "ok" when a graph is just starting up it's expected...
-	ShowOutput("timestamping audio as %lld -> %lld", rtStart, m_rtPreviousSampleEndTime);
+	ShowOutput("\ntimestamping audio packet as %lld -> %lld\n", rtStart, m_rtPreviousSampleEndTime);
     hr = pms->SetTime((REFERENCE_TIME*) &rtStart, (REFERENCE_TIME*) &m_rtPreviousSampleEndTime);
 	if (FAILED(hr)) {
 		assert(false);
@@ -94,7 +107,7 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
 	// however, then VLC cannot then stream it at all.  So we leave it set to some time, and just require you to have VLC buffers of at least 40 or 50 ms
 	// [a possible VLC bug?] http://forum.videolan.org/viewtopic.php?f=14&t=92659&hilit=+50ms
 
-	// whatever SetMediaTime even does...
+	// whatever SetMediaTime even means...
     // hr = pms->SetMediaTime((REFERENCE_TIME*)&rtStart, (REFERENCE_TIME*)&m_rtPreviousSampleEndTime);
     //m_llSampleMediaTimeStart = m_rtSampleEndTime;
 

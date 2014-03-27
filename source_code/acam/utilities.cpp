@@ -18,11 +18,13 @@ void ShowOutput(const char *str, ...)
   vsprintf_s(buf,str,ptr);
   OutputDebugStringA(buf);
   OutputDebugStringA("\n");
+  //printf("%s\n", buf);
   //logToFile(buf);
+  va_end(ptr);
 #endif
 }
 
-HRESULT set_config_string_setting(LPCTSTR szValueName, wchar_t *szToThis ) {
+HRESULT set_config_string_setting(LPCTSTR szValueName, wchar_t *szToThis) {
 
    HKEY hKey = NULL;
    LONG i;
