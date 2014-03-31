@@ -15,3 +15,5 @@ int getChannels();
 HRESULT LoopbackCaptureTakeFromBuffer(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNotNullThenJustSetTypeOnly, LONG* sizeWrote);
 
 #define BITS_PER_BYTE 8
+
+#define VIRTUAL_AUDIO_VERSION L"0.4.6"

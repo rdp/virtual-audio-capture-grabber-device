@@ -18,6 +18,7 @@
 #include "common.h"
 #include <assert.h>
 
+
 //extern CCritSec m_cSharedState;
 
 // This class is exported from the acam.dll
