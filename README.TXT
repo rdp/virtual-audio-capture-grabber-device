@@ -8,8 +8,8 @@ https://github.com/rdp/screen-capture-recorder-to-video-windows-free
 
 == Installation ==
 
-To use, download+install from here: https://sourceforge.net/projects/virtualaudiodev/files
-then use it via its included "record for x seconds" utility, or
+To use, download+install from here: http://sourceforge.net/projects/screencapturer/files (it says "on screen capture recorder"
+then use it via its included start menu utilities "start menu/windows orb -> screen capturer -> ...", or use it
 as input to any other program that can take directshow devices as an input.
 
 == Usage ==
