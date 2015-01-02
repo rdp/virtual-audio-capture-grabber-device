@@ -13,6 +13,8 @@ if no audio device, return -1 or what not...
 
 == meh/never ==
 
+it can be set to 24 bit audio if their input "is" 24 bit audio? maybe?
+
 it doesn't complain whn I choose an unwritable dir and writing fails?  It also displays as "recording to /\" if I choose the base?  
 
 bad icons? background console?
