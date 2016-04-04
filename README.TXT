@@ -104,6 +104,10 @@ But that's hardware and this is a software answer :)
 
 There are a handful of (mostly closed source) related projects, see http://superuser.com/questions/98720/is-there-a-free-or-open-source-equivalent-to-vac
 
+== buildling ==
+
+If you want to hack on the source code open the visual studio files in /source_code/acam
+
 == attribution ==
 
 Some source code originally from the windows SDK samples, some taken from [1]
