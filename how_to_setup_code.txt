@@ -1,1 +1,7 @@
+basically install windows sdk 7.1 and visual studio express 2010 (a pain on windows 10)
+then build directshow baseclasses from the SDK.
+then open the visual studio project files in /source_code/acam
+It outputs a .dll file that you "register" via (in administrator console) 
+$ regsvr32 XXX.dll (and unregister when you're done with regsvr32 /u XXX.dll)
+
 git submodule update --init --recursive

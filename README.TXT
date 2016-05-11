@@ -102,13 +102,12 @@ But that's hardware and this is a software answer :)
 
 == related ==
 
-There are a handful of (mostly closed source) related projects, see http://superuser.com/questions/98720/is-there-a-free-or-open-source-equivalent-to-vac
+There are a handful of (mostly closed source) similar projects, some with more functionality <heh>
+see http://superuser.com/questions/98720/is-there-a-free-or-open-source-equivalent-to-vac
 
 == building ==
 
-If you want to hack on the source code open the visual studio project files in /source_code/acam
-You'll also want to first build the windows SDK directshow "base classes" and adjust the linking and include dependency folders.
-It outputs a .dll file that you "register" via (in administrator console) $ regsvr32 XXX.dll (and unregister when you're done with regsvr32 /u XXX.dll)
+If you want to hack on the source code see the file how_to_setup_code.txt
 
 == Attribution ==
 
