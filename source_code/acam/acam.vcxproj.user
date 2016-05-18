@@ -1,9 +1,9 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <LocalDebuggerCommand>c:\vids\ffmpeg.exe</LocalDebuggerCommand>
+    <LocalDebuggerCommand>C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\graphedt</LocalDebuggerCommand>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerCommandArguments>-f dshow -r 4 -i video=screen-capture-recorder:audio=virtual-audio-capturer -y yo.mp4</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>c:\dev\virtual-audio-capture-grabber-device\source_code\yo2.grf</LocalDebuggerCommandArguments>
     <LocalDebuggerWorkingDirectory>c:\vids</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

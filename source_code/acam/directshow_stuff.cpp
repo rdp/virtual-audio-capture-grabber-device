@@ -40,19 +40,7 @@ CVCam::CVCam(LPUNKNOWN lpunk, HRESULT *phr) :
     ASSERT(phr);
 	//m_pClock is null at this point...
     m_paStreams = (CSourceStream **) new CVCamStream*[1];
-    m_paStreams[0] = new CVCamStream(phr, this, L"Capture Pin");
-}
-
-
-STDMETHODIMP CVCam::Run(REFERENCE_TIME tStart) {
-	ShowOutput("run called");
-	// LODO why is this called seemingly *way* later than packets are already collected?
-	// ((CVCamStream*) m_paStreams[0])->m_rtPreviousSampleEndTime = 0;
-	// looks like we accomodate for "resetting" within our own discontinuity stuff...
-	// LODO should we...umm...not give any samples before second one or not here?
-    return CBaseFilter::Run(tStart); // setup something->m_tStart
-	// we have two ancestor Run's to choose from? huh wuh?
-	// return CSource::Run(tStart);
+    m_paStreams[0] = new CVCamStream(phr, this, L"Capture Virtual Audio Pin");
 }
 
 HRESULT CVCam::QueryInterface(REFIID riid, void **ppv)
@@ -64,9 +52,11 @@ HRESULT CVCam::QueryInterface(REFIID riid, void **ppv)
         return CSource::QueryInterface(riid, ppv);
 }
 
-// I don't think this actually gets called when it's paused, but added here just in case... http://msdn.microsoft.com/en-us/library/dd377472%28v=vs.85%29.aspx
+// this does seem to get called frequently... http://msdn.microsoft.com/en-us/library/dd377472%28v=vs.85%29.aspx
+// I believe theoretically return VFW_S_CANT_CUE means "don't call me for data" so we should be safe here [?] but somehow still FillBuffer is called :|
 STDMETHODIMP CVCam::GetState(DWORD dw, FILTER_STATE *pState)
 {
+	//ShowOutput("GetState call ed");
     CheckPointer(pState, E_POINTER);
     *pState = m_State;
     if (m_State == State_Paused)
@@ -100,7 +90,7 @@ CVCamStream::~CVCamStream()
 } 
 
 // these latency/pushsource stuffs never seem to get called...ever...at least by VLC...
-/* unimplemented yet...
+/* therefore unimplemented yet...
 HRESULT STDMETHODCALLTYPE CVCamStream::GetLatency(REFERENCE_TIME *storeItHere) {
 	*storeItHere = 10000/SECOND_FRACTIONS_TO_GRAB;
 	// 1_000_000ns per s, this is in 100 ns or 10_000/s
@@ -280,15 +270,16 @@ HRESULT CVCamStream::OnThreadDestroy()
 HRESULT CVCamStream::Stop()
 {
 	// never get here
-	ShowOutput("stop");
+	ShowOutput("pin stop called");
+	// call Inactive to initiate shutdown anyway just in case :)
+	Inactive();
 	return S_OK;
 }
 
-
 HRESULT CVCamStream::Exit()
 {
-	// never get here
-    ShowOutput("exit method called");
+	// never seem to get here
+    ShowOutput("exit called");
 	return S_OK;
 }
 
@@ -296,21 +287,49 @@ int currentlyRunning = 0;
 
 HRESULT CVCamStream::Inactive()
 {
-	// we get here
-	ShowOutput("inactive: about to release loopback");
-	loopBackRelease();
-	ShowOutput("loopback released");
-	currentlyRunning = 0; //allow it to restart later...
+	// we get here at least with vlc
+	ShowOutput("stream inactive called");
 	return CSourceStream::Inactive(); //parent method
 }
 
+STDMETHODIMP CVCam::Stop()
+{
+	ShowOutput("parent stop called");
+	if (currentlyRunning)
+	{
+      ShowOutput("about to release loopback");
+	  loopBackRelease();
+	  ShowOutput("loopback released");
+  	  currentlyRunning = 0; // allow it to restart later...
+	}
+
+	return CSource::Stop();
+}
+
+STDMETHODIMP CVCam::Pause()
+{
+	// pause also gets called at "graph setup" time somehow before an initial Run, and always, weirdly...
+	// but not at "teardown" or "stop" time apparently...
+	// but yes at "pause" time as it were (though some requests for packets still occur, even after that, yikes!)
+	// pause is also called immediately before Stop...yikes!
+	// so the order is pause, run, pause, stop
+	// or, with a pause in there
+	// pause, run, pause, run, pause, stop
+	// unfortunately after each pause it still "requires" a few samples out or the graph will die (well, as we're doing it ???)
+	// see also http://microsoft.public.multimedia.directx.dshow.programming.narkive.com/h8ZxbM9E/csourcestream-fillbuffer-timing this thing shucks..huh?
+	// so current plan: just start it once, leave it going...but when Run is called it clears a buffer somewhere...
+	ShowOutput("parent pause called");
+	return CBaseFilter::Pause();
+}
 
 // Called when graph is first started
 HRESULT CVCamStream::OnThreadCreate()
 {
-	assert(currentlyRunning == 0); // sanity...
+	ShowOutput("OnThreadCreate called"); // seems like this gets called pretty early...
+    GetMediaType(0, &m_mt); // give it a default type...do we even  need this? LOL
+
+	assert(currentlyRunning == 0); // sanity check no double starts...
 	currentlyRunning = TRUE;
-    GetMediaType(0, &m_mt); // give it a default type...
 
     HRESULT hr = LoopbackCaptureSetup();
     if (FAILED(hr)) {
@@ -320,6 +339,19 @@ HRESULT CVCamStream::OnThreadCreate()
 
     return NOERROR;
 }
+void LoopbackCaptureClear();
+STDMETHODIMP CVCam::Run(REFERENCE_TIME tStart) {
+	ShowOutput("run called");
+	// LODO why is this called seemingly *way* later than packets are already collected? I guess it calls Pause first or something, to let filters "warm up" ... so in essence, this means "unPause! go!"
+	// ((CVCamStream*) m_paStreams[0])->m_rtPreviousSampleEndTime = 0;
+	// looks like we accomodate for "resetting" within our own discontinuity stuff...
+	// LODO should we...umm...not give any samples before second one or not here?
+			ShowOutput("clearing loop back capture buffer");
+   	    LoopbackCaptureClear(); // could stop and restart it I guess here, too...in theory...but that seems a bit violent and this more the "dshow way of doing things"
+
+	return CSource::Run(tStart); // this just calls CBaseFilter::Run (which calls Run on all the pins *then* sets its state to running)
+}
+
 
 //////////////////////////////////////////////////////////////////////////
 //  IAMStreamConfig

@@ -1,10 +1,11 @@
 #include "stdafx.h"
 #include "acam.h"
 
+
 CCritSec gSharedState;
 
 extern int totalBlips;
-bool ever_started = false;
+void LoopbackCaptureClear();
 //
 // FillBuffer
 //
@@ -13,7 +14,7 @@ bool ever_started = false;
 HRESULT CVCamStream::FillBuffer(IMediaSample *pms) 
 {	
 	// I don't expect these...the parent controls this/us and doesn't call us when it is stopped I guess, so we should always be active...
-	ShowOutput("requested audio frame");
+	ShowOutput("downstream requested an audio frame (FillBuffer cal led)");
 	//assert(m_pParent->IsActive()); // one of these can cause freezing on "stop button" in FME
 	//assert(!m_pParent->IsStopped());
 	
@@ -25,17 +26,13 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
         return hr;
     }
 
-	if(!ever_started) {
-		// allow it to startup until Run is called...so StreamTime can work see http://stackoverflow.com/questions/2469855/how-to-get-imediacontrol-run-to-start-a-file-playing-with-no-delay/2470548#2470548
-		FILTER_STATE myState;
-		CSourceStream::m_pFilter->GetState(INFINITE, &myState);
-		while(myState != State_Running) {
-		  // TODO accomodate for pausing better, we're single run only currently [does VLC do pausing even?]
-		  Sleep(1);
-		  ShowOutput("sleeping till graph running for audio...");
-		  m_pParent->GetState(INFINITE, &myState);	  
-		}
-		ever_started = true;
+	// allow it to warmup until Run is called...so StreamTime can work right (ai ai) see http://stackoverflow.com/questions/2469855/how-to-get-imediacontrol-run-to-start-a-file-playing-with-no-delay/2470548#2470548
+	FILTER_STATE myState;
+	CSourceStream::m_pFilter->GetState(INFINITE, &myState); // get parent filter state which is only set to Run "after pause" etc.
+	while(myState != State_Running) {
+		ShowOutput("sleeping till graph running for audio...");
+		Sleep(1);
+		m_pParent->GetState(INFINITE, &myState);	  
 	}
 
 	// the real meat -- get all the incoming data
@@ -44,7 +41,7 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
 	if(FAILED(hr)) {
 		// this one can return false during shutdown, so it's actually ok to just return from here...
 		// assert(false);
-		ShowOutput("shutdown 1");
+		ShowOutput("capture failed 1");
 		return hr;
 	}
 

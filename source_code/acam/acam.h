@@ -18,8 +18,7 @@
 #include "common.h"
 #include <assert.h>
 
-
-//extern CCritSec m_cSharedState;
+//extern CCritSec m_cSharedState; // unused
 
 // This class is exported from the acam.dll
 class ACAM_API Cacam {
@@ -34,8 +33,8 @@ ACAM_API int fnacam(void);
 
 EXTERN_C const GUID CLSID_VirtualCam; // reuse it...
 
-
-class CVCam : public CSource // not needed -> public IMediaFilter [?]
+// the "parent" class
+class CVCam : public CSource // not needed "public IMediaFilter" since CSource is already that
 {
 public:
     //////////////////////////////////////////////////////////////////////////
@@ -47,25 +46,25 @@ public:
     IFilterGraph *GetGraph() {return m_pGraph;};
 
     //////////////////////////////////////////////////////////////////////////
-    //  IMediaFilter [added]
+    //  IMediaFilter overrides [added]
     //////////////////////////////////////////////////////////////////////////
     STDMETHODIMP Run(REFERENCE_TIME tStart); // it does call this...
     STDMETHODIMP GetState(DWORD dw, FILTER_STATE *pState);
+    STDMETHODIMP Pause();
 
 	//protected:
 
    // IReferenceClock *m_pClock; // wrong place I think
 
+	// CBaseFilter
+	STDMETHODIMP Stop();
 
 private:
     CVCam(LPUNKNOWN lpunk, HRESULT *phr);
 };
 
 // child
-
-
-// // IPersistStreamInit, IPersistStream, ISpecifyPropertyPages, IPersistPropertyBag, IBaseFilter, IMediaFilter, IPersist, IAMovieSetup, IAMFilterMiscFlags, IToneSourceFilter, IDispatch
-
+// I think stream means "a pin" as it were...
 class CVCamStream : public CSourceStream, public IAMStreamConfig, public IKsPropertySet, public IAMBufferNegotiation, public IAMFilterMiscFlags //IAMPushSource
 {
 public:

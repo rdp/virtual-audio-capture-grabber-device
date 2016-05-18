@@ -110,7 +110,7 @@ int getChannels() {
 // we only call this once...per hit of the play button :)
 HRESULT LoopbackCaptureSetup()
 {
-	assert(shouldStop); // duplicate starts would be odd...
+	assert(shouldStop); // double start would be odd...
 	shouldStop = false; // allow graphs to restart, if they so desire...
 	pnFrames = 0;
 	bool bInt16 = true; // makes it actually work, for some reason...my guess is it's a more common format
@@ -557,6 +557,12 @@ HRESULT LoopbackCaptureTakeFromBuffer(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNo
       Sleep(1);
 	}
 	return E_FAIL; // we didn't fill anything...and are shutting down...
+}
+
+void LoopbackCaptureClear() {
+        CAutoLock cObjectLock(&csMyLock);  // Lock the critical section, releases scope after block is done...
+		pBufLocalCurrentEndLocation = 0;
+		bDiscontinuityDetected = 1; // it uses this for timestamping the next packet
 }
 
 // clean up
