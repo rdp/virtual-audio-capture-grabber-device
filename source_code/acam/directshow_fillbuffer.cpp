@@ -31,18 +31,30 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
 	CSourceStream::m_pFilter->GetState(INFINITE, &myState); // get parent filter state which is only set to Run "after pause" etc.
 	while(myState != State_Running) {
 		ShowOutput("sleeping till graph running for audio...");
+		ShowOutput("clearing loop back capture buffer"); // why have extra from "during" the paused state? just trash it! :)
+   	    LoopbackCaptureClear(); // could stop and restart it I guess here, too...in theory...but that seems a bit violent and this more the "dshow way of doing things"
 		Sleep(1);
-		m_pParent->GetState(INFINITE, &myState);	  
+		Command com;
+        if(CheckRequest(&com)) { // from http://microsoft.public.multimedia.directx.dshow.programming.narkive.com/h8ZxbM9E/csourcestream-fillbuffer-timing
+          if(com == CMD_STOP) {
+			  ShowOutput("exiting early from CMD_STOP thinger");
+              return S_FALSE;
+		  }
+        }
+		m_pParent->GetState(INFINITE, &myState);  
 	}
 
-	// the real meat -- get all the incoming data
+	// the real meat -- get all the incoming audio data
 	LONG totalWrote = -1;
 	hr = LoopbackCaptureTakeFromBuffer(pData, pms->GetSize(), NULL, &totalWrote);
 	if(FAILED(hr)) {
 		// this one can return false during shutdown, so it's actually ok to just return from here...
 		// assert(false);
 		ShowOutput("capture failed 1");
-		return hr;
+		//return hr; // don't return false here or people may get a "the graph was unable to change state unspecified error return code: 0x80004005) when hitting the stop button in graphedit :|
+		// which actually occurs during shutdown...not sure what to really do here...
+		pms->SetActualDataLength(0);
+		return S_OK;
 	}
 
 	CAutoLock cAutoLockShared(&gSharedState); // for the bFirstPacket boolean control, except there's probably still some odd race conditions er other...

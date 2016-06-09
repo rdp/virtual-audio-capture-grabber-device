@@ -300,7 +300,7 @@ STDMETHODIMP CVCam::Stop()
       ShowOutput("about to release loopback");
 	  loopBackRelease();
 	  ShowOutput("loopback released");
-  	  currentlyRunning = 0; // allow it to restart later...
+  	  currentlyRunning = 0; // allow it to restart later...untested...
 	}
 
 	return CSource::Stop();
@@ -315,6 +315,7 @@ STDMETHODIMP CVCam::Pause()
 	// so the order is pause, run, pause, stop
 	// or, with a pause in there
 	// pause, run, pause, run, pause, stop
+	// or have I seen run pause before, initially [?] ai ai
 	// unfortunately after each pause it still "requires" a few samples out or the graph will die (well, as we're doing it ???)
 	// see also http://microsoft.public.multimedia.directx.dshow.programming.narkive.com/h8ZxbM9E/csourcestream-fillbuffer-timing this thing shucks..huh?
 	// so current plan: just start it once, leave it going...but when Run is called it clears a buffer somewhere...
@@ -346,9 +347,6 @@ STDMETHODIMP CVCam::Run(REFERENCE_TIME tStart) {
 	// ((CVCamStream*) m_paStreams[0])->m_rtPreviousSampleEndTime = 0;
 	// looks like we accomodate for "resetting" within our own discontinuity stuff...
 	// LODO should we...umm...not give any samples before second one or not here?
-			ShowOutput("clearing loop back capture buffer");
-   	    LoopbackCaptureClear(); // could stop and restart it I guess here, too...in theory...but that seems a bit violent and this more the "dshow way of doing things"
-
 	return CSource::Run(tStart); // this just calls CBaseFilter::Run (which calls Run on all the pins *then* sets its state to running)
 }
 
