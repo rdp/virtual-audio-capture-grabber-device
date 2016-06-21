@@ -5,3 +5,12 @@ It outputs a .dll file that you "register" via (in administrator console)
 $ regsvr32 XXX.dll (and unregister when you're done with regsvr32 /u XXX.dll)
 
 git submodule update --init --recursive
+
+In essence this is the "WASAPI loopback" sample
+https://blogs.msdn.microsoft.com/matthew_van_eerde/2008/12/16/sample-wasapi-loopback-capture-record-what-you-hear/
+
+combined with the "capture source filter" http://tmhare.mvps.org/downloads.htm but with many improvements :)
+
+So go to those two to learn the basics.
+
+This is meant to provide a "directshow filter" you can use in your graph, not a demo of how to do graphs.

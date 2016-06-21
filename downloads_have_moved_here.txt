@@ -1,0 +1,3 @@
+please download releases from here (it is packaged within it):
+
+https://github.com/rdp/screen-capture-recorder-to-video-windows-free
