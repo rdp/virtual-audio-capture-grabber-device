@@ -16,4 +16,6 @@ HRESULT LoopbackCaptureTakeFromBuffer(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNo
 
 #define BITS_PER_BYTE 8
 
-#define VIRTUAL_AUDIO_VERSION L"0.4.6"
+#define VIRTUAL_AUDIO_VERSION L"0.5.0"
+
+void LoopbackCaptureClear();

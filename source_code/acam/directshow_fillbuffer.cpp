@@ -5,7 +5,6 @@
 CCritSec gSharedState;
 
 extern int totalBlips;
-void LoopbackCaptureClear();
 //
 // FillBuffer
 //
@@ -33,6 +32,7 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
 		ShowOutput("sleeping till graph running for audio...");
 		ShowOutput("clearing loop back capture buffer"); // why have extra from "during" the paused state? just trash it! :)
    	    LoopbackCaptureClear(); // could stop and restart it I guess here, too...in theory...but that seems a bit violent and this more the "dshow way of doing things"
+		// also sets bVeryFirstPacket
 		Sleep(1);
 		Command com;
         if(CheckRequest(&com)) { // from http://microsoft.public.multimedia.directx.dshow.programming.narkive.com/h8ZxbM9E/csourcestream-fillbuffer-timing
@@ -43,6 +43,9 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
         }
 		m_pParent->GetState(INFINITE, &myState);  
 	}
+
+	if (bVeryFirstPacket)
+	  LoopbackCaptureClear(); // this is to recover from pause resumes :|
 
 	// the real meat -- get all the incoming audio data
 	LONG totalWrote = -1;

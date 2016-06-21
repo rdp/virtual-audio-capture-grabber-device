@@ -342,14 +342,15 @@ HRESULT CVCamStream::OnThreadCreate()
 }
 void LoopbackCaptureClear();
 STDMETHODIMP CVCam::Run(REFERENCE_TIME tStart) {
-	ShowOutput("run called");
+	ShowOutput("Parent Run called");
+	LoopbackCaptureClear(); // post pause, want to clear this to alert it to use the right time stamps...I think hope!
+
 	// LODO why is this called seemingly *way* later than packets are already collected? I guess it calls Pause first or something, to let filters "warm up" ... so in essence, this means "unPause! go!"
 	// ((CVCamStream*) m_paStreams[0])->m_rtPreviousSampleEndTime = 0;
 	// looks like we accomodate for "resetting" within our own discontinuity stuff...
 	// LODO should we...umm...not give any samples before second one or not here?
 	return CSource::Run(tStart); // this just calls CBaseFilter::Run (which calls Run on all the pins *then* sets its state to running)
 }
-
 
 //////////////////////////////////////////////////////////////////////////
 //  IAMStreamConfig

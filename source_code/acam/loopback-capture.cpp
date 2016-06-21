@@ -439,7 +439,7 @@ HRESULT propagateBufferOnce() {
         }
 
 		{
-  		  CAutoLock cAutoLockShared(&gSharedState);
+  		  CAutoLock cAutoLockShared(&gSharedState);  // for the booleans, we lock csMyLock later :| XXXX weird?
 
 			if( dwFlags == 0 ) {
 			  // the good case, got audio packet
@@ -537,11 +537,11 @@ HRESULT propagateBufferOnce() {
 // iSize is max size of the BYTE buffer...so maybe...we should just drop it if we have past that size? hmm...we're probably
 HRESULT LoopbackCaptureTakeFromBuffer(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNotNullThenJustSetTypeOnly, LONG* totalBytesWrote)
  {
-	while(!shouldStop) { // allow this to exit, too, at shutdown.
+	while(!shouldStop) { // allow this to exit, too, at shutdown, possibly a few times we kind of got stuck in here, waiting for more data, but it was shutdown so not receiving any more data :|
        {
         CAutoLock cObjectLock(&csMyLock);  // Lock the critical section, releases scope after block is done...
 		if(pBufLocalCurrentEndLocation > 0) {
-		  // fails lodo is that ok? 
+		  // fails lodo is that ok though? 
 		  // assert(pBufLocalCurrentEndLocation <= expectedMaxBufferSize);
 		  int totalToWrite = MIN(pBufLocalCurrentEndLocation, expectedMaxBufferSize);
 		  ASSERT(totalToWrite <= iSize); // just in case...just in case almost...
