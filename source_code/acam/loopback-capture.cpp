@@ -435,10 +435,10 @@ HRESULT propagateBufferOnce() {
         
         if (FAILED(hr)) {
             ShowOutput("IAudioCaptureClient::GetBuffer failed after %u frames: hr = 0x%08x\n", pnFrames, hr);
-            pAudioClient->Stop();
+            /*pAudioClient->Stop();
             AvRevertMmThreadCharacteristics(hTask);
             pAudioCaptureClient->Release();
-            pAudioClient->Release();            
+            pAudioClient->Release();*/            
             return hr;            
         }
 
@@ -524,10 +524,10 @@ HRESULT propagateBufferOnce() {
         hr = pAudioCaptureClient->ReleaseBuffer(nNumFramesToRead);
         if (FAILED(hr)) {
             ShowOutput("IAudioCaptureClient::ReleaseBuffer failed after %u frames: hr = 0x%08x\n", pnFrames, hr);
-            pAudioClient->Stop();
+            /*pAudioClient->Stop();
             AvRevertMmThreadCharacteristics(hTask);
             pAudioCaptureClient->Release();
-            pAudioClient->Release();            
+            pAudioClient->Release(); */            
             return hr;            
         }
         
