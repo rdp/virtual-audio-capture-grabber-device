@@ -24,6 +24,8 @@ IMMDevice *m_pMMDevice;
 UINT32 nBlockAlign;
 UINT32 pnFrames;
 
+bool propagatingNormally;
+
 CCritSec csMyLock;  // shared critical section. Starts not locked...
 
 int shouldStop = true;
@@ -356,8 +358,8 @@ BYTE *captureData;
 		  return hr;
   	    }
 	}
-	start_silence_thread();
-	return S_OK;
+	hr = start_silence_thread();
+	return hr;
 } // end LoopbackCaptureSetup
 
 
@@ -380,7 +382,7 @@ HRESULT propagateBufferOnce() {
         hr = pAudioCaptureClient->GetNextPacketSize(&nNextPacketSize); // get next packet, if one is ready...
         if (FAILED(hr)) {
             ShowOutput("IAudioCaptureClient::GetNextPacketSize failed after %u frames: hr = 0x%08x\n", pnFrames, hr);
-            /*pAudioClient->Stop(); // cleaned up in the teardown, don't do it twice -> segfault!
+            /*pAudioClient->Stop(); // cleaned up in the teardown, don't do it twice -> segfault! [we get here if unplug headphones]
             AvRevertMmThreadCharacteristics(hTask);
             pAudioCaptureClient->Release();
             pAudioClient->Release();*/            
@@ -559,6 +561,9 @@ HRESULT LoopbackCaptureTakeFromBuffer(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNo
 	  // using sleep doesn't seem to hurt the cpu
 	  // and it seems to not get many "discontinuity" messages currently...
       Sleep(1);
+	  if (!propagatingNormally) {
+		  return E_FAIL; // the capture has died, Jim!
+	  }
 	}
 	return E_FAIL; // we didn't fill anything...and are shutting down...
 }
@@ -601,10 +606,12 @@ void outputStats() {
 
 // called via reflection :)
 static DWORD WINAPI propagateBufferForever(LPVOID pv) {
+  propagatingNormally = true; // XXXX use events, the coolio way :|
   while(!shouldStop) {
     HRESULT hr = propagateBufferOnce();
 	if(FAILED(hr)) {
-	  return hr;
+	  propagatingNormally = false;
+	  return hr; // exit thread
 	}
   }
   return S_OK;

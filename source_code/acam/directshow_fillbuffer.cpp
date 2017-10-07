@@ -54,10 +54,12 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
 		// this one can return false during shutdown, so it's actually ok to just return from here...
 		// assert(false);
 		ShowOutput("capture failed 1");
-		//return hr; // don't return false here or people may get a "the graph was unable to change state unspecified error return code: 0x80004005) when hitting the stop button in graphedit :|
+		return hr; 
+		// don't return false here or people may get a "the graph was unable to change state unspecified error return code: 0x80004005) when hitting the stop button in graphedit :|
 		// which actually occurs during shutdown...not sure what to really do here...
-		pms->SetActualDataLength(0);
-		return S_OK;
+		//pms->SetActualDataLength(0);
+		//return S_OK;
+		// except we *want* the graph to abort if they've unplugged something hrm...
 	}
 
 	CAutoLock cAutoLockShared(&gSharedState); // for the bFirstPacket boolean control, except there's probably still some odd race conditions er other...
