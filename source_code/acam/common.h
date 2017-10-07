@@ -10,7 +10,7 @@ extern bool bVeryFirstPacket;
 void ShowOutput(const char *str, ...);
 HRESULT set_config_string_setting(LPCTSTR szValueName, wchar_t *szToThis );
 
-int getHtzRate();
+int getHtzRate(HRESULT *hr);
 int getBitsPerSample();
 int getChannels();
 

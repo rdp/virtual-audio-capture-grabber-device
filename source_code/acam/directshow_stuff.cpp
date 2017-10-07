@@ -154,21 +154,24 @@ HRESULT CVCamStream::SetMediaType(const CMediaType *pmt)
     return hr;
 }
 
-HRESULT setupPwfex(WAVEFORMATEX *pwfex, AM_MEDIA_TYPE *pmt) {
+HRESULT setupPwfex(WAVEFORMATEX *pwfex, AM_MEDIA_TYPE *pmt) { // called super early during negotiation...
 	// we prefer PCM since WAVE_FORMAT_EXTENSIBLE seems to cause IFilterGraph::DirectConnect to fail, and many programs use it [VLC maybe does?]
 	// also we set it up to auto convert to PCM for us
 	// see also the bInt16 setting
 	pwfex->wFormatTag = WAVE_FORMAT_PCM;
 	pwfex->cbSize = 0;                  // apparently should be zero if using WAVE_FORMAT_PCM http://msdn.microsoft.com/en-us/library/ff538799(VS.85).aspx
 	pwfex->nChannels = getChannels();               // 1 for mono, 2 for stereo..
-	pwfex->nSamplesPerSec = getHtzRate();
+	HRESULT hr;
+	pwfex->nSamplesPerSec = getHtzRate(&hr);
+	if (hr != S_OK) {
+		return hr;
+	}
 	pwfex->wBitsPerSample = 16;          // 16 bit sound
 	pwfex->nBlockAlign = (WORD)((pwfex->wBitsPerSample * pwfex->nChannels) / BITS_PER_BYTE);
 	pwfex->nAvgBytesPerSec = pwfex->nSamplesPerSec * pwfex->nBlockAlign; // it can't calculate this itself? huh?
 		
 	// copy this info into the pmt
-
-	HRESULT hr = ::CreateAudioMediaType(pwfex, pmt, FALSE /* dont allocate more memory */);
+    hr = ::CreateAudioMediaType(pwfex, pmt, FALSE /* dont allocate more memory */);
 	return hr;
 }
 

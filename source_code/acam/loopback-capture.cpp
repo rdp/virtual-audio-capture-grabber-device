@@ -50,7 +50,7 @@ const IID IID_IMMDeviceEnumerator = __uuidof(IMMDeviceEnumerator);
 const IID IID_IAudioClient = __uuidof(IAudioClient);
 const IID IID_IAudioRenderClient = __uuidof(IAudioRenderClient);
 
-void propagateWithRawCurrentFormat(WAVEFORMATEX *toThis) {
+void propagateWithRawCurrentFormat(WAVEFORMATEX *toThis, HRESULT *hrOut) {
 	WAVEFORMATEX *pwfx;
 	IMMDevice *pMMDevice;
 	IAudioClient *pAudioClient;
@@ -60,7 +60,8 @@ void propagateWithRawCurrentFormat(WAVEFORMATEX *toThis) {
 
     HRESULT hr = get_default_device(&pMMDevice);
     if (FAILED(hr)) {
-        assert(false);
+		*hrOut = hr;
+		return;
     }
 	// activate an (the default, for us, since we want loopback) IAudioClient
     hr = pMMDevice->Activate(
@@ -70,7 +71,8 @@ void propagateWithRawCurrentFormat(WAVEFORMATEX *toThis) {
     );
     if (FAILED(hr)) {
         ShowOutput("IMMDevice::Activate(IAudioClient) failed: hr = 0x%08x", hr);
-		assert(false);
+		*hrOut = hr;
+		return;
     }
 
 	hr = pAudioClient->GetMixFormat(&pwfx);
@@ -78,7 +80,8 @@ void propagateWithRawCurrentFormat(WAVEFORMATEX *toThis) {
         ShowOutput("IAudioClient::GetMixFormat failed: hr = 0x%08x\n", hr);
         CoTaskMemFree(pwfx);
         pAudioClient->Release();
-   		assert(false);
+		*hrOut = hr;
+		return;
     }
 	pAudioClient->Stop();
     AvRevertMmThreadCharacteristics(hTask);
@@ -86,11 +89,12 @@ void propagateWithRawCurrentFormat(WAVEFORMATEX *toThis) {
     pMMDevice->Release();
 	memcpy(toThis, pwfx, sizeof(WAVEFORMATEX));
 	CoTaskMemFree(pwfx); 
+	*hrOut = S_OK;
 }
 
-int getHtzRate() {
+int getHtzRate(HRESULT *hr) { // called earliest so return "is it alive?"
 	WAVEFORMATEX format;
-	propagateWithRawCurrentFormat(&format);
+	propagateWithRawCurrentFormat(&format, hr);
 	return format.nSamplesPerSec;
 }
 /*
@@ -102,7 +106,8 @@ int getBitsPerSample() {
 */
 int getChannels() {
 	WAVEFORMATEX format;
-	propagateWithRawCurrentFormat(&format);
+    HRESULT hr;
+	propagateWithRawCurrentFormat(&format, &hr);
 	return format.nChannels;
 }
 

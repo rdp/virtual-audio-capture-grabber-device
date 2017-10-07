@@ -7,10 +7,9 @@
 #include <stdio.h>
 #include <avrt.h>
 
-// I guess this is the default umm...audio output device?
-
+// I guess this is the default...audio output device...
 HRESULT get_default_device(IMMDevice **ppMMDevice) {
-    HRESULT hr = S_OK;
+    HRESULT hr;
     IMMDeviceEnumerator *pMMDeviceEnumerator;
     // activate a device enumerator
     hr = CoCreateInstance(
@@ -30,6 +29,5 @@ HRESULT get_default_device(IMMDevice **ppMMDevice) {
         printf("IMMDeviceEnumerator::GetDefaultAudioEndpoint failed: hr = 0x%08x\n", hr);
         return hr;
     }
-
     return S_OK;
 }
