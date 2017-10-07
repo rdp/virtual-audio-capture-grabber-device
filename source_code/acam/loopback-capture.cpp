@@ -2,8 +2,6 @@
 
 #include <streams.h>
 #include <windows.h>
-#include <mmsystem.h>
-#include <mmdeviceapi.h>
 #include <audioclient.h>
 #include <stdio.h>
 #include <avrt.h>
@@ -13,7 +11,7 @@
 
 //HRESULT open_file(LPCWSTR szFileName, HMMIO *phFile);
 
-HRESULT get_default_device(IMMDevice **ppMMDevice);
+
 void outputStats();
 
 IAudioCaptureClient *pAudioCaptureClient;

@@ -11,7 +11,6 @@
 #endif
 
 #include <streams.h>
-#include <initguid.h>
 #include <dllsetup.h>
 #include <stdio.h>
 #include <Windows.h>

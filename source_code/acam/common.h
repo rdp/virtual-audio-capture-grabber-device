@@ -1,3 +1,5 @@
+#include <mmdeviceapi.h>
+#include <mmsystem.h>
 #define SECOND_FRACTIONS_TO_GRAB 16
 
 // dangerous macros!
@@ -16,6 +18,8 @@ HRESULT LoopbackCaptureTakeFromBuffer(BYTE pBuf[], int iSize, WAVEFORMATEX* ifNo
 
 #define BITS_PER_BYTE 8
 
-#define VIRTUAL_AUDIO_VERSION L"0.5.0"
+#define VIRTUAL_AUDIO_VERSION L"0.6.0"
 
 void LoopbackCaptureClear();
+
+HRESULT get_default_device(IMMDevice **ppMMDevice);
