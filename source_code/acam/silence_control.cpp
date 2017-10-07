@@ -73,6 +73,7 @@ HRESULT start_silence_thread() {
     }
 
     CloseHandle(hStartedEvent);
+	return S_OK;
 }
 
 HRESULT join_silence_thread() {
