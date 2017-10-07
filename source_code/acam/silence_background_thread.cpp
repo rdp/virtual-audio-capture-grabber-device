@@ -197,7 +197,7 @@ DWORD WINAPI PlaySilenceThreadFunction(LPVOID pContext) {
         UINT32 nFramesOfPadding;
         hr = pAudioClient->GetCurrentPadding(&nFramesOfPadding);
         if (FAILED(hr)) {
-            printf("IAudioClient::GetCurrentPadding failed on pass %u: hr = 0x%08x\n", nPasses, hr);
+            ShowOutput("IAudioClient::GetCurrentPadding failed on pass %u: hr = 0x%08x\n", nPasses, hr);
             pAudioClient->Stop();
             AvRevertMmThreadCharacteristics(hTask);
             CloseHandle(hFeedMe);
@@ -209,7 +209,7 @@ DWORD WINAPI PlaySilenceThreadFunction(LPVOID pContext) {
 
         if (nFramesOfPadding == nFramesInBuffer) {
             hr = E_UNEXPECTED;
-            printf("Got \"feed me\" event but IAudioClient::GetCurrentPadding reports buffer is full - glitch?\n");
+            ShowOutput("Got \"feed me\" event but IAudioClient::GetCurrentPadding reports buffer is full - glitch?\n");
             pAudioClient->Stop();
             AvRevertMmThreadCharacteristics(hTask);
             CloseHandle(hFeedMe);

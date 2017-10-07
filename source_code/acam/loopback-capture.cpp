@@ -380,10 +380,10 @@ HRESULT propagateBufferOnce() {
         hr = pAudioCaptureClient->GetNextPacketSize(&nNextPacketSize); // get next packet, if one is ready...
         if (FAILED(hr)) {
             ShowOutput("IAudioCaptureClient::GetNextPacketSize failed after %u frames: hr = 0x%08x\n", pnFrames, hr);
-            pAudioClient->Stop();
+            /*pAudioClient->Stop(); // cleaned up in the teardown, don't do it twice -> segfault!
             AvRevertMmThreadCharacteristics(hTask);
             pAudioCaptureClient->Release();
-            pAudioClient->Release();            
+            pAudioClient->Release();*/            
             return hr;
         }
 
@@ -576,11 +576,16 @@ void loopBackRelease() {
 	WaitForSingleObject(m_hThread, INFINITE);
     CloseHandle(m_hThread);
     m_hThread = NULL;
-	pAudioClient->Stop();
+	if (pAudioClient) {
+      m_pMMDevice->Release();
+	  pAudioClient->Stop();
+	  //pAudioClient->GetService();
+      pAudioCaptureClient->Release();
+      pAudioClient->Release();
+
+	}
     AvRevertMmThreadCharacteristics(hTask);
-    pAudioCaptureClient->Release();
-    pAudioClient->Release();
-    m_pMMDevice->Release();
+
 	// thread is done, we are exiting...
 	pBufLocalCurrentEndLocation = 0;
 	outputStats();

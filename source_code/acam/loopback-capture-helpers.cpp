@@ -26,7 +26,7 @@ HRESULT get_default_device(IMMDevice **ppMMDevice) {
     hr = pMMDeviceEnumerator->GetDefaultAudioEndpoint(eRender, eConsole, ppMMDevice);
     pMMDeviceEnumerator->Release();
     if (FAILED(hr)) {
-        printf("IMMDeviceEnumerator::GetDefaultAudioEndpoint failed: hr = 0x%08x\n", hr);
+        printf("IMMDeviceEnumerator::GetDefaultAudioEndpoint failed: hr = 0x%08x\n", hr); // we get here if no headphones plugged in
         return hr;
     }
     return S_OK;
