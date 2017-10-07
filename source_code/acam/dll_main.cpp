@@ -32,7 +32,7 @@
 #endif
 
 #include <olectl.h>
-#include <initguid.h>
+#include <initguid.h> // can only include this once/project
 #include <dllsetup.h>
 #include "acam.h"
 

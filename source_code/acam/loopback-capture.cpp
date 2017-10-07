@@ -13,7 +13,8 @@
 
 
 void outputStats();
-
+HRESULT start_silence_thread();
+HRESULT join_silence_thread();
 IAudioCaptureClient *pAudioCaptureClient;
 IAudioClient *pAudioClient;
 HANDLE hTask;
@@ -350,8 +351,8 @@ BYTE *captureData;
 		  return hr;
   	    }
 	}
-
-	return hr;
+	start_silence_thread();
+	return S_OK;
 } // end LoopbackCaptureSetup
 
 
@@ -578,6 +579,7 @@ void loopBackRelease() {
 	// thread is done, we are exiting...
 	pBufLocalCurrentEndLocation = 0;
 	outputStats();
+	join_silence_thread();
 }
 
 

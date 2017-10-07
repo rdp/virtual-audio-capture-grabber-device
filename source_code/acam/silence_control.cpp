@@ -9,7 +9,7 @@ HANDLE hStopEvent;
 HANDLE hThread;
 DWORD WINAPI PlaySilenceThreadFunction(LPVOID pContext);
 
-int start_silence_thread() {
+HRESULT start_silence_thread() {
     // create a "silence has started playing" event
     hStartedEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
     if (NULL == hStartedEvent) {
@@ -78,6 +78,7 @@ int start_silence_thread() {
 HRESULT join_silence_thread() {
 	SetEvent(hStopEvent);
 	WaitForSingleObject(hThread, INFINITE);
+
 	// wait for the thread to terminate
 	HANDLE rhHandles[1] = { hThread };
 
@@ -105,5 +106,6 @@ HRESULT join_silence_thread() {
 
 	CloseHandle(hThread);
 	CloseHandle(hStopEvent);
+	ShowOutput("silence thread done success!");
 	return S_OK;
 }

@@ -3,8 +3,8 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LocalDebuggerCommand>C:\installs\graphstudionext.exe</LocalDebuggerCommand>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerCommandArguments>c:\dev\ffmpeg\audio_only.grf</LocalDebuggerCommandArguments>
-    <LocalDebuggerWorkingDirectory>c:\dev\ffmpeg</LocalDebuggerWorkingDirectory>
+    <LocalDebuggerCommandArguments>c:\dev\ffmpeg\audio\audio_only.grf</LocalDebuggerCommandArguments>
+    <LocalDebuggerWorkingDirectory>c:\dev\ffmpeg\audio</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LocalDebuggerCommand>C:\Program Files (x86)\VideoLAN\VLC\vlc.exe</LocalDebuggerCommand>
