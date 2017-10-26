@@ -8,6 +8,7 @@ HANDLE hStartedEvent;
 HANDLE hStopEvent;
 HANDLE hThread;
 DWORD WINAPI PlaySilenceThreadFunction(LPVOID pContext);
+PlaySilenceThreadFunctionArguments threadArgs;
 
 HRESULT start_silence_thread() {
     // create a "silence has started playing" event
@@ -30,7 +31,7 @@ HRESULT start_silence_thread() {
         return __LINE__;
     }
     // create arguments for silence-playing thread
-    PlaySilenceThreadFunctionArguments threadArgs;
+
     threadArgs.hr = E_UNEXPECTED; // thread will overwrite this
     threadArgs.hStartedEvent = hStartedEvent;
     threadArgs.hStopEvent = hStopEvent;

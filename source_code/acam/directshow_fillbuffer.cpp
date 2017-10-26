@@ -110,6 +110,15 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
 	// I once tried to change it to always have monotonicity of timestamps at this point, but it didn't fix any problems, and seems to do all right without it so maybe ok [?]
     m_rtPreviousSampleEndTime = rtStart + sampleTimeUsed;
 
+	// attempt to disallow drift #
+	CRefTime now;
+    CSourceStream::m_pFilter->StreamTime(now);
+    CRefTime diff = now - m_rtPreviousSampleEndTime;
+    if (diff > 0)
+        m_rtPreviousSampleEndTime += CRefTime((long)1);
+    else if (diff < -100000)
+        m_rtPreviousSampleEndTime -= CRefTime((long)1);
+
 	// NB that this *can* set it to a negative start time...hmm...which apparently is "ok" when a graph is just starting up it's expected...
 	ShowOutput("timestamping audio packet as %lld -> %lld", rtStart, m_rtPreviousSampleEndTime);
     hr = pms->SetTime((REFERENCE_TIME*) &rtStart, (REFERENCE_TIME*) &m_rtPreviousSampleEndTime);
