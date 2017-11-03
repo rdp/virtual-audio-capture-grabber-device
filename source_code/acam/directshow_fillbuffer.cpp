@@ -110,7 +110,7 @@ HRESULT CVCamStream::FillBuffer(IMediaSample *pms)
 	// I once tried to change it to always have monotonicity of timestamps at this point, but it didn't fix any problems, and seems to do all right without it so maybe ok [?]
     m_rtPreviousSampleEndTime = rtStart + sampleTimeUsed;
 
-	// attempt to disallow drift #
+	// attempt to disallow drift/keep these in sync :|
 	CRefTime now;
     CSourceStream::m_pFilter->StreamTime(now);
     CRefTime diff = now - m_rtPreviousSampleEndTime;
