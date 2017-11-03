@@ -8,6 +8,7 @@
 
 #include "silence.h"
 
+// started in its own thread
 DWORD WINAPI PlaySilenceThreadFunction(LPVOID pContext) {
     PlaySilenceThreadFunctionArguments *pArgs =
         (PlaySilenceThreadFunctionArguments*)pContext;
@@ -15,7 +16,7 @@ DWORD WINAPI PlaySilenceThreadFunction(LPVOID pContext) {
     IMMDevice *pMMDevice = pArgs->pMMDevice;
     HRESULT &hr = pArgs->hr;
 
-    // CoInitialize
+    // CoInitialize (probably don't even need this...)
     hr = CoInitialize(NULL);
     if (FAILED(hr)) {
         printf("CoInitialize failed: hr = 0x%08x\n", hr);
@@ -31,7 +32,7 @@ DWORD WINAPI PlaySilenceThreadFunction(LPVOID pContext) {
     );
     if (FAILED(hr)) {
         printf("IMMDevice::Activate(IAudioClient) failed: hr = 0x%08x", hr);
-        CoUninitialize();
+        //CoUninitialize();
         return 0;
     }
 
@@ -41,7 +42,7 @@ DWORD WINAPI PlaySilenceThreadFunction(LPVOID pContext) {
     if (FAILED(hr)) {
         printf("IAudioClient::GetMixFormat failed: hr = 0x%08x\n", hr);
         pAudioClient->Release();
-        CoUninitialize();
+        //CoUninitialize();
         return 0;
     }
 
@@ -55,7 +56,7 @@ DWORD WINAPI PlaySilenceThreadFunction(LPVOID pContext) {
     if (FAILED(hr)) {
         printf("IAudioClient::Initialize failed: hr 0x%08x\n", hr);
         pAudioClient->Release();
-        CoUninitialize();
+        //CoUninitialize();
         return 0;
     }
 
@@ -65,7 +66,7 @@ DWORD WINAPI PlaySilenceThreadFunction(LPVOID pContext) {
     if (FAILED(hr)) {
         printf("IAudioClient::GetBufferSize failed: hr 0x%08x\n", hr);
         pAudioClient->Release();
-        CoUninitialize();
+        //CoUninitialize();
         return 0;
     }
 
@@ -78,7 +79,7 @@ DWORD WINAPI PlaySilenceThreadFunction(LPVOID pContext) {
     if (FAILED(hr)) {
         printf("IAudioClient::GetService(IAudioRenderClient) failed: hr 0x%08x\n", hr);
         pAudioClient->Release();
-        CoUninitialize();
+        //CoUninitialize();
         return 0;
     }
 
@@ -91,7 +92,7 @@ DWORD WINAPI PlaySilenceThreadFunction(LPVOID pContext) {
         printf("CreateEvent failed: last error is %u\n", dwErr);
         pAudioRenderClient->Release();
         pAudioClient->Release();
-        CoUninitialize();
+        //CoUninitialize();
         return 0;
     }
 
@@ -101,7 +102,7 @@ DWORD WINAPI PlaySilenceThreadFunction(LPVOID pContext) {
         printf("IAudioClient::SetEventHandle failed: hr = 0x%08x\n", hr);
         pAudioRenderClient->Release();
         pAudioClient->Release();
-        CoUninitialize();
+        //CoUninitialize();
         return 0;
     }
 
@@ -115,7 +116,7 @@ DWORD WINAPI PlaySilenceThreadFunction(LPVOID pContext) {
         CloseHandle(hFeedMe);
         pAudioRenderClient->Release();
         pAudioClient->Release();
-        CoUninitialize();
+        //CoUninitialize();
         return 0;
     }
 
@@ -128,7 +129,7 @@ DWORD WINAPI PlaySilenceThreadFunction(LPVOID pContext) {
         CloseHandle(hFeedMe);
         pAudioRenderClient->Release();
         pAudioClient->Release();
-        CoUninitialize();
+        //CoUninitialize();
         return 0;
     }        
 
@@ -141,7 +142,7 @@ DWORD WINAPI PlaySilenceThreadFunction(LPVOID pContext) {
         printf("AvSetMmThreadCharacteristics failed: last error = %u\n", dwErr);
         pAudioRenderClient->Release();
         pAudioClient->Release();
-        CoUninitialize();
+        //CoUninitialize();
         return 0;
     }    
 
@@ -153,7 +154,7 @@ DWORD WINAPI PlaySilenceThreadFunction(LPVOID pContext) {
         AvRevertMmThreadCharacteristics(hTask);
         pAudioRenderClient->Release();
         pAudioClient->Release();
-        CoUninitialize();
+        //CoUninitialize();
         return 0;
     }
     SetEvent(pArgs->hStartedEvent);
@@ -182,7 +183,7 @@ DWORD WINAPI PlaySilenceThreadFunction(LPVOID pContext) {
             CloseHandle(hFeedMe);
             pAudioRenderClient->Release();
             pAudioClient->Release();
-            CoUninitialize();
+            //CoUninitialize();
             return 0;
         }
 
@@ -203,20 +204,21 @@ DWORD WINAPI PlaySilenceThreadFunction(LPVOID pContext) {
             CloseHandle(hFeedMe);
             pAudioRenderClient->Release();
             pAudioClient->Release();
-            CoUninitialize();
+            //CoUninitialize();
             return 0;
         }
 
         if (nFramesOfPadding == nFramesInBuffer) {
             hr = E_UNEXPECTED;
-            ShowOutput("Got \"feed me\" event but IAudioClient::GetCurrentPadding reports buffer is full - glitch?\n");
-            pAudioClient->Stop();
+            ShowOutput("Got \"feed me\" event but IAudioClient::GetCurrentPadding reports buffer is full - glitch?\n"); 
+			// he said he ran into ths at least once?
+            /*pAudioClient->Stop();
             AvRevertMmThreadCharacteristics(hTask);
             CloseHandle(hFeedMe);
             pAudioRenderClient->Release();
             pAudioClient->Release();
-            CoUninitialize();
-            return 0;
+            //CoUninitialize();
+            return 0; */
         }
     
         hr = pAudioRenderClient->GetBuffer(nFramesInBuffer - nFramesOfPadding, &pData);
@@ -227,7 +229,7 @@ DWORD WINAPI PlaySilenceThreadFunction(LPVOID pContext) {
             CloseHandle(hFeedMe);
             pAudioRenderClient->Release();
             pAudioClient->Release();
-            CoUninitialize();
+            //CoUninitialize();
             return 0;
         }
 
@@ -253,7 +255,7 @@ DWORD WINAPI PlaySilenceThreadFunction(LPVOID pContext) {
             CloseHandle(hFeedMe);
             pAudioRenderClient->Release();
             pAudioClient->Release();
-            CoUninitialize();
+            //CoUninitialize();
             return 0;
         }        
     } // for each pass
@@ -263,6 +265,6 @@ DWORD WINAPI PlaySilenceThreadFunction(LPVOID pContext) {
     CloseHandle(hFeedMe);
     pAudioRenderClient->Release();
     pAudioClient->Release();
-    CoUninitialize();
+    //CoUninitialize();
     return 0;
 }
