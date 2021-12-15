@@ -23,32 +23,34 @@
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>acam</RootNamespace>
     <ProjectName>audio_sniffer</ProjectName>
+    <WindowsTargetPlatformVersion>10.0.22000.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>Unicode</CharacterSet>
-    <PlatformToolset>v100</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>Unicode</CharacterSet>
-    <PlatformToolset>Windows7.1SDK</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v142</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
-    <PlatformToolset>Windows7.1SDK</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -68,26 +70,26 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <LibraryPath>$(VCInstallDir)lib;$(VCInstallDir)atlmfc\lib;$(WindowsSdkDir)lib;$(FrameworkSDKDir)\lib;C:\Program Files\Microsoft SDKs\Windows\v7.1\Samples\multimedia\directshow\baseclasses\Debug</LibraryPath>
-    <IncludePath>C:\Program Files\Microsoft SDKs\Windows\v7.1\Samples\multimedia\directshow\baseclasses;$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)\include;$(FrameworkSDKDir)\include;</IncludePath>
+    <LibraryPath>D:\Build\Windows-classic-samples\Samples\Win7Samples\multimedia\directshow\baseclasses\Debug;$(WindowsSDK_LibraryPath_x86);$(LibraryPath);$(UniversalCRT_LibraryPath_x86)</LibraryPath>
+    <IncludePath>D:\Build\Windows-classic-samples\Samples\Win7Samples\multimedia\directshow\baseclasses;$(IncludePath);$(WindowsSDK_IncludePath);$(UniversalCRT_IncludePath);$(VC_IncludePath)</IncludePath>
     <TargetExt>.dll</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <LibraryPath>$(WindowsSdkDir)lib\x64;$(VCInstallDir)lib\amd64;$(VCInstallDir)atlmfc\lib\amd64;$(VSInstallDir);$(VSInstallDir)lib\amd64;$(WindowsSdkDir)lib;$(FrameworkSDKDir)\lib;C:\Program Files\Microsoft SDKs\Windows\v7.1\Samples\multimedia\directshow\baseclasses\x64\Debug</LibraryPath>
-    <IncludePath>C:\Program Files\Microsoft SDKs\Windows\v7.1\Samples\multimedia\directshow\baseclasses;$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)\include;$(FrameworkSDKDir)\include</IncludePath>
+    <LibraryPath>D:\Build\Windows-classic-samples\Samples\Win7Samples\multimedia\directshow\baseclasses\x64\Debug;$(WindowsSDK_LibraryPath_x64);$(LibraryPath);$(UniversalCRT_LibraryPath_x64)</LibraryPath>
+    <IncludePath>D:\Build\Windows-classic-samples\Samples\Win7Samples\multimedia\directshow\baseclasses;$(WindowsSDK_IncludePath);$(IncludePath);$(UniversalCRT_IncludePath);$(VC_IncludePath)</IncludePath>
     <TargetExt>.dll</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>C:\Program Files\Microsoft SDKs\Windows\v7.1\Samples\multimedia\directshow\baseclasses;$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include;</IncludePath>
-    <LibraryPath>$(VCInstallDir)lib;$(VCInstallDir)atlmfc\lib;$(WindowsSdkDir)lib;$(FrameworkSDKDir)\lib;C:\Program Files\Microsoft SDKs\Windows\v7.1\Samples\multimedia\directshow\baseclasses\Release</LibraryPath>
+    <IncludePath>D:\Build\Windows-classic-samples\Samples\Win7Samples\multimedia\directshow\baseclasses;$(IncludePath);$(WindowsSDK_IncludePath);$(UniversalCRT_IncludePath);$(VC_IncludePath)</IncludePath>
+    <LibraryPath>D:\Build\Windows-classic-samples\Samples\Win7Samples\multimedia\directshow\baseclasses\Release;$(WindowsSDK_LibraryPath_x86);$(LibraryPath);$(UniversalCRT_LibraryPath_x86)</LibraryPath>
     <TargetExt>.dll</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>C:\Program Files\Microsoft SDKs\Windows\v7.1\Samples\multimedia\directshow\baseclasses;$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include;</IncludePath>
-    <LibraryPath>$(WindowsSdkDir)lib\x64;$(VCInstallDir)lib\amd64;$(VCInstallDir)atlmfc\lib\amd64;$(VSInstallDir);$(VSInstallDir)lib\amd64;$(FrameworkSDKDir)\lib;C:\Program Files\Microsoft SDKs\Windows\v7.1\Samples\multimedia\directshow\baseclasses\x64\Release</LibraryPath>
+    <IncludePath>D:\Build\Windows-classic-samples\Samples\Win7Samples\multimedia\directshow\baseclasses;$(IncludePath);$(WindowsSDK_IncludePath);$(UniversalCRT_IncludePath);$(VC_IncludePath)</IncludePath>
+    <LibraryPath>D:\Build\Windows-classic-samples\Samples\Win7Samples\multimedia\directshow\baseclasses\x64\Release;$(WindowsSDK_LibraryPath_x64);$(LibraryPath);$(UniversalCRT_LibraryPath_x64)</LibraryPath>
     <TargetExt>.dll</TargetExt>
     <TargetName>audio_sniffer-x64</TargetName>
   </PropertyGroup>

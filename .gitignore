@@ -1,0 +1,14 @@
+source_code/.vs/**
+source_code/Debug/*
+!source_code/Debug/audio_sniffer.dll
+source_code/Release/*
+!source_code/Release/audio_sniffer.dll
+source_code/x64/Debug/*
+!source_code/x64/Debug/audio_sniffer.dll
+source_code/x64/Release/*
+!source_code/x64/Release/audio_sniffer-x64.dll
+source_code/acam/Debug/*
+source_code/acam/Release/*
+source_code/acam/x64/Release/*
+source_code/acam/x64/Debug/*
+
