@@ -1,10 +1,33 @@
-basically install windows sdk 7.1 and visual studio express 2010 (a pain on windows 10)
-then build directshow baseclasses from the SDK.
-then open the visual studio project files in /source_code/acam
+Install Windows 10 SDK and at least Visual Studio Express 2019
+
+The directshow baseclasses example is no longer part of the Windows SDK. Get
+the samples by cloning https://github.com/microsoft/Windows-classic-samples 
+to D:\build
+
+mkdir D:\build
+cd /d D:\build
+git clone https://github.com/microsoft/Windows-classic-samples
+
+Build directshow baseclasses from the SDK: 
+Open 
+D:\Build\Windows-classic-samples\Samples\Win7Samples\multimedia\directshow\baseclasses\baseclasses.sln
+in Visual Studio, let Visual Studio upgrade the version and build
+it (all combinations Debug x86, Release x86, x64... especialy for the platform you want to build 
+audio_sniffer.dll for).
+
+Clone the virtual-audio-capture-grabber-device repository
+
+cd /d D:\build
+git clone https://github.com/rdp/virtual-audio-capture-grabber-device
+cd virtual-audio-capture-grabber-device
+git submodule update --init --recursive
+
+then open the visual studio project file \source_code\acam\acam.vcxproj 
+
+let Visual Studio upgrade the version and build it.
+
 It outputs a .dll file that you "register" via (in administrator console) 
 $ regsvr32 XXX.dll (and unregister when you're done with regsvr32 /u XXX.dll)
-
-git submodule update --init --recursive
 
 In essence this is the "WASAPI loopback" sample
 https://blogs.msdn.microsoft.com/matthew_van_eerde/2008/12/16/sample-wasapi-loopback-capture-record-what-you-hear/
