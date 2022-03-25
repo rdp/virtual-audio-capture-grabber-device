@@ -76,7 +76,7 @@ STDMETHODIMP CVCam::GetState(DWORD dw, FILTER_STATE *pState)
 CVCamStream::CVCamStream(HRESULT *phr, CVCam *pParent, LPCWSTR pPinName) :
     CSourceStream(NAME("Virtual cam5"),phr, pParent, pPinName), m_pParent(pParent)
 {
-    // Set the media type...
+    // Set the default media type...
 	GetMediaType(0, &m_mt);
 }
 
